@@ -16,6 +16,7 @@ from main import db, Conversation, ConversationEntry, limiter
 from utils.validators import SecurityValidator
 from config import Config
 from notifications import notification_manager, system_monitor, NotificationLevel
+from database_utils import DatabaseManager
 
 # Create admin blueprint
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')

@@ -200,14 +200,16 @@ class ConversationChain:
             self.conversation = None
     
     @classmethod
-    def create_new(cls, initial_input):
-        """Create a new conversation chain"""
+    def create_new(cls, initial_input, session_id=None, user_ip=None):
+        """Create a new conversation chain with enhanced persistence"""
         conversation_id = str(uuid.uuid4())
         conversation = Conversation(
             id=conversation_id,
             initial_input=initial_input,
             current_agent_index=0,
-            is_complete=False
+            is_complete=False,
+            session_id=session_id,
+            user_ip=user_ip
         )
         db.session.add(conversation)
         db.session.commit()
@@ -216,18 +218,20 @@ class ConversationChain:
         from notifications import notification_manager, NotificationLevel
         notification_manager.add_notification(
             "New Conversation Started",
-            f"Conversation {conversation_id[:8]}... initiated",
+            f"Conversation {conversation_id[:8]}... initiated by {user_ip or 'unknown'}",
             NotificationLevel.INFO,
-            {"conversation_id": conversation_id, "initial_input": initial_input[:100]}
+            {"conversation_id": conversation_id, "initial_input": initial_input[:100], "session_id": session_id}
         )
         
         chain = cls(conversation_id)
         return chain
     
     def process_input(self, input_text):
-        """Process input through the current agent and advance to next"""
+        """Process input through the current agent and advance to next with enhanced persistence"""
         if self.conversation.is_complete:
             raise Exception("Conversation chain is already complete")
+        
+        start_time = datetime.utcnow()
         
         try:
             current_agent = self.agents[self.conversation.current_agent_index]
@@ -242,17 +246,27 @@ class ConversationChain:
             # Extract question for next agent
             next_question = current_agent.extract_next_question(response)
             
-            # Create and save conversation entry
+            # Calculate processing time
+            processing_time = (datetime.utcnow() - start_time).total_seconds()
+            
+            # Create and save conversation entry with enhanced tracking
             entry = ConversationEntry(
                 conversation_id=self.conversation.id,
                 agent_name=current_agent.name,
                 agent_role=current_agent.role,
                 input_text=input_text,
                 response_text=response,
-                next_question=next_question
+                next_question=next_question,
+                processing_time_seconds=processing_time,
+                model_used=getattr(current_agent, 'model', 'gpt-3.5-turbo'),
+                error_occurred=False
             )
             
             db.session.add(entry)
+            
+            # Update conversation token usage (estimate)
+            estimated_tokens = len(input_text) // 4 + len(response) // 4  # Rough estimate
+            self.conversation.total_tokens_used += estimated_tokens
             
             # Move to next agent
             self.conversation.current_agent_index += 1
@@ -260,6 +274,7 @@ class ConversationChain:
             # Check if conversation is complete
             if self.conversation.current_agent_index >= len(self.agents):
                 self.conversation.is_complete = True
+                self.conversation.completion_time = datetime.utcnow()
                 
                 # Send completion notification
                 from notifications import notification_manager, NotificationLevel
@@ -267,7 +282,12 @@ class ConversationChain:
                     "Conversation Completed",
                     f"Conversation {self.conversation.id[:8]}... completed successfully",
                     NotificationLevel.INFO,
-                    {"conversation_id": self.conversation.id, "duration": (datetime.utcnow() - self.conversation.created_at).total_seconds()}
+                    {
+                        "conversation_id": self.conversation.id, 
+                        "duration": self.conversation.get_duration(),
+                        "total_tokens": self.conversation.total_tokens_used,
+                        "entry_count": self.conversation.get_entry_count()
+                    }
                 )
             
             self.conversation.updated_at = datetime.utcnow()
@@ -276,8 +296,28 @@ class ConversationChain:
             return entry.to_dict()
             
         except Exception as e:
+            # Handle error and rollback
             db.session.rollback()
             logging.error(f"Error processing input: {str(e)}")
+            
+            # Record error in conversation
+            self.conversation.error_count += 1
+            
+            # Create error entry
+            error_entry = ConversationEntry(
+                conversation_id=self.conversation.id,
+                agent_name=current_agent.name if 'current_agent' in locals() else 'Unknown',
+                agent_role=current_agent.role if 'current_agent' in locals() else 'Unknown',
+                input_text=input_text,
+                response_text=f"Error occurred: {str(e)}",
+                next_question=None,
+                processing_time_seconds=(datetime.utcnow() - start_time).total_seconds(),
+                error_occurred=True,
+                error_message=str(e)
+            )
+            
+            db.session.add(error_entry)
+            db.session.commit()
             
             # Send error notification
             from notifications import notification_manager, NotificationLevel
@@ -285,7 +325,13 @@ class ConversationChain:
                 "Conversation Error",
                 f"Error in conversation {self.conversation.id[:8]}...: {str(e)[:100]}",
                 NotificationLevel.ERROR,
-                {"conversation_id": self.conversation.id, "error": str(e), "agent_index": self.conversation.current_agent_index},
+                {
+                    "conversation_id": self.conversation.id, 
+                    "error": str(e), 
+                    "agent": current_agent.name if 'current_agent' in locals() else 'Unknown',
+                    "processing_time": (datetime.utcnow() - start_time).total_seconds(),
+                    "agent_index": self.conversation.current_agent_index
+                },
                 send_email=True
             )
             
@@ -318,7 +364,8 @@ def health_check():
     """Health check endpoint for monitoring"""
     try:
         # Check database connection
-        db.session.execute('SELECT 1')
+        from sqlalchemy import text
+        db.session.execute(text('SELECT 1'))
         
         # Check OpenAI API (optional - might want to skip in production)
         # openai_status = "available" if app.config['OPENAI_API_KEY'] else "missing_key"
@@ -365,24 +412,35 @@ def start_conversation():
         # Sanitize input
         input_text = InputValidator.sanitize_html(input_text.strip())
         
-        # Create new conversation chain with database storage
-        chain = ConversationChain.create_new(input_text)
+        # Create new conversation chain with enhanced database storage
+        chain = ConversationChain.create_new(
+            input_text,
+            session_id=session.get('session_id', str(uuid.uuid4())),
+            user_ip=request.remote_addr
+        )
         
         # Process initial input with Analyst
         result = chain.process_input(input_text)
         
-        # Store conversation ID in session
+        # Store conversation ID and session info
         session['conversation_id'] = chain.conversation.id
+        session['session_id'] = chain.conversation.session_id
         session.permanent = True
         
-        logging.info(f"New conversation started: {chain.conversation.id}")
+        logging.info(f"New conversation started: {chain.conversation.id} by {request.remote_addr}")
         
         return jsonify({
             "success": True,
             "conversation_id": chain.conversation.id,
             "result": result,
             "next_agent": chain.get_next_agent_name(),
-            "is_complete": chain.is_complete
+            "is_complete": chain.is_complete,
+            "conversation_stats": {
+                "total_tokens_used": chain.conversation.total_tokens_used,
+                "entry_count": chain.conversation.get_entry_count(),
+                "duration_seconds": chain.conversation.get_duration(),
+                "error_count": chain.conversation.error_count
+            }
         })
         
     except Exception as e:

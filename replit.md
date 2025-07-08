@@ -29,9 +29,12 @@ The application follows a simple Flask web application architecture with the fol
 
 ### Data Storage
 - **Primary Storage**: PostgreSQL database for persistent conversation history
-- **Database Models**: Conversation and ConversationEntry models using SQLAlchemy
+- **Database Models**: Enhanced Conversation and ConversationEntry models using SQLAlchemy
 - **Session Storage**: Flask session cookies for user identification
 - **Persistent Data**: All conversations and agent responses are stored permanently
+- **Enhanced Tracking**: Session IDs, IP addresses, processing times, token usage, and error tracking
+- **Database Utilities**: Comprehensive DatabaseManager class for advanced operations
+- **Performance Optimization**: Strategic database indexing for improved query performance
 
 ## Key Components
 
@@ -95,7 +98,11 @@ The application follows a simple Flask web application architecture with the fol
 ### Scalability Considerations
 - **Database Storage**: PostgreSQL provides persistent, scalable conversation storage
 - **Session Dependency**: Uses Flask sessions for user identification
-- **Database Design**: Normalized schema with Conversation and ConversationEntry tables
+- **Database Design**: Normalized schema with enhanced Conversation and ConversationEntry tables
+- **Performance Optimization**: Strategic database indexing for conversation queries
+- **Error Tracking**: Comprehensive error logging and recovery mechanisms
+- **Token Management**: Automatic token usage tracking and optimization
+- **Data Retention**: Configurable conversation cleanup and archival policies
 
 ### Security Considerations
 - **API Key Management**: OpenAI API key stored as environment variable
