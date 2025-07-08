@@ -1,48 +1,61 @@
 import os
 import logging
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, g
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_wtf.csrf import CSRFProtect
 from openai import OpenAI
 import uuid
 from datetime import datetime
 from models import db, Conversation, ConversationEntry
+from config import config, Config
+from utils.validators import InputValidator, SecurityValidator
 
-# Configure logging for debugging
-logging.basicConfig(level=logging.DEBUG)
-
-app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "default-secret-key-for-dev")
-
-# Database configuration
-database_url = os.environ.get("DATABASE_URL")
-if not database_url:
-    logging.error("DATABASE_URL environment variable is not set")
-    raise RuntimeError("DATABASE_URL environment variable is required")
-
-app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-}
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-# Initialize database
-db.init_app(app)
-
-# OpenAI API setup
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    logging.error("OPENAI_API_KEY environment variable is not set")
+# Initialize Flask app
+def create_app(config_name=None):
+    """Application factory pattern"""
+    app = Flask(__name__)
     
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
+    # Load configuration
+    config_name = config_name or os.environ.get('FLASK_ENV', 'development')
+    app.config.from_object(config[config_name])
+    
+    # Validate required environment variables
+    Config.validate_required_env_vars()
+    
+    # Setup logging
+    Config.setup_logging()
+    
+    # Initialize extensions
+    db.init_app(app)
+    
+    # Initialize CSRF protection
+    csrf = CSRFProtect(app)
+    
+    # Initialize rate limiter
+    limiter = Limiter(
+        app=app,
+        key_func=lambda: SecurityValidator.check_rate_limit_key(get_remote_address()),
+        default_limits=[app.config['RATELIMIT_DEFAULT']],
+        storage_uri=app.config['RATELIMIT_STORAGE_URL']
+    )
+    
+    # Create database tables
+    with app.app_context():
+        try:
+            db.create_all()
+            logging.info("Database tables created successfully")
+        except Exception as e:
+            logging.error(f"Error creating database tables: {str(e)}")
+            raise e
+    
+    return app, limiter, csrf
 
-# Create database tables
-with app.app_context():
-    try:
-        db.create_all()
-        logging.info("Database tables created successfully")
-    except Exception as e:
-        logging.error(f"Error creating database tables: {str(e)}")
-        raise e
+# Create app instance
+app, limiter, csrf = create_app()
+
+# OpenAI client setup
+openai_client = OpenAI(api_key=app.config['OPENAI_API_KEY'])
 
 class Agent:
     """Base class for all AI agents"""
@@ -67,10 +80,10 @@ class Agent:
             messages.append({"role": "user", "content": input_text})
             
             response = openai_client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=app.config['OPENAI_MODEL'],
                 messages=messages,
-                max_tokens=500,
-                temperature=0.7
+                max_tokens=app.config['OPENAI_MAX_TOKENS'],
+                temperature=app.config['OPENAI_TEMPERATURE']
             )
             
             return response.choices[0].message.content.strip()
@@ -240,17 +253,58 @@ def index():
     """Main page with conversation interface"""
     return render_template('index.html')
 
+@app.route('/health')
+@limiter.exempt
+def health_check():
+    """Health check endpoint for monitoring"""
+    try:
+        # Check database connection
+        db.session.execute('SELECT 1')
+        
+        # Check OpenAI API (optional - might want to skip in production)
+        # openai_status = "available" if app.config['OPENAI_API_KEY'] else "missing_key"
+        
+        return jsonify({
+            "status": "healthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "version": "1.0.0",
+            "database": "connected",
+            # "openai": openai_status
+        }), 200
+    
+    except Exception as e:
+        logging.error(f"Health check failed: {str(e)}")
+        return jsonify({
+            "status": "unhealthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "error": str(e)
+        }), 500
+
 @app.route('/start_conversation', methods=['POST'])
+@limiter.limit("5 per minute")
+@csrf.exempt  # We'll handle CSRF differently for API endpoints
 def start_conversation():
     """Start a new conversation chain"""
     try:
-        data = request.get_json()
-        if not data or 'input' not in data:
-            return jsonify({"error": "Input text is required"}), 400
+        # Validate request data
+        data = request.get_json() if request.is_json else {}
+        is_valid, error_msg = InputValidator.validate_json_request(data, ['input'])
+        if not is_valid:
+            return jsonify({"error": error_msg}), 400
         
-        input_text = data['input'].strip()
-        if not input_text:
-            return jsonify({"error": "Input text cannot be empty"}), 400
+        # Validate input text
+        input_text = data['input']
+        is_valid, error_msg = InputValidator.validate_conversation_input(input_text)
+        if not is_valid:
+            return jsonify({"error": error_msg}), 400
+        
+        # Check session limits
+        if not SecurityValidator.validate_session_data(session):
+            session.clear()
+            return jsonify({"error": "Session data invalid, please refresh"}), 400
+        
+        # Sanitize input
+        input_text = InputValidator.sanitize_html(input_text.strip())
         
         # Create new conversation chain with database storage
         chain = ConversationChain.create_new(input_text)
@@ -260,6 +314,9 @@ def start_conversation():
         
         # Store conversation ID in session
         session['conversation_id'] = chain.conversation.id
+        session.permanent = True
+        
+        logging.info(f"New conversation started: {chain.conversation.id}")
         
         return jsonify({
             "success": True,
@@ -271,20 +328,33 @@ def start_conversation():
         
     except Exception as e:
         logging.error(f"Error starting conversation: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error occurred. Please try again."}), 500
 
 @app.route('/continue_conversation', methods=['POST'])
+@limiter.limit("10 per minute")
+@csrf.exempt
 def continue_conversation():
     """Continue an existing conversation chain"""
     try:
+        # Validate session
+        if not SecurityValidator.validate_session_data(session):
+            session.clear()
+            return jsonify({"error": "Session data invalid, please refresh"}), 400
+        
         conversation_id = session.get('conversation_id')
         if not conversation_id:
             return jsonify({"error": "No active conversation found"}), 404
+        
+        # Validate conversation ID
+        is_valid, error_msg = InputValidator.validate_conversation_id(conversation_id)
+        if not is_valid:
+            return jsonify({"error": error_msg}), 400
         
         # Load conversation chain from database
         try:
             chain = ConversationChain(conversation_id)
         except ValueError:
+            session.pop('conversation_id', None)
             return jsonify({"error": "Conversation not found"}), 404
         
         if chain.is_complete:
@@ -298,8 +368,13 @@ def continue_conversation():
         last_entry = conversation_history[-1]
         next_question = last_entry["next_question"]
         
+        if not next_question:
+            return jsonify({"error": "No question available for next agent"}), 400
+        
         # Process with next agent
         result = chain.process_input(next_question)
+        
+        logging.info(f"Conversation continued: {conversation_id}, agent: {result['agent']}")
         
         return jsonify({
             "success": True,
@@ -310,7 +385,7 @@ def continue_conversation():
         
     except Exception as e:
         logging.error(f"Error continuing conversation: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error occurred. Please try again."}), 500
 
 @app.route('/get_conversation_history')
 def get_conversation_history():
@@ -353,16 +428,27 @@ def reset_conversation():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/list_conversations')
+@limiter.limit("20 per minute")
 def list_conversations():
     """Get a list of all conversations"""
     try:
+        # Validate session
+        if not SecurityValidator.validate_session_data(session):
+            session.clear()
+            return jsonify({"error": "Session data invalid, please refresh"}), 400
+        
         conversations = Conversation.query.order_by(Conversation.created_at.desc()).limit(50).all()
         
         conversation_list = []
         for conv in conversations:
+            # Safely truncate and sanitize initial input
+            initial_input = InputValidator.sanitize_html(conv.initial_input)
+            if len(initial_input) > 100:
+                initial_input = initial_input[:100] + "..."
+            
             conversation_list.append({
                 "id": conv.id,
-                "initial_input": conv.initial_input[:100] + "..." if len(conv.initial_input) > 100 else conv.initial_input,
+                "initial_input": initial_input,
                 "created_at": conv.created_at.isoformat(),
                 "updated_at": conv.updated_at.isoformat(),
                 "is_complete": conv.is_complete,
@@ -376,22 +462,36 @@ def list_conversations():
         
     except Exception as e:
         logging.error(f"Error listing conversations: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to load conversations"}), 500
 
 @app.route('/load_conversation/<conversation_id>')
+@limiter.limit("15 per minute")
 def load_conversation(conversation_id):
     """Load a specific conversation"""
     try:
+        # Validate conversation ID
+        is_valid, error_msg = InputValidator.validate_conversation_id(conversation_id)
+        if not is_valid:
+            return jsonify({"error": error_msg}), 400
+        
+        # Validate session
+        if not SecurityValidator.validate_session_data(session):
+            session.clear()
+            return jsonify({"error": "Session data invalid, please refresh"}), 400
+        
         conversation = Conversation.query.get(conversation_id)
         if not conversation:
             return jsonify({"error": "Conversation not found"}), 404
         
         # Set the conversation in session
         session['conversation_id'] = conversation_id
+        session.permanent = True
         
         # Get conversation history
         chain = ConversationChain(conversation_id)
         history = chain.get_conversation_history()
+        
+        logging.info(f"Conversation loaded: {conversation_id}")
         
         return jsonify({
             "success": True,
@@ -402,16 +502,61 @@ def load_conversation(conversation_id):
         
     except Exception as e:
         logging.error(f"Error loading conversation: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to load conversation"}), 500
 
+# Security and error handling middleware
+@app.before_request
+def security_headers():
+    """Add security headers to all responses"""
+    g.start_time = datetime.utcnow()
+
+@app.after_request
+def after_request(response):
+    """Add security headers and logging"""
+    # Security headers
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    
+    # Log request duration
+    if hasattr(g, 'start_time'):
+        duration = (datetime.utcnow() - g.start_time).total_seconds()
+        if duration > 5:  # Log slow requests
+            logging.warning(f"Slow request: {request.endpoint} took {duration:.2f}s")
+    
+    return response
+
+# Error handlers
 @app.errorhandler(404)
 def not_found(error):
+    """Handle 404 errors"""
+    if request.path.startswith('/api/') or request.is_json:
+        return jsonify({"error": "Resource not found"}), 404
     return render_template('index.html'), 404
 
 @app.errorhandler(500)
 def internal_error(error):
+    """Handle 500 errors"""
+    db.session.rollback()
     logging.error(f"Internal server error: {str(error)}")
+    if request.path.startswith('/api/') or request.is_json:
+        return jsonify({"error": "An internal error occurred"}), 500
     return render_template('index.html'), 500
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    """Handle rate limit errors"""
+    return jsonify({
+        "error": "Rate limit exceeded",
+        "message": f"Too many requests. Please try again in {e.retry_after} seconds."
+    }), 429
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    """Handle request too large errors"""
+    return jsonify({"error": "Request too large"}), 413
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

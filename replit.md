@@ -62,10 +62,13 @@ The application follows a simple Flask web application architecture with the fol
 ### Core Dependencies
 - **Flask**: Web framework for Python
 - **Flask-SQLAlchemy**: Database ORM for PostgreSQL integration
+- **Flask-Limiter**: Rate limiting for API endpoints
+- **Flask-WTF**: CSRF protection and form handling
 - **OpenAI Python Client**: Official OpenAI API client library
 - **PostgreSQL**: Database for persistent conversation storage
 - **Bootstrap**: CSS framework for responsive design
 - **Font Awesome**: Icon library for UI elements
+- **Validators**: Input validation utilities
 
 ### API Dependencies
 - **OpenAI API**: GPT-3.5-turbo model for AI agent responses
@@ -90,8 +93,13 @@ The application follows a simple Flask web application architecture with the fol
 
 ### Security Considerations
 - **API Key Management**: OpenAI API key stored as environment variable
-- **Session Security**: Flask session cookies for user state
-- **Input Validation**: Basic input handling (may need enhancement)
+- **Session Security**: Flask session cookies with HTTPOnly, Secure, SameSite attributes
+- **Input Validation**: Comprehensive input sanitization and validation
+- **Rate Limiting**: IP-based rate limiting on all API endpoints
+- **Security Headers**: XSS protection, content type options, frame options, HSTS
+- **Error Handling**: Generic error messages to prevent information disclosure
+- **CSRF Protection**: Flask-WTF CSRF protection for forms
+- **Request Size Limits**: Maximum request size enforcement
 
 ## Development Notes
 
