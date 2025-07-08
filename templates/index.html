@@ -261,6 +261,107 @@
         </div>
     </div>
 
+    <!-- Human-Clarity Feedback Modal -->
+    <div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="feedbackModalLabel">
+                        <i class="fas fa-star me-2 text-warning"></i>
+                        Rate Response Clarity
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="feedbackForm">
+                        <input type="hidden" id="feedbackEntryId" value="">
+                        <input type="hidden" id="feedbackAgent" value="">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Agent: <span id="feedbackAgentName" class="fw-bold"></span></label>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="clarityRating" class="form-label">
+                                <i class="fas fa-eye me-1"></i>
+                                How clear was the response?
+                            </label>
+                            <div class="rating-stars" data-rating="clarityRating">
+                                <i class="fas fa-star" data-value="1"></i>
+                                <i class="fas fa-star" data-value="2"></i>
+                                <i class="fas fa-star" data-value="3"></i>
+                                <i class="fas fa-star" data-value="4"></i>
+                                <i class="fas fa-star" data-value="5"></i>
+                            </div>
+                            <input type="hidden" id="clarityRating" value="0">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="empathyRating" class="form-label">
+                                <i class="fas fa-heart me-1"></i>
+                                Did the response show understanding of your needs?
+                            </label>
+                            <div class="rating-stars" data-rating="empathyRating">
+                                <i class="fas fa-star" data-value="1"></i>
+                                <i class="fas fa-star" data-value="2"></i>
+                                <i class="fas fa-star" data-value="3"></i>
+                                <i class="fas fa-star" data-value="4"></i>
+                                <i class="fas fa-star" data-value="5"></i>
+                            </div>
+                            <input type="hidden" id="empathyRating" value="0">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="actionabilityRating" class="form-label">
+                                <i class="fas fa-arrow-right me-1"></i>
+                                How actionable were the next steps?
+                            </label>
+                            <div class="rating-stars" data-rating="actionabilityRating">
+                                <i class="fas fa-star" data-value="1"></i>
+                                <i class="fas fa-star" data-value="2"></i>
+                                <i class="fas fa-star" data-value="3"></i>
+                                <i class="fas fa-star" data-value="4"></i>
+                                <i class="fas fa-star" data-value="5"></i>
+                            </div>
+                            <input type="hidden" id="actionabilityRating" value="0">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="overallRating" class="form-label">
+                                <i class="fas fa-thumbs-up me-1"></i>
+                                Overall, how helpful was this response?
+                            </label>
+                            <div class="rating-stars" data-rating="overallRating">
+                                <i class="fas fa-star" data-value="1"></i>
+                                <i class="fas fa-star" data-value="2"></i>
+                                <i class="fas fa-star" data-value="3"></i>
+                                <i class="fas fa-star" data-value="4"></i>
+                                <i class="fas fa-star" data-value="5"></i>
+                            </div>
+                            <input type="hidden" id="overallRating" value="0">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="feedbackComment" class="form-label">
+                                <i class="fas fa-comment me-1"></i>
+                                Additional feedback (optional)
+                            </label>
+                            <textarea class="form-control" id="feedbackComment" rows="3" 
+                                placeholder="What could make this response better?"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitFeedback()">
+                        <i class="fas fa-paper-plane me-1"></i>
+                        Submit Feedback
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         class ConversationManager {
@@ -465,6 +566,11 @@
                                 <div class="mb-3">
                                     <strong>Response:</strong>
                                     <p class="mb-2">${this.formatResponse(entry.response)}</p>
+                                    <div class="response-actions mt-2">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="showFeedbackModal(${entry.id}, '${entry.agent}')">
+                                            <i class="fas fa-star"></i> Rate Clarity
+                                        </button>
+                                    </div>
                                 </div>
                                 
                                 ${entry.next_question ? `
@@ -765,7 +871,139 @@
         // Initialize the conversation manager when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             new ConversationManager();
+            initializeFeedbackSystem();
         });
+
+        // Feedback System Initialization
+        function initializeFeedbackSystem() {
+            const ratingGroups = document.querySelectorAll('.rating-stars');
+            
+            ratingGroups.forEach(group => {
+                const stars = group.querySelectorAll('.fas.fa-star');
+                const ratingName = group.dataset.rating;
+                
+                stars.forEach((star, index) => {
+                    star.style.cursor = 'pointer';
+                    star.classList.add('text-muted');
+                    
+                    star.addEventListener('mouseenter', function() {
+                        highlightStars(stars, index + 1);
+                    });
+                    
+                    star.addEventListener('mouseleave', function() {
+                        const currentRating = parseInt(document.getElementById(ratingName).value);
+                        highlightStars(stars, currentRating);
+                    });
+                    
+                    star.addEventListener('click', function() {
+                        const rating = index + 1;
+                        document.getElementById(ratingName).value = rating;
+                        highlightStars(stars, rating);
+                    });
+                });
+            });
+        }
+
+        // Feedback Modal Functions
+        function showFeedbackModal(entryId, agentName) {
+            document.getElementById('feedbackEntryId').value = entryId;
+            document.getElementById('feedbackAgent').value = agentName;
+            document.getElementById('feedbackAgentName').textContent = agentName;
+            
+            resetRatings();
+            document.getElementById('feedbackComment').value = '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+            modal.show();
+        }
+
+        function resetRatings() {
+            const ratingGroups = document.querySelectorAll('.rating-stars');
+            ratingGroups.forEach(group => {
+                const stars = group.querySelectorAll('.fas.fa-star');
+                stars.forEach(star => {
+                    star.classList.remove('text-warning');
+                    star.classList.add('text-muted');
+                });
+                const hiddenInput = document.getElementById(group.dataset.rating);
+                if (hiddenInput) hiddenInput.value = '0';
+            });
+        }
+
+        function highlightStars(stars, count) {
+            stars.forEach((star, index) => {
+                if (index < count) {
+                    star.classList.remove('text-muted');
+                    star.classList.add('text-warning');
+                } else {
+                    star.classList.remove('text-warning');
+                    star.classList.add('text-muted');
+                }
+            });
+        }
+
+        async function submitFeedback() {
+            const entryId = document.getElementById('feedbackEntryId').value;
+            const clarityRating = parseInt(document.getElementById('clarityRating').value);
+            const empathyRating = parseInt(document.getElementById('empathyRating').value);
+            const actionabilityRating = parseInt(document.getElementById('actionabilityRating').value);
+            const overallRating = parseInt(document.getElementById('overallRating').value);
+            const comment = document.getElementById('feedbackComment').value.trim();
+
+            if (!clarityRating || !empathyRating || !actionabilityRating || !overallRating) {
+                showNotification('Please provide all ratings before submitting.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/submit_feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        entry_id: entryId,
+                        clarity_rating: clarityRating,
+                        empathy_rating: empathyRating,
+                        actionability_rating: actionabilityRating,
+                        overall_rating: overallRating,
+                        comment: comment
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('feedbackModal'));
+                    modal.hide();
+                    showNotification('Thank you for your feedback! This helps improve our AI agents.', 'success');
+                } else {
+                    throw new Error(result.error || 'Failed to submit feedback');
+                }
+                
+            } catch (error) {
+                console.error('Error submitting feedback:', error);
+                showNotification('Failed to submit feedback. Please try again.', 'error');
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
     </script>
 </body>
 </html>

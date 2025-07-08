@@ -582,6 +582,41 @@ def get_conversation_history():
         logging.error(f"Error getting conversation history: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/submit_feedback', methods=['POST'])
+@limiter.limit("10 per minute")
+def submit_feedback():
+    """Submit user feedback for agent response clarity"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['entry_id', 'clarity_rating', 'empathy_rating', 'actionability_rating', 'overall_rating']
+        is_valid, error = InputValidator.validate_json_request(data, required_fields)
+        if not is_valid:
+            return jsonify({'success': False, 'error': error}), 400
+        
+        # Import feedback manager
+        from clarity_feedback import feedback_manager
+        
+        success = feedback_manager.submit_feedback(
+            entry_id=data['entry_id'],
+            clarity_rating=data['clarity_rating'],
+            empathy_rating=data['empathy_rating'],
+            actionability_rating=data['actionability_rating'],
+            overall_rating=data['overall_rating'],
+            comment=data.get('comment', ''),
+            user_session=session.get('session_id', 'anonymous')
+        )
+        
+        if success:
+            return jsonify({'success': True, 'message': 'Feedback submitted successfully'})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to submit feedback'}), 500
+            
+    except Exception as e:
+        logging.error(f"Error submitting feedback: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
 @app.route('/reset_conversation', methods=['POST'])
 def reset_conversation():
     """Reset the current conversation"""

@@ -620,45 +620,70 @@ def api_clarity_analytics():
     """API endpoint for Human-Clarity analytics data"""
     try:
         from human_clarity import clarity_engine
+        from clarity_feedback import feedback_manager
         
-        # Get clarity trends
+        # Get automated clarity trends
         trends = clarity_engine.get_clarity_trends(days=7)
         
-        # Get agent-specific scores (mock data for now)
-        agent_scores = {
-            "Analyst": 75.5,
-            "Researcher": 82.3,
-            "Writer": 78.9
+        # Get user feedback statistics
+        feedback_stats = feedback_manager.get_feedback_stats(days=7)
+        
+        # Get low-rated responses for improvement
+        low_rated = feedback_manager.get_low_rated_responses(threshold=2)
+        
+        # Combine automated analysis with user feedback
+        combined_data = {
+            "automated_analysis": trends,
+            "user_feedback": feedback_stats,
+            "improvement_opportunities": len(low_rated),
+            "recent_low_rated": low_rated[:5],  # Last 5 low-rated responses
         }
         
-        # Recent analysis data (simplified)
-        recent_analysis = [
-            {
-                "timestamp": "2025-07-08T21:00:00",
-                "agent": "Writer",
-                "clarity_score": 85,
-                "empathy_detected": True,
-                "actionability": 90,
-                "understanding_shown": True,
-                "suggestions": ["Response shows excellent understanding"]
-            },
-            {
-                "timestamp": "2025-07-08T20:45:00",
-                "agent": "Researcher",
-                "clarity_score": 72,
-                "empathy_detected": False,
-                "actionability": 65,
-                "understanding_shown": True,
-                "suggestions": ["Add more empathy indicators", "Include clearer next steps"]
-            }
-        ]
+        # Calculate overall scores combining both sources
+        if "error" not in trends and "error" not in feedback_stats:
+            avg_clarity = (trends.get("average_clarity_score", 0) + feedback_stats.get("average_clarity", 0)) / 2
+            avg_empathy = feedback_stats.get("average_empathy", 0) * 20  # Convert to 0-100 scale
+            
+            agent_scores = feedback_stats.get("agent_ratings", {
+                "Analyst": 75,
+                "Researcher": 80,
+                "Writer": 78
+            })
+        else:
+            avg_clarity = 0
+            avg_empathy = 0
+            agent_scores = {"Analyst": 0, "Researcher": 0, "Writer": 0}
+        
+        # Recent analysis combining both data sources
+        recent_analysis = []
+        
+        # Add recent user feedback
+        for response in low_rated[:3]:
+            feedback = response.get("feedback", {})
+            recent_analysis.append({
+                "timestamp": response["created_at"],
+                "agent": response["agent"],
+                "clarity_score": feedback.get("clarity_rating", 0) * 20,  # Convert to 0-100
+                "empathy_detected": feedback.get("empathy_rating", 0) >= 3,
+                "actionability": feedback.get("actionability_rating", 0) * 20,
+                "understanding_shown": feedback.get("empathy_rating", 0) >= 3,
+                "suggestions": ["User provided low rating - needs improvement"],
+                "source": "user_feedback"
+            })
         
         return jsonify({
-            **trends,
+            "average_clarity_score": round(avg_clarity, 1),
+            "empathy_rate": round(avg_empathy, 1),
+            "total_analyzed": trends.get("total_analyzed", 0) + feedback_stats.get("total_feedback_count", 0),
+            "trend": feedback_stats.get("feedback_trend", "stable"),
             "agent_scores": agent_scores,
             "recent_analysis": recent_analysis,
-            "average_actionability": 77.5,
-            "loop_closure_rate": 68.2
+            "average_actionability": feedback_stats.get("average_actionability", 0) * 20,
+            "loop_closure_rate": 68.2,  # Placeholder for now
+            "data_sources": {
+                "automated_analysis": trends.get("total_analyzed", 0),
+                "user_feedback": feedback_stats.get("total_feedback_count", 0)
+            }
         })
         
     except Exception as e:
