@@ -430,14 +430,25 @@ def reset_conversation():
 @app.route('/list_conversations')
 @limiter.limit("20 per minute")
 def list_conversations():
-    """Get a list of all conversations"""
+    """Get a list of all conversations with optional search"""
     try:
         # Validate session
         if not SecurityValidator.validate_session_data(session):
             session.clear()
             return jsonify({"error": "Session data invalid, please refresh"}), 400
         
-        conversations = Conversation.query.order_by(Conversation.created_at.desc()).limit(50).all()
+        # Get search query if provided
+        search_query = request.args.get('search', '').strip()
+        
+        # Build query
+        query = Conversation.query
+        
+        if search_query:
+            # Search in initial_input field
+            search_pattern = f"%{search_query}%"
+            query = query.filter(Conversation.initial_input.ilike(search_pattern))
+        
+        conversations = query.order_by(Conversation.created_at.desc()).limit(50).all()
         
         conversation_list = []
         for conv in conversations:
@@ -457,7 +468,8 @@ def list_conversations():
         
         return jsonify({
             "success": True,
-            "conversations": conversation_list
+            "conversations": conversation_list,
+            "search_query": search_query
         })
         
     except Exception as e:
@@ -503,6 +515,79 @@ def load_conversation(conversation_id):
     except Exception as e:
         logging.error(f"Error loading conversation: {str(e)}")
         return jsonify({"error": "Failed to load conversation"}), 500
+
+@app.route('/export_conversation/<conversation_id>')
+@limiter.limit("10 per minute")
+def export_conversation(conversation_id):
+    """Export a conversation as a text file"""
+    try:
+        # Validate conversation ID
+        is_valid, error_msg = InputValidator.validate_conversation_id(conversation_id)
+        if not is_valid:
+            return jsonify({"error": error_msg}), 400
+        
+        # Validate session
+        if not SecurityValidator.validate_session_data(session):
+            session.clear()
+            return jsonify({"error": "Session data invalid, please refresh"}), 400
+        
+        conversation = Conversation.query.get(conversation_id)
+        if not conversation:
+            return jsonify({"error": "Conversation not found"}), 404
+        
+        # Get conversation history
+        chain = ConversationChain(conversation_id)
+        history = chain.get_conversation_history()
+        
+        # Generate export content
+        export_content = f"""Multi-Agent AI Conversation Export
+Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}
+Conversation ID: {conversation_id}
+Created: {conversation.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}
+Status: {'Complete' if conversation.is_complete else 'In Progress'}
+
+Initial Input:
+{conversation.initial_input}
+
+{'='*80}
+
+"""
+        
+        for i, entry in enumerate(history, 1):
+            export_content += f"""Step {i}: {entry['agent']} ({entry['role']})
+Time: {entry['timestamp']}
+
+Input:
+{entry['input']}
+
+Response:
+{entry['response']}
+
+Next Question: {entry.get('next_question', 'N/A')}
+
+{'-'*60}
+
+"""
+        
+        # Create response with text file
+        from flask import Response
+        
+        response = Response(
+            export_content,
+            mimetype='text/plain',
+            headers={
+                'Content-Disposition': f'attachment; filename=conversation_{conversation_id[:8]}.txt',
+                'Content-Type': 'text/plain; charset=utf-8'
+            }
+        )
+        
+        logging.info(f"Conversation exported: {conversation_id}")
+        
+        return response
+        
+    except Exception as e:
+        logging.error(f"Error exporting conversation: {str(e)}")
+        return jsonify({"error": "Failed to export conversation"}), 500
 
 # Security and error handling middleware
 @app.before_request

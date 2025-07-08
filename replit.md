@@ -17,6 +17,8 @@ The application follows a simple Flask web application architecture with the fol
 - **UI Components**: Single-page application with dynamic content updates
 - **Styling**: Bootstrap Agent Dark Theme with custom CSS animations
 - **Icons**: Font Awesome for visual elements
+- **Navigation**: Tabbed interface for new conversations vs. conversation history
+- **Interactive Features**: Keyboard shortcuts, search with highlighting, visual feedback
 
 ### Backend Architecture
 - **Framework**: Flask (Python web framework)
@@ -44,6 +46,8 @@ The application follows a simple Flask web application architecture with the fol
 - **Real-time Interaction**: AJAX-based communication for seamless user experience
 - **Error Handling**: Comprehensive error handling for API failures and edge cases
 - **Conversation History**: Browse and load previous conversations with persistent storage
+- **Search Functionality**: Full-text search through conversation history with highlighted results
+- **Export Capability**: Download conversations as formatted text files
 - **Database Persistence**: All conversations survive server restarts and are permanently stored
 
 ## Data Flow
