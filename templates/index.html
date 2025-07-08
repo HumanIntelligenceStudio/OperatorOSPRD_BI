@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent AI Conversation System</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .agent-card {
+            border-left: 4px solid;
+            margin-bottom: 1rem;
+        }
+        .agent-analyst { border-left-color: var(--bs-primary); }
+        .agent-researcher { border-left-color: var(--bs-info); }
+        .agent-writer { border-left-color: var(--bs-success); }
+        
+        .conversation-entry {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .loading-indicator {
+            display: none;
+        }
+        
+        .loading-indicator.show {
+            display: block;
+        }
+        
+        .next-question {
+            background-color: var(--bs-dark);
+            border: 1px solid var(--bs-secondary);
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+        }
+        
+        .agent-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.5rem;
+        }
+        
+        .icon-analyst { background-color: var(--bs-primary); }
+        .icon-researcher { background-color: var(--bs-info); }
+        .icon-writer { background-color: var(--bs-success); }
+    </style>
+</head>
+<body data-bs-theme="dark">
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="text-center mb-4">
+                    <h1 class="display-4 mb-3">
+                        <i class="fas fa-robot me-2"></i>
+                        Multi-Agent AI Conversation System
+                    </h1>
+                    <p class="lead">Watch three AI agents collaborate: Analyst → Researcher → Writer</p>
+                </div>
+
+                <!-- Input Form -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-edit me-2"></i>
+                            Start a New Conversation
+                        </h5>
+                        <form id="conversationForm">
+                            <div class="mb-3">
+                                <label for="userInput" class="form-label">Enter your topic or question:</label>
+                                <textarea class="form-control" id="userInput" rows="3" 
+                                    placeholder="e.g., 'The impact of artificial intelligence on modern education'"></textarea>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary" id="startBtn">
+                                    <i class="fas fa-play me-2"></i>
+                                    Start Conversation
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="resetBtn">
+                                    <i class="fas fa-refresh me-2"></i>
+                                    Reset
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div class="loading-indicator" id="loadingIndicator">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="spinner-border text-primary me-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <span id="loadingText">Processing with Analyst...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Display -->
+                <div class="alert alert-danger d-none" id="errorAlert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="errorMessage"></span>
+                </div>
+
+                <!-- Conversation History -->
+                <div id="conversationHistory"></div>
+
+                <!-- Continue Button -->
+                <div class="text-center mb-4 d-none" id="continueSection">
+                    <button class="btn btn-outline-primary" id="continueBtn">
+                        <i class="fas fa-arrow-right me-2"></i>
+                        Continue to Next Agent
+                    </button>
+                </div>
+
+                <!-- Completion Message -->
+                <div class="alert alert-success d-none" id="completionAlert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Conversation Complete!</strong> All three agents have contributed to the discussion.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        class ConversationManager {
+            constructor() {
+                this.conversationActive = false;
+                this.isProcessing = false;
+                this.bindEvents();
+            }
+
+            bindEvents() {
+                document.getElementById('conversationForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.startConversation();
+                });
+
+                document.getElementById('continueBtn').addEventListener('click', () => {
+                    this.continueConversation();
+                });
+
+                document.getElementById('resetBtn').addEventListener('click', () => {
+                    this.resetConversation();
+                });
+            }
+
+            async startConversation() {
+                if (this.isProcessing) return;
+
+                const input = document.getElementById('userInput').value.trim();
+                if (!input) {
+                    this.showError('Please enter a topic or question to start the conversation.');
+                    return;
+                }
+
+                this.isProcessing = true;
+                this.showLoading('Processing with Analyst...');
+                this.hideError();
+
+                try {
+                    const response = await fetch('/start_conversation', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ input: input })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.conversationActive = true;
+                        this.addConversationEntry(data.result);
+                        
+                        if (!data.is_complete) {
+                            this.showContinueButton(data.next_agent);
+                        } else {
+                            this.showCompletion();
+                        }
+                    } else {
+                        this.showError(data.error || 'Failed to start conversation');
+                    }
+                } catch (error) {
+                    this.showError('Network error: ' + error.message);
+                } finally {
+                    this.isProcessing = false;
+                    this.hideLoading();
+                }
+            }
+
+            async continueConversation() {
+                if (this.isProcessing) return;
+
+                this.isProcessing = true;
+                this.showLoading('Processing with next agent...');
+                this.hideError();
+                this.hideContinueButton();
+
+                try {
+                    const response = await fetch('/continue_conversation', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.addConversationEntry(data.result);
+                        
+                        if (!data.is_complete) {
+                            this.showContinueButton(data.next_agent);
+                        } else {
+                            this.showCompletion();
+                        }
+                    } else {
+                        this.showError(data.error || 'Failed to continue conversation');
+                    }
+                } catch (error) {
+                    this.showError('Network error: ' + error.message);
+                } finally {
+                    this.isProcessing = false;
+                    this.hideLoading();
+                }
+            }
+
+            async resetConversation() {
+                try {
+                    await fetch('/reset_conversation', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    // Reset UI
+                    document.getElementById('conversationHistory').innerHTML = '';
+                    document.getElementById('userInput').value = '';
+                    this.hideContinueButton();
+                    this.hideCompletion();
+                    this.hideError();
+                    this.conversationActive = false;
+                } catch (error) {
+                    this.showError('Failed to reset conversation: ' + error.message);
+                }
+            }
+
+            addConversationEntry(entry) {
+                const historyDiv = document.getElementById('conversationHistory');
+                const agentClass = `agent-${entry.agent.toLowerCase()}`;
+                const iconClass = `icon-${entry.agent.toLowerCase()}`;
+                
+                const entryHtml = `
+                    <div class="conversation-entry">
+                        <div class="card agent-card ${agentClass} mb-3">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="agent-icon ${iconClass}">
+                                        <i class="fas fa-${this.getAgentIcon(entry.agent)} text-white"></i>
+                                    </div>
+                                    <h6 class="card-title mb-0">
+                                        ${entry.agent} - ${entry.role}
+                                    </h6>
+                                    <small class="text-muted ms-auto">
+                                        ${new Date(entry.timestamp).toLocaleTimeString()}
+                                    </small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <strong>Input:</strong>
+                                    <p class="mb-2">${this.escapeHtml(entry.input)}</p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <strong>Response:</strong>
+                                    <p class="mb-2">${this.formatResponse(entry.response)}</p>
+                                </div>
+                                
+                                ${entry.next_question ? `
+                                    <div class="next-question">
+                                        <strong><i class="fas fa-arrow-right me-1"></i> Next Agent Question:</strong>
+                                        <p class="mb-0 mt-1">${this.escapeHtml(entry.next_question)}</p>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                historyDiv.insertAdjacentHTML('beforeend', entryHtml);
+                
+                // Scroll to the new entry
+                setTimeout(() => {
+                    const newEntry = historyDiv.lastElementChild;
+                    newEntry.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+
+            getAgentIcon(agent) {
+                const icons = {
+                    'Analyst': 'chart-line',
+                    'Researcher': 'search',
+                    'Writer': 'pen-fancy'
+                };
+                return icons[agent] || 'robot';
+            }
+
+            formatResponse(response) {
+                // Remove the "NEXT AGENT QUESTION:" part from display
+                const questionIndex = response.indexOf('NEXT AGENT QUESTION:');
+                if (questionIndex !== -1) {
+                    response = response.substring(0, questionIndex).trim();
+                }
+                return this.escapeHtml(response).replace(/\n/g, '<br>');
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            showLoading(text) {
+                document.getElementById('loadingText').textContent = text;
+                document.getElementById('loadingIndicator').classList.add('show');
+            }
+
+            hideLoading() {
+                document.getElementById('loadingIndicator').classList.remove('show');
+            }
+
+            showError(message) {
+                document.getElementById('errorMessage').textContent = message;
+                document.getElementById('errorAlert').classList.remove('d-none');
+            }
+
+            hideError() {
+                document.getElementById('errorAlert').classList.add('d-none');
+            }
+
+            showContinueButton(nextAgent) {
+                document.getElementById('continueBtn').innerHTML = `
+                    <i class="fas fa-arrow-right me-2"></i>
+                    Continue to ${nextAgent}
+                `;
+                document.getElementById('continueSection').classList.remove('d-none');
+            }
+
+            hideContinueButton() {
+                document.getElementById('continueSection').classList.add('d-none');
+            }
+
+            showCompletion() {
+                document.getElementById('completionAlert').classList.remove('d-none');
+            }
+
+            hideCompletion() {
+                document.getElementById('completionAlert').classList.add('d-none');
+            }
+        }
+
+        // Initialize the conversation manager when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new ConversationManager();
+        });
+    </script>
+</body>
+</html>
