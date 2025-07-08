@@ -144,6 +144,9 @@
                 <a class="nav-link" href="/admin/conversations">
                     <i class="fas fa-comments me-1"></i>Conversations
                 </a>
+                <a class="nav-link" href="/admin/agent-performance">
+                    <i class="fas fa-users me-1"></i>Agent Performance
+                </a>
                 <a class="nav-link" href="/admin/system">
                     <i class="fas fa-server me-1"></i>System
                 </a>
@@ -557,22 +560,65 @@
             updateAgentPerformance(performance) {
                 const container = document.getElementById('agentPerformanceList');
                 
-                const html = performance.agent_stats.map(agent => `
-                    <div class="agent-performance-item">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">${agent.agent}</h6>
-                                <small class="text-muted">${agent.response_count} responses</small>
+                const html = performance.agent_stats.map(agent => {
+                    const successRate = this.getSuccessRate(agent.agent, performance.success_rates);
+                    const processingTime = agent.processing_times?.avg_processing_time || 0;
+                    
+                    return `
+                        <div class="agent-performance-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas ${this.getAgentIcon(agent.agent)} me-2"></i>
+                                        ${agent.agent}
+                                    </h6>
+                                    <small class="text-muted">${agent.role}</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="text-primary">${successRate.toFixed(1)}%</div>
+                                    <small class="text-muted">Success Rate</small>
+                                </div>
                             </div>
-                            <div class="text-end">
-                                <div class="text-primary">${agent.avg_response_length} chars</div>
-                                <small class="text-muted">${agent.avg_response_time}s avg</small>
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="metric-value" style="font-size: 1.1rem;">${agent.response_count}</div>
+                                    <div class="metric-label" style="font-size: 0.8rem;">Responses</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="metric-value" style="font-size: 1.1rem;">${agent.conversations_handled}</div>
+                                    <div class="metric-label" style="font-size: 0.8rem;">Conversations</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="metric-value" style="font-size: 1.1rem;">${processingTime.toFixed(1)}s</div>
+                                    <div class="metric-label" style="font-size: 0.8rem;">Avg Time</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
 
-                container.innerHTML = html;
+                container.innerHTML = html + `
+                    <div class="text-center mt-3">
+                        <a href="/admin/agent-performance" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-chart-line me-1"></i>
+                            View Detailed Analytics
+                        </a>
+                    </div>
+                `;
+            }
+
+            getAgentIcon(agentName) {
+                const icons = {
+                    'Analyst': 'fa-search',
+                    'Researcher': 'fa-book',
+                    'Writer': 'fa-pen'
+                };
+                return icons[agentName] || 'fa-robot';
+            }
+
+            getSuccessRate(agentName, successRates) {
+                const rate = successRates.find(sr => sr.agent_name === agentName);
+                return rate ? rate.success_rate : 0;
             }
 
             updateSystemHealth(health) {

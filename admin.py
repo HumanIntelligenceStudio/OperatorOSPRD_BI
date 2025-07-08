@@ -68,48 +68,200 @@ class AdminMetrics:
     
     @staticmethod
     def get_agent_performance(days: int = 30) -> Dict[str, Any]:
-        """Get agent performance metrics"""
+        """Get comprehensive agent performance metrics"""
         cutoff_date = datetime.utcnow() - timedelta(days=days)
         
-        # Agent response counts
+        # Enhanced agent statistics
         agent_stats = db.session.query(
             ConversationEntry.agent_name,
+            ConversationEntry.agent_role,
             func.count(ConversationEntry.id).label('response_count'),
-            func.avg(func.length(ConversationEntry.response_text)).label('avg_response_length')
+            func.avg(func.length(ConversationEntry.response_text)).label('avg_response_length'),
+            func.count(func.distinct(ConversationEntry.conversation_id)).label('conversations_handled'),
+            func.min(ConversationEntry.created_at).label('first_response'),
+            func.max(ConversationEntry.created_at).label('last_response'),
+            func.avg(func.length(ConversationEntry.next_question)).label('avg_question_length')
         ).filter(
             ConversationEntry.created_at >= cutoff_date
-        ).group_by(ConversationEntry.agent_name).all()
+        ).group_by(ConversationEntry.agent_name, ConversationEntry.agent_role).all()
         
-        # Agent response times (approximate based on creation time gaps)
+        # Calculate agent success rates and handoff efficiency
+        agent_success_rates = []
+        handoff_efficiency = []
+        
+        for agent_name in ['Analyst', 'Researcher', 'Writer']:
+            # Count conversations that reached this agent
+            conversations_reached = db.session.query(
+                func.count(func.distinct(ConversationEntry.conversation_id))
+            ).filter(
+                and_(
+                    ConversationEntry.agent_name == agent_name,
+                    ConversationEntry.created_at >= cutoff_date
+                )
+            ).scalar() or 0
+            
+            if agent_name == 'Writer':
+                # For writer, check completion rate
+                conversations_completed = db.session.query(
+                    func.count(func.distinct(Conversation.id))
+                ).join(ConversationEntry).filter(
+                    and_(
+                        ConversationEntry.agent_name == agent_name,
+                        ConversationEntry.created_at >= cutoff_date,
+                        Conversation.is_complete == True
+                    )
+                ).scalar() or 0
+            else:
+                # For other agents, check handoff success
+                next_agent = {'Analyst': 'Researcher', 'Researcher': 'Writer'}[agent_name]
+                conversations_completed = db.session.query(
+                    func.count(func.distinct(ConversationEntry.conversation_id))
+                ).filter(
+                    and_(
+                        ConversationEntry.agent_name == next_agent,
+                        ConversationEntry.conversation_id.in_(
+                            db.session.query(ConversationEntry.conversation_id).filter(
+                                and_(
+                                    ConversationEntry.agent_name == agent_name,
+                                    ConversationEntry.created_at >= cutoff_date
+                                )
+                            )
+                        )
+                    )
+                ).scalar() or 0
+            
+            success_rate = (conversations_completed / conversations_reached * 100) if conversations_reached > 0 else 0
+            agent_success_rates.append({
+                'agent_name': agent_name,
+                'conversations_reached': conversations_reached,
+                'conversations_completed': conversations_completed,
+                'success_rate': round(success_rate, 2)
+            })
+        
+        # Daily performance trends
+        daily_performance = db.session.query(
+            ConversationEntry.agent_name,
+            func.date(ConversationEntry.created_at).label('date'),
+            func.count(ConversationEntry.id).label('responses'),
+            func.avg(func.length(ConversationEntry.response_text)).label('avg_length'),
+            func.count(func.distinct(ConversationEntry.conversation_id)).label('unique_conversations')
+        ).filter(
+            ConversationEntry.created_at >= cutoff_date
+        ).group_by(
+            ConversationEntry.agent_name,
+            func.date(ConversationEntry.created_at)
+        ).order_by('date').all()
+        
+        # Agent response time analysis
         agent_response_times = {}
+        conversation_durations = {}
+        
+        for agent_name in ['Analyst', 'Researcher', 'Writer']:
+            # Get recent entries for this agent
+            entries = ConversationEntry.query.filter(
+                and_(
+                    ConversationEntry.agent_name == agent_name,
+                    ConversationEntry.created_at >= cutoff_date
+                )
+            ).order_by(ConversationEntry.created_at.desc()).limit(200).all()
+            
+            if entries:
+                # Calculate processing times within conversations
+                times = []
+                for entry in entries:
+                    # Get conversation start time
+                    conv_start = db.session.query(Conversation.created_at).filter(
+                        Conversation.id == entry.conversation_id
+                    ).scalar()
+                    
+                    if conv_start:
+                        processing_time = (entry.created_at - conv_start).total_seconds()
+                        if processing_time > 0 and processing_time < 1800:  # Filter unrealistic times (30 min max)
+                            times.append(processing_time)
+                
+                agent_response_times[agent_name] = {
+                    'avg_processing_time': round(sum(times) / len(times), 2) if times else 0,
+                    'min_processing_time': round(min(times), 2) if times else 0,
+                    'max_processing_time': round(max(times), 2) if times else 0
+                }
+        
+        # Agent quality metrics (based on response characteristics)
+        quality_metrics = []
         for agent_name in ['Analyst', 'Researcher', 'Writer']:
             entries = ConversationEntry.query.filter(
                 and_(
                     ConversationEntry.agent_name == agent_name,
                     ConversationEntry.created_at >= cutoff_date
                 )
-            ).order_by(ConversationEntry.created_at.desc()).limit(100).all()
+            ).all()
             
             if entries:
-                # Calculate average time between entries for this agent
-                times = []
-                for i in range(1, len(entries)):
-                    time_diff = (entries[i-1].created_at - entries[i].created_at).total_seconds()
-                    if time_diff > 0 and time_diff < 300:  # Filter out unrealistic times
-                        times.append(time_diff)
+                # Calculate quality indicators
+                total_responses = len(entries)
+                responses_with_questions = sum(1 for e in entries if e.next_question and len(e.next_question.strip()) > 10)
+                avg_response_length = sum(len(e.response_text) for e in entries) / total_responses
                 
-                agent_response_times[agent_name] = sum(times) / len(times) if times else 0
+                quality_metrics.append({
+                    'agent_name': agent_name,
+                    'question_generation_rate': round((responses_with_questions / total_responses * 100), 2),
+                    'avg_response_length': round(avg_response_length),
+                    'response_consistency': round(min(100, (avg_response_length / 500) * 100), 2),  # Normalized score
+                    'total_responses': total_responses
+                })
+        
+        # Performance rankings
+        if agent_stats:
+            most_active = max(agent_stats, key=lambda x: x.response_count)
+            most_efficient = min(agent_stats, key=lambda x: x.avg_response_length or float('inf'))
+            
+            performance_summary = {
+                'total_agents': len(agent_stats),
+                'most_active_agent': most_active.agent_name,
+                'most_efficient_agent': most_efficient.agent_name,
+                'best_success_rate': max(agent_success_rates, key=lambda x: x['success_rate'])['agent_name'] if agent_success_rates else None,
+                'total_responses': sum(stat.response_count for stat in agent_stats),
+                'avg_response_length_all': round(sum(stat.avg_response_length or 0 for stat in agent_stats) / len(agent_stats)),
+                'period_days': days
+            }
+        else:
+            performance_summary = {
+                'total_agents': 0,
+                'most_active_agent': None,
+                'most_efficient_agent': None,
+                'best_success_rate': None,
+                'total_responses': 0,
+                'avg_response_length_all': 0,
+                'period_days': days
+            }
         
         return {
             'agent_stats': [
                 {
                     'agent': stat.agent_name,
+                    'role': stat.agent_role,
                     'response_count': stat.response_count,
                     'avg_response_length': round(stat.avg_response_length) if stat.avg_response_length else 0,
-                    'avg_response_time': round(agent_response_times.get(stat.agent_name, 0), 2)
+                    'conversations_handled': stat.conversations_handled,
+                    'first_response': stat.first_response.isoformat() if stat.first_response else None,
+                    'last_response': stat.last_response.isoformat() if stat.last_response else None,
+                    'avg_question_length': round(stat.avg_question_length) if stat.avg_question_length else 0,
+                    'processing_times': agent_response_times.get(stat.agent_name, {})
                 }
                 for stat in agent_stats
             ],
+            'success_rates': agent_success_rates,
+            'daily_performance': [
+                {
+                    'agent_name': perf.agent_name,
+                    'date': perf.date.strftime('%Y-%m-%d'),
+                    'responses': perf.responses,
+                    'avg_length': round(perf.avg_length) if perf.avg_length else 0,
+                    'unique_conversations': perf.unique_conversations
+                }
+                for perf in daily_performance
+            ],
+            'quality_metrics': quality_metrics,
+            'performance_summary': performance_summary,
             'period_days': days
         }
     
@@ -355,6 +507,13 @@ def conversations():
 def system():
     """System monitoring page"""
     return render_template('admin/system.html')
+
+@admin_bp.route('/agent-performance')
+@admin_required
+@limiter.limit("20 per minute")
+def agent_performance():
+    """Agent performance analytics page"""
+    return render_template('admin/agent_performance.html')
 
 
 # Real-time notification API endpoints

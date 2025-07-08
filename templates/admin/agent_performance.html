@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Performance - Multi-Agent AI System</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .agent-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        
+        .agent-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+        
+        .agent-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .performance-metric {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            margin-bottom: 1rem;
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--bs-primary);
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--bs-secondary);
+            margin-top: 0.25rem;
+        }
+        
+        .success-rate-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .success-rate-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--bs-success), var(--bs-info));
+            transition: width 0.3s ease;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--bs-primary);
+        }
+        
+        .quality-score {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .quality-excellent { background: var(--bs-success); color: white; }
+        .quality-good { background: var(--bs-info); color: white; }
+        .quality-fair { background: var(--bs-warning); color: white; }
+        .quality-poor { background: var(--bs-danger); color: white; }
+        
+        .agent-comparison {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .comparison-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .comparison-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/admin/dashboard">
+                <i class="fas fa-robot me-2"></i>
+                Multi-Agent AI Admin
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin/dashboard">
+                    <i class="fas fa-chart-line me-1"></i>Dashboard
+                </a>
+                <a class="nav-link" href="/admin/conversations">
+                    <i class="fas fa-comments me-1"></i>Conversations
+                </a>
+                <a class="nav-link active" href="/admin/agent-performance">
+                    <i class="fas fa-users me-1"></i>Agent Performance
+                </a>
+                <a class="nav-link" href="/admin/system">
+                    <i class="fas fa-cogs me-1"></i>System
+                </a>
+                <a class="nav-link" href="/">
+                    <i class="fas fa-home me-1"></i>Main App
+                </a>
+                <a class="nav-link" href="/admin/logout">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        Agent Performance Analytics
+                    </h1>
+                    <div class="d-flex gap-2">
+                        <select class="form-select" id="timePeriod" style="width: auto;">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                        <button class="btn btn-outline-primary" id="refreshBtn">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-2">Loading agent performance data...</div>
+        </div>
+
+        <!-- Performance Content -->
+        <div id="performanceContent" class="d-none">
+            <!-- Agent Overview Cards -->
+            <div class="row mb-4" id="agentOverviewCards">
+                <!-- Agent cards will be populated here -->
+            </div>
+
+            <!-- Performance Comparison -->
+            <div class="row mb-4">
+                <div class="col-lg-6">
+                    <div class="agent-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Success Rate Comparison
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="successRateChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="agent-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-clock me-2"></i>
+                                Processing Time Analysis
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="processingTimeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Performance Trends -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="agent-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Daily Performance Trends
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="dailyTrendsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quality Metrics -->
+            <div class="row mb-4">
+                <div class="col-lg-8">
+                    <div class="agent-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-star me-2"></i>
+                                Quality Metrics
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="qualityMetricsContainer">
+                                <!-- Quality metrics will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="agent-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-trophy me-2"></i>
+                                Performance Rankings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="performanceRankings">
+                                <!-- Rankings will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Agent Stats -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="agent-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-table me-2"></i>
+                                Detailed Agent Statistics
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Agent</th>
+                                            <th>Role</th>
+                                            <th>Responses</th>
+                                            <th>Conversations</th>
+                                            <th>Avg Response Length</th>
+                                            <th>Success Rate</th>
+                                            <th>Processing Time</th>
+                                            <th>Quality Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="agentStatsTable">
+                                        <!-- Table rows will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        class AgentPerformanceAnalytics {
+            constructor() {
+                this.charts = {};
+                this.currentPeriod = 30;
+                this.performanceData = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadPerformanceData();
+                
+                // Auto-refresh every 2 minutes
+                setInterval(() => {
+                    this.loadPerformanceData();
+                }, 120000);
+            }
+
+            setupEventListeners() {
+                document.getElementById('refreshBtn').addEventListener('click', () => {
+                    this.loadPerformanceData();
+                });
+
+                document.getElementById('timePeriod').addEventListener('change', (e) => {
+                    this.currentPeriod = parseInt(e.target.value);
+                    this.loadPerformanceData();
+                });
+            }
+
+            async loadPerformanceData() {
+                try {
+                    document.getElementById('loadingState').classList.remove('d-none');
+                    document.getElementById('performanceContent').classList.add('d-none');
+
+                    const response = await fetch(`/admin/api/stats?days=${this.currentPeriod}`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.performanceData = data.data;
+                        this.renderPerformanceAnalytics();
+                    } else {
+                        throw new Error(data.error || 'Failed to load performance data');
+                    }
+                } catch (error) {
+                    console.error('Error loading performance data:', error);
+                    this.showError('Failed to load performance data');
+                } finally {
+                    document.getElementById('loadingState').classList.add('d-none');
+                    document.getElementById('performanceContent').classList.remove('d-none');
+                }
+            }
+
+            renderPerformanceAnalytics() {
+                const agentPerformance = this.performanceData.agent_performance;
+                
+                this.renderAgentOverviewCards(agentPerformance);
+                this.renderSuccessRateChart(agentPerformance);
+                this.renderProcessingTimeChart(agentPerformance);
+                this.renderDailyTrendsChart(agentPerformance);
+                this.renderQualityMetrics(agentPerformance);
+                this.renderPerformanceRankings(agentPerformance);
+                this.renderAgentStatsTable(agentPerformance);
+            }
+
+            renderAgentOverviewCards(agentPerformance) {
+                const container = document.getElementById('agentOverviewCards');
+                const agents = agentPerformance.agent_stats || [];
+                
+                container.innerHTML = agents.map(agent => {
+                    const successRate = this.getSuccessRate(agent.agent, agentPerformance.success_rates);
+                    const qualityScore = this.getQualityScore(agent.agent, agentPerformance.quality_metrics);
+                    
+                    return `
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="agent-card">
+                                <div class="card-body text-center">
+                                    <div class="agent-icon">
+                                        <i class="fas ${this.getAgentIcon(agent.agent)} text-primary"></i>
+                                    </div>
+                                    <h5 class="card-title">${agent.agent}</h5>
+                                    <p class="card-text text-muted">${agent.role}</p>
+                                    
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="performance-metric">
+                                                <div class="metric-value">${agent.response_count}</div>
+                                                <div class="metric-label">Responses</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="performance-metric">
+                                                <div class="metric-value">${agent.conversations_handled}</div>
+                                                <div class="metric-label">Conversations</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>Success Rate</span>
+                                            <span class="fw-bold">${successRate.toFixed(1)}%</span>
+                                        </div>
+                                        <div class="success-rate-bar">
+                                            <div class="success-rate-fill" style="width: ${successRate}%"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-2">
+                                        <span class="quality-score ${this.getQualityClass(qualityScore)}">
+                                            Quality: ${qualityScore}/100
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            renderSuccessRateChart(agentPerformance) {
+                const ctx = document.getElementById('successRateChart').getContext('2d');
+                const successRates = agentPerformance.success_rates || [];
+                
+                if (this.charts.successRate) {
+                    this.charts.successRate.destroy();
+                }
+                
+                this.charts.successRate = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: successRates.map(sr => sr.agent_name),
+                        datasets: [{
+                            data: successRates.map(sr => sr.success_rate),
+                            backgroundColor: [
+                                'rgba(54, 162, 235, 0.8)',
+                                'rgba(255, 99, 132, 0.8)',
+                                'rgba(255, 206, 86, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(255, 206, 86, 1)'
+                            ],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            renderProcessingTimeChart(agentPerformance) {
+                const ctx = document.getElementById('processingTimeChart').getContext('2d');
+                const agents = agentPerformance.agent_stats || [];
+                
+                if (this.charts.processingTime) {
+                    this.charts.processingTime.destroy();
+                }
+                
+                this.charts.processingTime = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: agents.map(agent => agent.agent),
+                        datasets: [{
+                            label: 'Avg Processing Time (seconds)',
+                            data: agents.map(agent => agent.processing_times?.avg_processing_time || 0),
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: 'white'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: 'white'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            renderDailyTrendsChart(agentPerformance) {
+                const ctx = document.getElementById('dailyTrendsChart').getContext('2d');
+                const dailyData = agentPerformance.daily_performance || [];
+                
+                if (this.charts.dailyTrends) {
+                    this.charts.dailyTrends.destroy();
+                }
+                
+                // Group data by agent
+                const agentData = {};
+                dailyData.forEach(item => {
+                    if (!agentData[item.agent_name]) {
+                        agentData[item.agent_name] = [];
+                    }
+                    agentData[item.agent_name].push(item);
+                });
+                
+                const datasets = Object.keys(agentData).map((agentName, index) => {
+                    const colors = ['rgba(54, 162, 235, 0.8)', 'rgba(255, 99, 132, 0.8)', 'rgba(255, 206, 86, 0.8)'];
+                    return {
+                        label: agentName,
+                        data: agentData[agentName].map(item => ({
+                            x: item.date,
+                            y: item.responses
+                        })),
+                        borderColor: colors[index % colors.length],
+                        backgroundColor: colors[index % colors.length],
+                        fill: false,
+                        tension: 0.1
+                    };
+                });
+                
+                this.charts.dailyTrends = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: 'white'
+                                }
+                            },
+                            x: {
+                                type: 'time',
+                                time: {
+                                    parser: 'YYYY-MM-DD',
+                                    tooltipFormat: 'MMM DD'
+                                },
+                                ticks: {
+                                    color: 'white'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            renderQualityMetrics(agentPerformance) {
+                const container = document.getElementById('qualityMetricsContainer');
+                const qualityMetrics = agentPerformance.quality_metrics || [];
+                
+                container.innerHTML = qualityMetrics.map(metric => `
+                    <div class="agent-comparison">
+                        <h6 class="mb-3">${metric.agent_name}</h6>
+                        <div class="comparison-item">
+                            <span>Question Generation Rate</span>
+                            <span class="fw-bold">${metric.question_generation_rate}%</span>
+                        </div>
+                        <div class="comparison-item">
+                            <span>Average Response Length</span>
+                            <span class="fw-bold">${metric.avg_response_length} chars</span>
+                        </div>
+                        <div class="comparison-item">
+                            <span>Response Consistency</span>
+                            <span class="fw-bold">${metric.response_consistency}%</span>
+                        </div>
+                        <div class="comparison-item">
+                            <span>Total Responses</span>
+                            <span class="fw-bold">${metric.total_responses}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderPerformanceRankings(agentPerformance) {
+                const container = document.getElementById('performanceRankings');
+                const summary = agentPerformance.performance_summary || {};
+                
+                container.innerHTML = `
+                    <div class="agent-comparison">
+                        <div class="comparison-item">
+                            <span><i class="fas fa-trophy text-warning"></i> Most Active</span>
+                            <span class="fw-bold">${summary.most_active_agent || 'N/A'}</span>
+                        </div>
+                        <div class="comparison-item">
+                            <span><i class="fas fa-zap text-success"></i> Most Efficient</span>
+                            <span class="fw-bold">${summary.most_efficient_agent || 'N/A'}</span>
+                        </div>
+                        <div class="comparison-item">
+                            <span><i class="fas fa-star text-info"></i> Best Success Rate</span>
+                            <span class="fw-bold">${summary.best_success_rate || 'N/A'}</span>
+                        </div>
+                        <div class="comparison-item">
+                            <span><i class="fas fa-chart-line text-primary"></i> Total Responses</span>
+                            <span class="fw-bold">${summary.total_responses || 0}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderAgentStatsTable(agentPerformance) {
+                const tbody = document.getElementById('agentStatsTable');
+                const agents = agentPerformance.agent_stats || [];
+                
+                tbody.innerHTML = agents.map(agent => {
+                    const successRate = this.getSuccessRate(agent.agent, agentPerformance.success_rates);
+                    const qualityScore = this.getQualityScore(agent.agent, agentPerformance.quality_metrics);
+                    
+                    return `
+                        <tr>
+                            <td><i class="fas ${this.getAgentIcon(agent.agent)} me-2"></i>${agent.agent}</td>
+                            <td>${agent.role}</td>
+                            <td>${agent.response_count}</td>
+                            <td>${agent.conversations_handled}</td>
+                            <td>${agent.avg_response_length}</td>
+                            <td>${successRate.toFixed(1)}%</td>
+                            <td>${agent.processing_times?.avg_processing_time || 0}s</td>
+                            <td><span class="quality-score ${this.getQualityClass(qualityScore)}">${qualityScore}/100</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            getAgentIcon(agentName) {
+                const icons = {
+                    'Analyst': 'fa-search',
+                    'Researcher': 'fa-book',
+                    'Writer': 'fa-pen'
+                };
+                return icons[agentName] || 'fa-robot';
+            }
+
+            getSuccessRate(agentName, successRates) {
+                const rate = successRates.find(sr => sr.agent_name === agentName);
+                return rate ? rate.success_rate : 0;
+            }
+
+            getQualityScore(agentName, qualityMetrics) {
+                const metric = qualityMetrics.find(qm => qm.agent_name === agentName);
+                if (!metric) return 0;
+                
+                // Calculate composite quality score
+                const questionWeight = 0.3;
+                const consistencyWeight = 0.4;
+                const lengthWeight = 0.3;
+                
+                const normalizedLength = Math.min(100, (metric.avg_response_length / 800) * 100);
+                
+                return Math.round(
+                    (metric.question_generation_rate * questionWeight) +
+                    (metric.response_consistency * consistencyWeight) +
+                    (normalizedLength * lengthWeight)
+                );
+            }
+
+            getQualityClass(score) {
+                if (score >= 80) return 'quality-excellent';
+                if (score >= 60) return 'quality-good';
+                if (score >= 40) return 'quality-fair';
+                return 'quality-poor';
+            }
+
+            showError(message) {
+                console.error('Performance Analytics Error:', message);
+                // Could be enhanced with toast notifications
+            }
+        }
+
+        // Initialize analytics when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new AgentPerformanceAnalytics();
+        });
+    </script>
+</body>
+</html>
