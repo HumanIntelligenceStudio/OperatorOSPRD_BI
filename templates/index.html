@@ -67,30 +67,76 @@
                     <p class="lead">Watch three AI agents collaborate: Analyst → Researcher → Writer</p>
                 </div>
 
-                <!-- Input Form -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="fas fa-edit me-2"></i>
-                            Start a New Conversation
-                        </h5>
-                        <form id="conversationForm">
-                            <div class="mb-3">
-                                <label for="userInput" class="form-label">Enter your topic or question:</label>
-                                <textarea class="form-control" id="userInput" rows="3" 
-                                    placeholder="e.g., 'The impact of artificial intelligence on modern education'"></textarea>
+                <!-- Navigation Tabs -->
+                <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="new-conversation-tab" data-bs-toggle="tab" 
+                                data-bs-target="#new-conversation" type="button" role="tab">
+                            <i class="fas fa-plus me-2"></i>New Conversation
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="conversation-history-tab" data-bs-toggle="tab" 
+                                data-bs-target="#conversation-history-panel" type="button" role="tab">
+                            <i class="fas fa-history me-2"></i>Conversation History
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="mainTabContent">
+                    <!-- New Conversation Tab -->
+                    <div class="tab-pane fade show active" id="new-conversation" role="tabpanel">
+                        <!-- Input Form -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-edit me-2"></i>
+                                    Start a New Conversation
+                                </h5>
+                                <form id="conversationForm">
+                                    <div class="mb-3">
+                                        <label for="userInput" class="form-label">Enter your topic or question:</label>
+                                        <textarea class="form-control" id="userInput" rows="3" 
+                                            placeholder="e.g., 'The impact of artificial intelligence on modern education'"></textarea>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary" id="startBtn">
+                                            <i class="fas fa-play me-2"></i>
+                                            Start Conversation
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="resetBtn">
+                                            <i class="fas fa-refresh me-2"></i>
+                                            Reset
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-primary" id="startBtn">
-                                    <i class="fas fa-play me-2"></i>
-                                    Start Conversation
-                                </button>
-                                <button type="button" class="btn btn-secondary" id="resetBtn">
-                                    <i class="fas fa-refresh me-2"></i>
-                                    Reset
-                                </button>
+                        </div>
+                    </div>
+
+                    <!-- Conversation History Tab -->
+                    <div class="tab-pane fade" id="conversation-history-panel" role="tabpanel">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-history me-2"></i>
+                                        Past Conversations
+                                    </h5>
+                                    <button class="btn btn-outline-primary btn-sm" id="refreshHistoryBtn">
+                                        <i class="fas fa-refresh me-1"></i>Refresh
+                                    </button>
+                                </div>
+                                <div id="conversationHistoryList">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <div class="mt-2">Loading conversations...</div>
+                                    </div>
+                                </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
@@ -139,6 +185,7 @@
                 this.conversationActive = false;
                 this.isProcessing = false;
                 this.bindEvents();
+                this.loadConversationHistory();
             }
 
             bindEvents() {
@@ -153,6 +200,15 @@
 
                 document.getElementById('resetBtn').addEventListener('click', () => {
                     this.resetConversation();
+                });
+
+                document.getElementById('refreshHistoryBtn').addEventListener('click', () => {
+                    this.loadConversationHistory();
+                });
+
+                // Load conversation history when tab is shown
+                document.getElementById('conversation-history-tab').addEventListener('shown.bs.tab', () => {
+                    this.loadConversationHistory();
                 });
             }
 
@@ -369,6 +425,131 @@
 
             hideCompletion() {
                 document.getElementById('completionAlert').classList.add('d-none');
+            }
+
+            async loadConversationHistory() {
+                try {
+                    const response = await fetch('/list_conversations');
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.displayConversationHistory(data.conversations);
+                    } else {
+                        this.displayConversationHistoryError(data.error || 'Failed to load conversations');
+                    }
+                } catch (error) {
+                    this.displayConversationHistoryError('Network error: ' + error.message);
+                }
+            }
+
+            displayConversationHistory(conversations) {
+                const historyList = document.getElementById('conversationHistoryList');
+                
+                if (conversations.length === 0) {
+                    historyList.innerHTML = `
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-comments fa-3x mb-3"></i>
+                            <h5>No conversations yet</h5>
+                            <p>Start your first conversation to see it appear here.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const historyHtml = conversations.map(conv => `
+                    <div class="card mb-3 conversation-item" data-conversation-id="${conv.id}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="card-title mb-2">${this.escapeHtml(conv.initial_input)}</h6>
+                                    <div class="text-muted small mb-2">
+                                        <i class="fas fa-clock me-1"></i>
+                                        ${new Date(conv.created_at).toLocaleString()}
+                                        <span class="ms-3">
+                                            <i class="fas fa-comments me-1"></i>
+                                            ${conv.entry_count} responses
+                                        </span>
+                                        ${conv.is_complete ? 
+                                            '<span class="badge bg-success ms-2">Complete</span>' : 
+                                            '<span class="badge bg-warning ms-2">In Progress</span>'
+                                        }
+                                    </div>
+                                </div>
+                                <button class="btn btn-outline-primary btn-sm load-conversation-btn" 
+                                        data-conversation-id="${conv.id}">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                historyList.innerHTML = historyHtml;
+
+                // Add click handlers for load buttons
+                document.querySelectorAll('.load-conversation-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const conversationId = btn.getAttribute('data-conversation-id');
+                        this.loadConversation(conversationId);
+                    });
+                });
+            }
+
+            displayConversationHistoryError(message) {
+                const historyList = document.getElementById('conversationHistoryList');
+                historyList.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${this.escapeHtml(message)}
+                    </div>
+                `;
+            }
+
+            async loadConversation(conversationId) {
+                try {
+                    this.showLoading('Loading conversation...');
+                    
+                    const response = await fetch(`/load_conversation/${conversationId}`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Switch to new conversation tab
+                        document.getElementById('new-conversation-tab').click();
+                        
+                        // Clear current conversation display
+                        document.getElementById('conversationHistory').innerHTML = '';
+                        
+                        // Display loaded conversation history
+                        data.history.forEach(entry => {
+                            this.addConversationEntry(entry);
+                        });
+
+                        // Update UI state
+                        if (data.is_complete) {
+                            this.showCompletion();
+                            this.hideContinueButton();
+                        } else {
+                            this.hideCompletion();
+                            // Check if we can continue this conversation
+                            if (data.history.length > 0) {
+                                const lastEntry = data.history[data.history.length - 1];
+                                if (lastEntry.next_question) {
+                                    this.showContinueButton('Next Agent');
+                                }
+                            }
+                        }
+
+                        this.conversationActive = true;
+                        this.hideError();
+                    } else {
+                        this.showError(data.error || 'Failed to load conversation');
+                    }
+                } catch (error) {
+                    this.showError('Network error: ' + error.message);
+                } finally {
+                    this.hideLoading();
+                }
             }
         }
 

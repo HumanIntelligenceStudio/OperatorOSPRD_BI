@@ -25,9 +25,10 @@ The application follows a simple Flask web application architecture with the fol
 - **Logging**: Python logging module for debugging and monitoring
 
 ### Data Storage
-- **Primary Storage**: In-memory dictionary for conversation history
+- **Primary Storage**: PostgreSQL database for persistent conversation history
+- **Database Models**: Conversation and ConversationEntry models using SQLAlchemy
 - **Session Storage**: Flask session cookies for user identification
-- **No Persistent Database**: All data is stored in memory and lost on restart
+- **Persistent Data**: All conversations and agent responses are stored permanently
 
 ## Key Components
 
@@ -39,9 +40,11 @@ The application follows a simple Flask web application architecture with the fol
 
 ### Core Functionality
 - **Multi-Agent Support**: Framework supports multiple specialized AI agents
-- **Conversation Management**: Tracks and maintains conversation history per session
+- **Conversation Management**: Tracks and maintains conversation history in PostgreSQL database
 - **Real-time Interaction**: AJAX-based communication for seamless user experience
 - **Error Handling**: Comprehensive error handling for API failures and edge cases
+- **Conversation History**: Browse and load previous conversations with persistent storage
+- **Database Persistence**: All conversations survive server restarts and are permanently stored
 
 ## Data Flow
 
@@ -58,7 +61,9 @@ The application follows a simple Flask web application architecture with the fol
 
 ### Core Dependencies
 - **Flask**: Web framework for Python
+- **Flask-SQLAlchemy**: Database ORM for PostgreSQL integration
 - **OpenAI Python Client**: Official OpenAI API client library
+- **PostgreSQL**: Database for persistent conversation storage
 - **Bootstrap**: CSS framework for responsive design
 - **Font Awesome**: Icon library for UI elements
 
@@ -79,9 +84,9 @@ The application follows a simple Flask web application architecture with the fol
 - **API Limits**: Subject to OpenAI API rate limits and usage quotas
 
 ### Scalability Considerations
-- **Current Limitations**: In-memory storage limits scalability
+- **Database Storage**: PostgreSQL provides persistent, scalable conversation storage
 - **Session Dependency**: Uses Flask sessions for user identification
-- **Stateless Design**: Each request is independent except for conversation history
+- **Database Design**: Normalized schema with Conversation and ConversationEntry tables
 
 ### Security Considerations
 - **API Key Management**: OpenAI API key stored as environment variable
