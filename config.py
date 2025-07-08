@@ -49,6 +49,10 @@ class Config:
     MAX_INPUT_LENGTH = int(os.environ.get('MAX_INPUT_LENGTH', '5000'))
     MAX_CONVERSATIONS_PER_SESSION = int(os.environ.get('MAX_CONVERSATIONS_PER_SESSION', '50'))
     
+    # Admin configuration
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
+    ADMIN_SESSION_TIMEOUT = int(os.environ.get('ADMIN_SESSION_TIMEOUT', '3600'))  # 1 hour
+    
     @staticmethod
     def validate_required_env_vars():
         """Validate that all required environment variables are set"""

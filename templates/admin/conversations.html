@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversation Management - Admin Dashboard</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .conversation-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .conversation-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+        
+        .conversation-card.selected {
+            border-color: var(--bs-primary);
+            background: rgba(var(--bs-primary-rgb), 0.1);
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .conversation-detail {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .agent-entry {
+            border-left: 4px solid var(--bs-primary);
+            background: rgba(255, 255, 255, 0.02);
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .agent-entry.analyst {
+            border-left-color: #007bff;
+        }
+        
+        .agent-entry.researcher {
+            border-left-color: #28a745;
+        }
+        
+        .agent-entry.writer {
+            border-left-color: #ffc107;
+        }
+        
+        .pagination-controls {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .filter-buttons .btn {
+            margin: 0.2rem;
+        }
+        
+        .search-highlight {
+            background-color: rgba(255, 193, 7, 0.3);
+            color: #ffc107;
+            padding: 0.1rem 0.2rem;
+            border-radius: 0.2rem;
+        }
+    </style>
+</head>
+<body data-bs-theme="dark">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/admin/dashboard">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                Admin Dashboard
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin/dashboard">
+                    <i class="fas fa-chart-line me-1"></i>Dashboard
+                </a>
+                <a class="nav-link active" href="/admin/conversations">
+                    <i class="fas fa-comments me-1"></i>Conversations
+                </a>
+                <a class="nav-link" href="/admin/system">
+                    <i class="fas fa-server me-1"></i>System
+                </a>
+                <a class="nav-link" href="/">
+                    <i class="fas fa-home me-1"></i>Main App
+                </a>
+                <a class="nav-link" href="/admin/logout">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-comments me-2"></i>
+                    Conversation Management
+                </h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Conversation List -->
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Conversations</h5>
+                            <div class="d-flex gap-2">
+                                <input type="text" class="form-control form-control-sm" 
+                                       id="searchInput" placeholder="Search..." style="width: 150px;">
+                                <button class="btn btn-outline-primary btn-sm" id="searchBtn">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" id="refreshBtn">
+                                    <i class="fas fa-sync"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Filter Buttons -->
+                        <div class="filter-buttons mb-3">
+                            <button class="btn btn-sm btn-outline-secondary active" data-filter="all">
+                                All
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" data-filter="complete">
+                                Complete
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" data-filter="incomplete">
+                                Incomplete
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" data-filter="stale">
+                                Stale
+                            </button>
+                        </div>
+
+                        <!-- Conversation List -->
+                        <div id="conversationList">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <div class="mt-2">Loading conversations...</div>
+                            </div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="pagination-controls mt-3" id="paginationControls">
+                            <!-- Pagination will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversation Detail -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Conversation Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="conversationDetail" class="text-center text-muted py-5">
+                            <i class="fas fa-mouse-pointer fa-3x mb-3"></i>
+                            <p>Select a conversation to view details</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        class ConversationManager {
+            constructor() {
+                this.currentPage = 1;
+                this.currentFilter = 'all';
+                this.searchQuery = '';
+                this.selectedConversation = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadConversations();
+            }
+
+            setupEventListeners() {
+                // Filter buttons
+                document.querySelectorAll('.filter-buttons .btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.filter-buttons .btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentFilter = e.target.dataset.filter;
+                        this.currentPage = 1;
+                        this.loadConversations();
+                    });
+                });
+
+                // Search
+                document.getElementById('searchBtn').addEventListener('click', () => {
+                    this.searchQuery = document.getElementById('searchInput').value;
+                    this.currentPage = 1;
+                    this.loadConversations();
+                });
+
+                document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.searchQuery = e.target.value;
+                        this.currentPage = 1;
+                        this.loadConversations();
+                    }
+                });
+
+                // Refresh
+                document.getElementById('refreshBtn').addEventListener('click', () => {
+                    this.loadConversations();
+                });
+            }
+
+            async loadConversations() {
+                try {
+                    const params = new URLSearchParams({
+                        page: this.currentPage,
+                        per_page: 10,
+                        status: this.currentFilter
+                    });
+
+                    if (this.searchQuery) {
+                        params.append('search', this.searchQuery);
+                    }
+
+                    const response = await fetch(`/admin/api/conversations?${params}`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.displayConversations(data.data.conversations);
+                        this.displayPagination(data.data.pagination);
+                    } else {
+                        this.showError('Failed to load conversations');
+                    }
+                } catch (error) {
+                    this.showError('Network error: ' + error.message);
+                }
+            }
+
+            displayConversations(conversations) {
+                const container = document.getElementById('conversationList');
+                
+                if (conversations.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-search fa-3x mb-3"></i>
+                            <p>No conversations found</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const html = conversations.map(conv => {
+                    const statusClass = conv.is_complete ? 'success' : 'warning';
+                    const statusText = conv.is_complete ? 'Complete' : 'In Progress';
+                    
+                    return `
+                        <div class="conversation-card p-3 mb-2" data-conversation-id="${conv.id}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">${this.escapeHtml(conv.initial_input)}</h6>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        ${new Date(conv.created_at).toLocaleString()}
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-${statusClass} status-badge">${statusText}</span>
+                                    <div class="small text-muted mt-1">
+                                        ${conv.entry_count} responses
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    Current: Agent ${conv.current_agent_index + 1}/3
+                                </small>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = html;
+
+                // Add click handlers
+                document.querySelectorAll('.conversation-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const conversationId = card.dataset.conversationId;
+                        this.selectConversation(conversationId);
+                    });
+                });
+            }
+
+            displayPagination(pagination) {
+                const container = document.getElementById('paginationControls');
+                
+                if (pagination.pages <= 1) {
+                    container.innerHTML = '';
+                    return;
+                }
+
+                let html = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">
+                                Showing ${((pagination.page - 1) * pagination.per_page) + 1} - 
+                                ${Math.min(pagination.page * pagination.per_page, pagination.total)} 
+                                of ${pagination.total} conversations
+                            </small>
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                `;
+
+                // Previous button
+                html += `
+                    <li class="page-item ${!pagination.has_prev ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="${pagination.page - 1}">Previous</a>
+                    </li>
+                `;
+
+                // Page numbers
+                const startPage = Math.max(1, pagination.page - 2);
+                const endPage = Math.min(pagination.pages, pagination.page + 2);
+
+                for (let i = startPage; i <= endPage; i++) {
+                    html += `
+                        <li class="page-item ${i === pagination.page ? 'active' : ''}">
+                            <a class="page-link" href="#" data-page="${i}">${i}</a>
+                        </li>
+                    `;
+                }
+
+                // Next button
+                html += `
+                    <li class="page-item ${!pagination.has_next ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="${pagination.page + 1}">Next</a>
+                    </li>
+                `;
+
+                html += `
+                            </ul>
+                        </nav>
+                    </div>
+                `;
+
+                container.innerHTML = html;
+
+                // Add click handlers
+                container.querySelectorAll('.page-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const page = parseInt(e.target.dataset.page);
+                        if (page && page !== this.currentPage) {
+                            this.currentPage = page;
+                            this.loadConversations();
+                        }
+                    });
+                });
+            }
+
+            async selectConversation(conversationId) {
+                try {
+                    // Update selection UI
+                    document.querySelectorAll('.conversation-card').forEach(card => {
+                        card.classList.remove('selected');
+                    });
+                    document.querySelector(`[data-conversation-id="${conversationId}"]`).classList.add('selected');
+
+                    // Show loading
+                    document.getElementById('conversationDetail').innerHTML = `
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="mt-2">Loading conversation details...</div>
+                        </div>
+                    `;
+
+                    // Load conversation details
+                    const response = await fetch(`/admin/api/conversation/${conversationId}`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.displayConversationDetail(data.data);
+                    } else {
+                        this.showError('Failed to load conversation details');
+                    }
+                } catch (error) {
+                    this.showError('Network error: ' + error.message);
+                }
+            }
+
+            displayConversationDetail(data) {
+                const container = document.getElementById('conversationDetail');
+                const { conversation, entries } = data;
+
+                let html = `
+                    <div class="mb-3">
+                        <h6>Conversation Details</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>ID:</strong> ${conversation.id.substring(0, 8)}...<br>
+                                <strong>Created:</strong> ${new Date(conversation.created_at).toLocaleString()}<br>
+                                <strong>Status:</strong> ${conversation.is_complete ? 'Complete' : 'In Progress'}
+                            </div>
+                            <div class="col-6">
+                                <strong>Updated:</strong> ${new Date(conversation.updated_at).toLocaleString()}<br>
+                                <strong>Entries:</strong> ${entries.length}<br>
+                                <strong>Current Agent:</strong> ${conversation.current_agent_index + 1}/3
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>Initial Input</h6>
+                        <div class="p-3 bg-dark rounded">
+                            ${this.escapeHtml(conversation.initial_input)}
+                        </div>
+                    </div>
+
+                    <div class="conversation-detail">
+                        <h6>Agent Responses</h6>
+                `;
+
+                entries.forEach((entry, index) => {
+                    const agentClass = entry.agent_name.toLowerCase();
+                    html += `
+                        <div class="agent-entry ${agentClass}">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-user me-2"></i>
+                                    ${entry.agent_name} (${entry.agent_role})
+                                </h6>
+                                <small class="text-muted">
+                                    ${new Date(entry.created_at).toLocaleString()}
+                                </small>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <strong>Input:</strong>
+                                <div class="mt-1">${this.escapeHtml(entry.input_text)}</div>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <strong>Response:</strong>
+                                <div class="mt-1">${this.escapeHtml(entry.response_text)}</div>
+                            </div>
+                            
+                            ${entry.next_question ? `
+                                <div>
+                                    <strong>Next Question:</strong>
+                                    <div class="mt-1 text-info">${this.escapeHtml(entry.next_question)}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+
+                container.innerHTML = html;
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            showError(message) {
+                console.error('Error:', message);
+                // Simple error display - could be enhanced with toast notifications
+                alert('Error: ' + message);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new ConversationManager();
+        });
+    </script>
+</body>
+</html>

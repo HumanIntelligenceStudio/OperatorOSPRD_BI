@@ -54,6 +54,10 @@ def create_app(config_name=None):
 # Create app instance
 app, limiter, csrf = create_app()
 
+# Register admin blueprint
+from admin import admin_bp
+app.register_blueprint(admin_bp)
+
 # OpenAI client setup
 openai_client = OpenAI(api_key=app.config['OPENAI_API_KEY'])
 

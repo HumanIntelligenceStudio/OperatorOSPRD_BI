@@ -24,6 +24,7 @@ The application follows a simple Flask web application architecture with the fol
 - **Framework**: Flask (Python web framework)
 - **API Structure**: RESTful endpoints for agent interactions
 - **Session Management**: Flask sessions for user state management
+- **Admin System**: Dedicated admin blueprint with authentication and monitoring
 - **Logging**: Python logging module for debugging and monitoring
 
 ### Data Storage
@@ -48,6 +49,7 @@ The application follows a simple Flask web application architecture with the fol
 - **Conversation History**: Browse and load previous conversations with persistent storage
 - **Search Functionality**: Full-text search through conversation history with highlighted results
 - **Export Capability**: Download conversations as formatted text files
+- **Admin Dashboard**: Comprehensive monitoring and management interface for administrators
 - **Database Persistence**: All conversations survive server restarts and are permanently stored
 
 ## Data Flow
@@ -105,10 +107,37 @@ The application follows a simple Flask web application architecture with the fol
 - **CSRF Protection**: Flask-WTF CSRF protection for forms
 - **Request Size Limits**: Maximum request size enforcement
 
+## Admin Dashboard Features
+
+### Performance Monitoring
+- **Real-time Metrics**: Total conversations, completion rates, response times
+- **Usage Analytics**: Daily trends, hourly activity patterns, peak usage times
+- **Agent Performance**: Individual agent statistics, response quality metrics
+- **System Health**: Database status, API connectivity, memory usage monitoring
+
+### Conversation Management
+- **Browse & Search**: Full conversation history with filtering and search capabilities
+- **Detailed View**: Complete conversation flows with agent responses and timing
+- **Status Tracking**: Monitor incomplete and stale conversations
+- **Export Tools**: Download conversation data for analysis
+
+### System Monitoring
+- **Configuration Overview**: Current system settings and security status
+- **Health Checks**: Database connectivity, API availability, system resources
+- **Activity Logs**: Real-time system events and error tracking
+- **Security Status**: Authentication, rate limiting, and protection mechanisms
+
+### Access Control
+- **Secure Authentication**: Password-protected admin access with session management
+- **Role-based Access**: Admin-only features with proper authorization
+- **Session Timeout**: Automatic logout for security
+- **Audit Trail**: Admin action logging and monitoring
+
 ## Development Notes
 
-- The application is designed for development/demo purposes with in-memory storage
-- Production deployment would require persistent storage for conversation history
+- The application uses PostgreSQL for persistent conversation storage
+- Production deployment includes comprehensive security and monitoring features
 - The agent system is designed to be extensible for adding new specialized agents
 - Error handling includes logging for debugging and monitoring
 - The UI uses animations and loading indicators for better user experience
+- Admin dashboard provides comprehensive monitoring and management capabilities

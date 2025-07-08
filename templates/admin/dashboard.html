@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Multi-Agent AI System</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .dashboard-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, var(--bs-primary), var(--bs-info));
+            border: none;
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+            pointer-events: none;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+        
+        .metric-icon {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            opacity: 0.7;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .status-healthy {
+            background-color: #28a745;
+        }
+        
+        .status-warning {
+            background-color: #ffc107;
+        }
+        
+        .status-error {
+            background-color: #dc3545;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .agent-performance-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .agent-performance-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .navbar-brand {
+            font-weight: 600;
+        }
+        
+        .table-dark {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .table-dark th {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .table-dark td {
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .refresh-btn {
+            transition: transform 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body data-bs-theme="dark">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                Admin Dashboard
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin/conversations">
+                    <i class="fas fa-comments me-1"></i>Conversations
+                </a>
+                <a class="nav-link" href="/admin/system">
+                    <i class="fas fa-server me-1"></i>System
+                </a>
+                <a class="nav-link" href="/">
+                    <i class="fas fa-home me-1"></i>Main App
+                </a>
+                <a class="nav-link" href="/admin/logout">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Performance Dashboard
+                    </h1>
+                    <div class="d-flex gap-2">
+                        <select class="form-select" id="timePeriod" style="width: auto;">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                        <button class="btn btn-outline-primary refresh-btn" id="refreshBtn">
+                            <i class="fas fa-sync"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-2">Loading dashboard data...</div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div id="dashboardContent" class="d-none">
+            <!-- Key Metrics Row -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="metric-card">
+                        <i class="fas fa-comments metric-icon"></i>
+                        <div class="metric-value" id="totalConversations">0</div>
+                        <div class="metric-label">Total Conversations</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="metric-card">
+                        <i class="fas fa-chart-line metric-icon"></i>
+                        <div class="metric-value" id="recentConversations">0</div>
+                        <div class="metric-label">Recent Conversations</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="metric-card">
+                        <i class="fas fa-check-circle metric-icon"></i>
+                        <div class="metric-value" id="completionRate">0%</div>
+                        <div class="metric-label">Completion Rate</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="metric-card">
+                        <i class="fas fa-clock metric-icon"></i>
+                        <div class="metric-value" id="avgCompletionTime">--</div>
+                        <div class="metric-label">Avg Completion Time</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row mb-4">
+                <div class="col-lg-8 mb-3">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-area me-2"></i>
+                                Usage Trends
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="usageTrendsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 mb-3">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-clock me-2"></i>
+                                Hourly Activity
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="hourlyChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent Performance & System Health Row -->
+            <div class="row mb-4">
+                <div class="col-lg-6 mb-3">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-users me-2"></i>
+                                Agent Performance
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="agentPerformanceList">
+                                <!-- Agent performance will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-3">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-heartbeat me-2"></i>
+                                System Health
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item bg-transparent border-0 px-0">
+                                    <span class="status-indicator" id="dbStatus"></span>
+                                    <strong>Database Connection</strong>
+                                    <span class="float-end" id="dbStatusText">Checking...</span>
+                                </div>
+                                <div class="list-group-item bg-transparent border-0 px-0">
+                                    <span class="status-indicator" id="apiStatus"></span>
+                                    <strong>OpenAI API</strong>
+                                    <span class="float-end" id="apiStatusText">Checking...</span>
+                                </div>
+                                <div class="list-group-item bg-transparent border-0 px-0">
+                                    <span class="status-indicator" id="activityStatus"></span>
+                                    <strong>Recent Activity</strong>
+                                    <span class="float-end" id="activityStatusText">Checking...</span>
+                                </div>
+                                <div class="list-group-item bg-transparent border-0 px-0">
+                                    <span class="status-indicator" id="staleStatus"></span>
+                                    <strong>Stale Conversations</strong>
+                                    <span class="float-end" id="staleStatusText">Checking...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        class AdminDashboard {
+            constructor() {
+                this.charts = {};
+                this.currentPeriod = 30;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadDashboardData();
+                
+                // Auto-refresh every 30 seconds
+                setInterval(() => {
+                    this.loadDashboardData();
+                }, 30000);
+            }
+
+            setupEventListeners() {
+                document.getElementById('refreshBtn').addEventListener('click', () => {
+                    this.loadDashboardData();
+                });
+
+                document.getElementById('timePeriod').addEventListener('change', (e) => {
+                    this.currentPeriod = parseInt(e.target.value);
+                    this.loadDashboardData();
+                });
+            }
+
+            async loadDashboardData() {
+                try {
+                    document.getElementById('loadingState').classList.remove('d-none');
+                    document.getElementById('dashboardContent').classList.add('d-none');
+
+                    const response = await fetch(`/admin/api/stats?days=${this.currentPeriod}`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.updateMetrics(data.data);
+                        this.updateCharts(data.data);
+                        this.updateAgentPerformance(data.data.agent_performance);
+                        this.updateSystemHealth(data.data.system_health);
+                    } else {
+                        this.showError('Failed to load dashboard data');
+                    }
+                } catch (error) {
+                    this.showError('Network error: ' + error.message);
+                } finally {
+                    document.getElementById('loadingState').classList.add('d-none');
+                    document.getElementById('dashboardContent').classList.remove('d-none');
+                }
+            }
+
+            updateMetrics(data) {
+                const stats = data.conversation_stats;
+                
+                document.getElementById('totalConversations').textContent = stats.total_conversations;
+                document.getElementById('recentConversations').textContent = stats.recent_conversations;
+                document.getElementById('completionRate').textContent = Math.round(stats.completion_rate) + '%';
+                
+                const avgTime = stats.avg_completion_time_minutes;
+                document.getElementById('avgCompletionTime').textContent = 
+                    avgTime ? Math.round(avgTime) + 'm' : '--';
+            }
+
+            updateCharts(data) {
+                this.updateUsageTrendsChart(data.usage_trends);
+                this.updateHourlyChart(data.usage_trends);
+            }
+
+            updateUsageTrendsChart(trends) {
+                const ctx = document.getElementById('usageTrendsChart').getContext('2d');
+                
+                if (this.charts.usageTrends) {
+                    this.charts.usageTrends.destroy();
+                }
+
+                this.charts.usageTrends = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: trends.daily_trends.map(d => d.date),
+                        datasets: [{
+                            label: 'Conversations',
+                            data: trends.daily_trends.map(d => d.conversations),
+                            borderColor: '#007bff',
+                            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateHourlyChart(trends) {
+                const ctx = document.getElementById('hourlyChart').getContext('2d');
+                
+                if (this.charts.hourly) {
+                    this.charts.hourly.destroy();
+                }
+
+                // Create 24-hour array
+                const hourlyData = Array(24).fill(0);
+                trends.hourly_distribution.forEach(h => {
+                    hourlyData[h.hour] = h.conversations;
+                });
+
+                this.charts.hourly = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Array.from({length: 24}, (_, i) => i + ':00'),
+                        datasets: [{
+                            label: 'Activity',
+                            data: hourlyData,
+                            backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                            borderColor: '#28a745',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateAgentPerformance(performance) {
+                const container = document.getElementById('agentPerformanceList');
+                
+                const html = performance.agent_stats.map(agent => `
+                    <div class="agent-performance-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${agent.agent}</h6>
+                                <small class="text-muted">${agent.response_count} responses</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="text-primary">${agent.avg_response_length} chars</div>
+                                <small class="text-muted">${agent.avg_response_time}s avg</small>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                container.innerHTML = html;
+            }
+
+            updateSystemHealth(health) {
+                // Database status
+                const dbStatus = document.getElementById('dbStatus');
+                const dbStatusText = document.getElementById('dbStatusText');
+                if (health.database_healthy) {
+                    dbStatus.className = 'status-indicator status-healthy';
+                    dbStatusText.textContent = 'Connected';
+                } else {
+                    dbStatus.className = 'status-indicator status-error';
+                    dbStatusText.textContent = 'Error';
+                }
+
+                // API status
+                const apiStatus = document.getElementById('apiStatus');
+                const apiStatusText = document.getElementById('apiStatusText');
+                if (health.openai_api_configured) {
+                    apiStatus.className = 'status-indicator status-healthy';
+                    apiStatusText.textContent = 'Configured';
+                } else {
+                    apiStatus.className = 'status-indicator status-error';
+                    apiStatusText.textContent = 'Not configured';
+                }
+
+                // Activity status
+                const activityStatus = document.getElementById('activityStatus');
+                const activityStatusText = document.getElementById('activityStatusText');
+                if (health.recent_activity > 0) {
+                    activityStatus.className = 'status-indicator status-healthy';
+                    activityStatusText.textContent = `${health.recent_activity} today`;
+                } else {
+                    activityStatus.className = 'status-indicator status-warning';
+                    activityStatusText.textContent = 'No activity';
+                }
+
+                // Stale conversations
+                const staleStatus = document.getElementById('staleStatus');
+                const staleStatusText = document.getElementById('staleStatusText');
+                if (health.stale_conversations === 0) {
+                    staleStatus.className = 'status-indicator status-healthy';
+                    staleStatusText.textContent = 'None';
+                } else {
+                    staleStatus.className = 'status-indicator status-warning';
+                    staleStatusText.textContent = `${health.stale_conversations} stale`;
+                }
+            }
+
+            showError(message) {
+                // Simple error display - could be enhanced with toast notifications
+                console.error('Dashboard error:', message);
+                alert('Error: ' + message);
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new AdminDashboard();
+        });
+    </script>
+</body>
+</html>
