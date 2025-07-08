@@ -458,10 +458,11 @@ def start_conversation():
         if not is_valid:
             return jsonify({"error": error_msg}), 400
         
-        # Check session limits
-        if not SecurityValidator.validate_session_data(session):
-            session.clear()
-            return jsonify({"error": "Session data invalid, please refresh"}), 400
+        # Initialize session if needed
+        if 'session_id' not in session:
+            session['session_id'] = str(uuid.uuid4())
+            session['created_at'] = datetime.utcnow().isoformat()
+            session['conversation_count'] = 0
         
         # Sanitize input
         input_text = InputValidator.sanitize_html(input_text.strip())
@@ -507,10 +508,11 @@ def start_conversation():
 def continue_conversation():
     """Continue an existing conversation chain"""
     try:
-        # Validate session
-        if not SecurityValidator.validate_session_data(session):
-            session.clear()
-            return jsonify({"error": "Session data invalid, please refresh"}), 400
+        # Initialize session if needed
+        if 'session_id' not in session:
+            session['session_id'] = str(uuid.uuid4())
+            session['created_at'] = datetime.utcnow().isoformat()
+            session['conversation_count'] = 0
         
         conversation_id = session.get('conversation_id')
         if not conversation_id:
