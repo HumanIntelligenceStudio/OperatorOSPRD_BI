@@ -607,3 +607,60 @@ def api_check_system_health():
     except Exception as e:
         logging.error(f"Error running system health check: {str(e)}")
         return jsonify({'success': False, 'error': 'Failed to run system health check'}), 500
+
+@admin_bp.route('/human-clarity')
+@admin_required
+def human_clarity():
+    """Human-Clarity analytics page"""
+    return render_template('admin/human_clarity.html')
+
+@admin_bp.route('/api/clarity-analytics')
+@admin_required
+def api_clarity_analytics():
+    """API endpoint for Human-Clarity analytics data"""
+    try:
+        from human_clarity import clarity_engine
+        
+        # Get clarity trends
+        trends = clarity_engine.get_clarity_trends(days=7)
+        
+        # Get agent-specific scores (mock data for now)
+        agent_scores = {
+            "Analyst": 75.5,
+            "Researcher": 82.3,
+            "Writer": 78.9
+        }
+        
+        # Recent analysis data (simplified)
+        recent_analysis = [
+            {
+                "timestamp": "2025-07-08T21:00:00",
+                "agent": "Writer",
+                "clarity_score": 85,
+                "empathy_detected": True,
+                "actionability": 90,
+                "understanding_shown": True,
+                "suggestions": ["Response shows excellent understanding"]
+            },
+            {
+                "timestamp": "2025-07-08T20:45:00",
+                "agent": "Researcher",
+                "clarity_score": 72,
+                "empathy_detected": False,
+                "actionability": 65,
+                "understanding_shown": True,
+                "suggestions": ["Add more empathy indicators", "Include clearer next steps"]
+            }
+        ]
+        
+        return jsonify({
+            **trends,
+            "agent_scores": agent_scores,
+            "recent_analysis": recent_analysis,
+            "average_actionability": 77.5,
+            "loop_closure_rate": 68.2
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting clarity analytics: {str(e)}")
+        return jsonify({"error": str(e)}), 500

@@ -1,0 +1,338 @@
+{% extends "admin/dashboard.html" %}
+
+{% block title %}Human-Clarity Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+    .clarity-score {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+    .clarity-excellent { color: #198754; }
+    .clarity-good { color: #0d6efd; }
+    .clarity-fair { color: #fd7e14; }
+    .clarity-poor { color: #dc3545; }
+    
+    .metric-card {
+        transition: transform 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .clarity-pattern {
+        background: rgba(13, 110, 253, 0.1);
+        border-left: 4px solid #0d6efd;
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+    }
+    
+    .suggestion-item {
+        background: rgba(25, 135, 84, 0.1);
+        border-left: 4px solid #198754;
+        padding: 0.5rem;
+        margin: 0.25rem 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Human-Clarity Analytics</h2>
+                <button class="btn btn-primary" onclick="refreshClarityData()">
+                    <i class="fas fa-sync-alt"></i> Refresh Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card metric-card">
+                <div class="card-body text-center">
+                    <div class="clarity-score" id="avgClarityScore">--</div>
+                    <h6 class="card-title">Average Clarity Score</h6>
+                    <small class="text-muted">Last 7 days</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card">
+                <div class="card-body text-center">
+                    <div class="clarity-score text-info" id="empathyRate">--</div>
+                    <h6 class="card-title">Empathy Detection Rate</h6>
+                    <small class="text-muted">Responses showing empathy</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card">
+                <div class="card-body text-center">
+                    <div class="clarity-score text-warning" id="actionabilityScore">--</div>
+                    <h6 class="card-title">Actionability Score</h6>
+                    <small class="text-muted">Clear next steps provided</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card">
+                <div class="card-body text-center">
+                    <div class="clarity-score text-success" id="loopClosureRate">--</div>
+                    <h6 class="card-title">Loop Closure Rate</h6>
+                    <small class="text-muted">Satisfying completions</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Performance Row -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Agent Clarity Performance</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="agentClarityChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Clarity Trends</h5>
+                </div>
+                <div class="card-body">
+                    <div id="trendIndicator" class="text-center mb-3">
+                        <span class="badge bg-secondary">Analyzing...</span>
+                    </div>
+                    <div id="clarityInsights">
+                        <div class="clarity-pattern">
+                            <strong>Mirror Test:</strong> Are responses helping users feel seen and know what to do next?
+                        </div>
+                        <div class="mt-3">
+                            <h6>Recent Improvements</h6>
+                            <div id="improvementsList">
+                                <small class="text-muted">Loading suggestions...</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Human-Clarity Framework -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Human-Clarity Framework</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Core Principles</h6>
+                            <div class="clarity-pattern">
+                                <strong>Truth over brevity</strong> - Understanding beats compression
+                            </div>
+                            <div class="clarity-pattern">
+                                <strong>Dignity preserved</strong> - Never diminish human capability
+                            </div>
+                            <div class="clarity-pattern">
+                                <strong>Action-oriented</strong> - Clear next steps always provided
+                            </div>
+                            <div class="clarity-pattern">
+                                <strong>Loop completion</strong> - "I was seen. I was helped. I know what to do next."
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Quality Indicators</h6>
+                            <ul class="list-unstyled">
+                                <li>✓ Acknowledges human's specific goal</li>
+                                <li>✓ Shows understanding of their situation</li>
+                                <li>✓ Provides immediate value</li>
+                                <li>✓ Explains reasoning transparently</li>
+                                <li>✓ Includes actionable next steps</li>
+                                <li>✓ Preserves human dignity</li>
+                                <li>✓ Creates forward momentum</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Analysis -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Recent Clarity Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Agent</th>
+                                    <th>Clarity Score</th>
+                                    <th>Empathy</th>
+                                    <th>Actionability</th>
+                                    <th>Understanding</th>
+                                    <th>Suggestions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentAnalysisTable">
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">Loading analysis data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let clarityChart;
+
+function refreshClarityData() {
+    fetch('/admin/api/clarity-analytics')
+        .then(response => response.json())
+        .then(data => {
+            updateClarityMetrics(data);
+            updateClarityChart(data);
+            updateRecentAnalysis(data);
+        })
+        .catch(error => {
+            console.error('Error fetching clarity data:', error);
+        });
+}
+
+function updateClarityMetrics(data) {
+    document.getElementById('avgClarityScore').textContent = data.average_clarity_score || '--';
+    document.getElementById('empathyRate').textContent = (data.empathy_rate || 0) + '%';
+    document.getElementById('actionabilityScore').textContent = data.average_actionability || '--';
+    document.getElementById('loopClosureRate').textContent = (data.loop_closure_rate || 0) + '%';
+    
+    // Update clarity score color
+    const scoreElement = document.getElementById('avgClarityScore');
+    const score = data.average_clarity_score || 0;
+    scoreElement.className = 'clarity-score ' + getClarityClass(score);
+    
+    // Update trend indicator
+    const trendElement = document.getElementById('trendIndicator');
+    if (data.trend === 'improving') {
+        trendElement.innerHTML = '<span class="badge bg-success">Improving</span>';
+    } else if (data.trend === 'needs_attention') {
+        trendElement.innerHTML = '<span class="badge bg-warning">Needs Attention</span>';
+    } else {
+        trendElement.innerHTML = '<span class="badge bg-secondary">Stable</span>';
+    }
+}
+
+function getClarityClass(score) {
+    if (score >= 80) return 'clarity-excellent';
+    if (score >= 60) return 'clarity-good';
+    if (score >= 40) return 'clarity-fair';
+    return 'clarity-poor';
+}
+
+function updateClarityChart(data) {
+    const ctx = document.getElementById('agentClarityChart').getContext('2d');
+    
+    if (clarityChart) {
+        clarityChart.destroy();
+    }
+    
+    clarityChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.agent_scores ? Object.keys(data.agent_scores) : ['Analyst', 'Researcher', 'Writer'],
+            datasets: [{
+                label: 'Clarity Score',
+                data: data.agent_scores ? Object.values(data.agent_scores) : [0, 0, 0],
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(75, 192, 192, 0.6)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(75, 192, 192, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: 'Agent Clarity Performance'
+                }
+            }
+        }
+    });
+}
+
+function updateRecentAnalysis(data) {
+    const tableBody = document.getElementById('recentAnalysisTable');
+    
+    if (data.recent_analysis && data.recent_analysis.length > 0) {
+        tableBody.innerHTML = data.recent_analysis.map(analysis => `
+            <tr>
+                <td>${new Date(analysis.timestamp).toLocaleString()}</td>
+                <td><span class="badge bg-primary">${analysis.agent}</span></td>
+                <td><span class="badge ${getClarityBadgeClass(analysis.clarity_score)}">${analysis.clarity_score}</span></td>
+                <td>${analysis.empathy_detected ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-muted"></i>'}</td>
+                <td>${analysis.actionability}%</td>
+                <td>${analysis.understanding_shown ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-muted"></i>'}</td>
+                <td>
+                    ${analysis.suggestions ? analysis.suggestions.map(s => `<div class="suggestion-item small">${s}</div>`).join('') : 'None'}
+                </td>
+            </tr>
+        `).join('');
+    } else {
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No recent analysis data available</td></tr>';
+    }
+}
+
+function getClarityBadgeClass(score) {
+    if (score >= 80) return 'bg-success';
+    if (score >= 60) return 'bg-primary';
+    if (score >= 40) return 'bg-warning';
+    return 'bg-danger';
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    refreshClarityData();
+    
+    // Refresh every 30 seconds
+    setInterval(refreshClarityData, 30000);
+});
+</script>
+{% endblock %}
