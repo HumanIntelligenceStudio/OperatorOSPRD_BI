@@ -312,7 +312,8 @@ class SystemMonitor:
         """Check database connectivity and performance"""
         try:
             # Test basic query
-            db.session.execute('SELECT 1')
+            from sqlalchemy import text
+            db.session.execute(text('SELECT 1'))
             
             # Check for connection pool issues
             pool_size = db.engine.pool.size()

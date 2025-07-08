@@ -397,16 +397,18 @@ class ConversationChain:
             
             raise e
     
-    def _generate_with_retry(self, agent, input_text, context_history, max_retries=3, timeout_seconds=10):
-        """Generate response with retry mechanism and timeout"""
+    def _generate_with_retry(self, agent, input_text, context_history, max_retries=3, timeout_seconds=15):
+        """Generate response with enhanced retry mechanism and timeout"""
         import signal
         import time
+        from datetime import datetime
         
         for attempt in range(max_retries):
+            start_time = datetime.utcnow()
             try:
                 logging.info(f"🔄 RETRY ATTEMPT: {attempt + 1}/{max_retries} for {agent.name}")
                 
-                # Set timeout alarm
+                # Set timeout alarm with longer duration for complex agents
                 def timeout_handler(signum, frame):
                     raise TimeoutError(f"Agent {agent.name} response timeout after {timeout_seconds}s")
                 
@@ -414,29 +416,47 @@ class ConversationChain:
                 signal.alarm(timeout_seconds)
                 
                 try:
-                    # Generate response
+                    # Generate response with enhanced validation
                     response = agent.generate_response(input_text, context_history)
                     signal.alarm(0)  # Cancel alarm
                     
-                    if response and len(response.strip()) > 10:  # Basic validation
-                        logging.info(f"✅ RETRY SUCCESS: {agent.name} responded successfully")
+                    # Enhanced response validation
+                    if response and len(response.strip()) > 50:  # Require more substantial responses
+                        # Check for proper question format for non-Writer agents
+                        if agent.name != "Writer" and "NEXT AGENT QUESTION:" not in response:
+                            logging.warning(f"⚠️ FORMAT WARNING: {agent.name} response missing 'NEXT AGENT QUESTION:' format")
+                            # Try to extract or generate a question anyway
+                            if attempt < max_retries - 1:
+                                raise ValueError("Missing required NEXT AGENT QUESTION format")
+                        
+                        processing_time = (datetime.utcnow() - start_time).total_seconds()
+                        logging.info(f"✅ RETRY SUCCESS: {agent.name} responded successfully in {processing_time:.2f}s")
                         return response
                     else:
-                        raise ValueError("Response too short or empty")
+                        raise ValueError(f"Response too short ({len(response.strip()) if response else 0} chars) or empty")
                         
                 except TimeoutError:
                     signal.alarm(0)  # Cancel alarm
-                    logging.warning(f"⏱️ TIMEOUT: {agent.name} timed out on attempt {attempt + 1}")
+                    processing_time = (datetime.utcnow() - start_time).total_seconds()
+                    logging.warning(f"⏱️ TIMEOUT: {agent.name} timed out on attempt {attempt + 1} after {processing_time:.2f}s")
                     if attempt == max_retries - 1:
                         raise TimeoutError(f"Agent {agent.name} failed after {max_retries} timeout attempts")
-                    time.sleep(2)  # Wait before retry
+                    time.sleep(3)  # Longer wait for timeout recovery
                     
             except Exception as e:
                 signal.alarm(0)  # Cancel alarm
-                logging.error(f"❌ RETRY FAILED: {agent.name} attempt {attempt + 1}: {str(e)}")
+                processing_time = (datetime.utcnow() - start_time).total_seconds()
+                logging.error(f"❌ RETRY FAILED: {agent.name} attempt {attempt + 1} ({processing_time:.2f}s): {str(e)}")
+                
                 if attempt == max_retries - 1:
+                    # Final attempt failed - log comprehensive error
+                    logging.critical(f"🚨 AGENT FAILURE: {agent.name} failed after {max_retries} attempts")
                     raise Exception(f"Agent {agent.name} failed after {max_retries} attempts: {str(e)}")
-                time.sleep(1)  # Wait before retry
+                
+                # Progressive backoff
+                wait_time = (attempt + 1) * 2  # 2s, 4s, 6s...
+                logging.info(f"⏳ WAITING: {wait_time}s before retry {attempt + 2}")
+                time.sleep(wait_time)
                 
         raise Exception(f"All retry attempts failed for {agent.name}")
     
@@ -555,7 +575,9 @@ def health_check():
     try:
         # Check database connection
         from sqlalchemy import text
-        db.session.execute(text('SELECT 1'))
+        result = db.session.execute(text('SELECT 1')).scalar()
+        if result != 1:
+            raise Exception("Database connectivity test failed")
         
         # Check OpenAI API (optional - might want to skip in production)
         # openai_status = "available" if app.config['OPENAI_API_KEY'] else "missing_key"
