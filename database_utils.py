@@ -336,7 +336,9 @@ class DatabaseManager:
         try:
             # Test basic connectivity
             from sqlalchemy import text
-            db.session.execute(text('SELECT 1'))
+            result = db.session.execute(text('SELECT 1')).scalar()
+            if result != 1:
+                raise Exception("Database connectivity test failed")
             
             # Get table sizes
             conversation_count = Conversation.query.count()

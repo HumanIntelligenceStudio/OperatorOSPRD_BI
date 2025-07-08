@@ -280,18 +280,24 @@ class ConversationChain:
         try:
             current_agent = self.agents[self.conversation.current_agent_index]
             
+            # Log agent execution start
+            logging.info(f"🎯 AGENT EXECUTION: Starting {current_agent.name} (index {self.conversation.current_agent_index})")
+            
             # Get recent conversation history for context
             recent_entries = self.conversation.entries.order_by(ConversationEntry.created_at.desc()).limit(3).all()
             context_history = [entry.to_dict() for entry in reversed(recent_entries)]
             
-            # Generate response from current agent
-            response = current_agent.generate_response(input_text, context_history)
+            # Generate response from current agent with timeout and retry
+            response = self._generate_with_retry(current_agent, input_text, context_history, max_retries=3, timeout_seconds=10)
             
             # Extract question for next agent
             next_question = current_agent.extract_next_question(response)
             
             # Calculate processing time
             processing_time = (datetime.utcnow() - start_time).total_seconds()
+            
+            # Log agent completion
+            logging.info(f"✅ AGENT COMPLETED: {current_agent.name} in {processing_time:.2f}s")
             
             # Create and save conversation entry with enhanced tracking
             entry = ConversationEntry(
@@ -391,6 +397,136 @@ class ConversationChain:
             
             raise e
     
+    def _generate_with_retry(self, agent, input_text, context_history, max_retries=3, timeout_seconds=10):
+        """Generate response with retry mechanism and timeout"""
+        import signal
+        import time
+        
+        for attempt in range(max_retries):
+            try:
+                logging.info(f"🔄 RETRY ATTEMPT: {attempt + 1}/{max_retries} for {agent.name}")
+                
+                # Set timeout alarm
+                def timeout_handler(signum, frame):
+                    raise TimeoutError(f"Agent {agent.name} response timeout after {timeout_seconds}s")
+                
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(timeout_seconds)
+                
+                try:
+                    # Generate response
+                    response = agent.generate_response(input_text, context_history)
+                    signal.alarm(0)  # Cancel alarm
+                    
+                    if response and len(response.strip()) > 10:  # Basic validation
+                        logging.info(f"✅ RETRY SUCCESS: {agent.name} responded successfully")
+                        return response
+                    else:
+                        raise ValueError("Response too short or empty")
+                        
+                except TimeoutError:
+                    signal.alarm(0)  # Cancel alarm
+                    logging.warning(f"⏱️ TIMEOUT: {agent.name} timed out on attempt {attempt + 1}")
+                    if attempt == max_retries - 1:
+                        raise TimeoutError(f"Agent {agent.name} failed after {max_retries} timeout attempts")
+                    time.sleep(2)  # Wait before retry
+                    
+            except Exception as e:
+                signal.alarm(0)  # Cancel alarm
+                logging.error(f"❌ RETRY FAILED: {agent.name} attempt {attempt + 1}: {str(e)}")
+                if attempt == max_retries - 1:
+                    raise Exception(f"Agent {agent.name} failed after {max_retries} attempts: {str(e)}")
+                time.sleep(1)  # Wait before retry
+                
+        raise Exception(f"All retry attempts failed for {agent.name}")
+    
+    def execute_full_loop(self, initial_input):
+        """Execute complete OperatorOS loop: Analyst → Researcher → Writer"""
+        logging.info(f"🚀 STARTING FULL OPERATOROS LOOP")
+        logging.info(f"📝 Initial Input: {initial_input}")
+        
+        loop_results = []
+        current_input = initial_input
+        
+        try:
+            # Step 1: Analyst
+            logging.info(f"🔍 STEP 1: EXECUTING ANALYST AGENT")
+            analyst_result = self.process_input(current_input)
+            loop_results.append(analyst_result)
+            
+            if not analyst_result.get('next_question'):
+                raise Exception("Analyst failed to generate next question")
+            
+            # Auto-trigger Researcher
+            logging.info(f"📚 STEP 2: AUTO-TRIGGERING RESEARCHER AGENT")
+            logging.info(f"🔗 Researcher Input: {analyst_result['next_question']}")
+            researcher_result = self.process_input(analyst_result['next_question'])
+            loop_results.append(researcher_result)
+            
+            if not researcher_result.get('next_question'):
+                raise Exception("Researcher failed to generate next question")
+            
+            # Auto-trigger Writer
+            logging.info(f"✍️ STEP 3: AUTO-TRIGGERING WRITER AGENT")
+            logging.info(f"🔗 Writer Input: {researcher_result['next_question']}")
+            writer_result = self.process_input(researcher_result['next_question'])
+            loop_results.append(writer_result)
+            
+            # Check if loop completed
+            if self.is_complete():
+                logging.info(f"🎯 LOOP COMPLETED: All 3 agents executed successfully")
+                
+                # Send completion notification
+                from notifications import notification_manager, NotificationLevel
+                notification_manager.add_notification(
+                    "OperatorOS Loop Completed",
+                    f"Full loop completed for conversation {self.conversation.id[:8]}... with {len(loop_results)} agents",
+                    NotificationLevel.INFO,
+                    {
+                        "conversation_id": self.conversation.id,
+                        "agents_executed": len(loop_results),
+                        "total_processing_time": sum(r.get('processing_time_seconds', 0) for r in loop_results),
+                        "loop_status": "completed"
+                    }
+                )
+            else:
+                logging.warning(f"⚠️ LOOP INCOMPLETE: Expected completion but conversation not marked complete")
+            
+            return {
+                "success": True,
+                "loop_status": "completed" if self.is_complete() else "incomplete",
+                "agents_executed": len(loop_results),
+                "conversation_id": self.conversation.id,
+                "results": loop_results
+            }
+            
+        except Exception as e:
+            logging.error(f"💥 LOOP EXECUTION FAILED: {str(e)}")
+            
+            # Send failure notification
+            from notifications import notification_manager, NotificationLevel
+            notification_manager.add_notification(
+                "OperatorOS Loop Failed",
+                f"Loop execution failed for conversation {self.conversation.id[:8]}...: {str(e)[:100]}",
+                NotificationLevel.ERROR,
+                {
+                    "conversation_id": self.conversation.id,
+                    "error": str(e),
+                    "agents_executed": len(loop_results),
+                    "loop_status": "failed"
+                },
+                send_email=True
+            )
+            
+            return {
+                "success": False,
+                "loop_status": "failed",
+                "agents_executed": len(loop_results),
+                "error": str(e),
+                "conversation_id": self.conversation.id,
+                "results": loop_results
+            }
+
     def get_next_agent_name(self):
         """Get the name of the next agent in the chain"""
         if self.conversation.current_agent_index < len(self.agents):
@@ -618,6 +754,59 @@ def submit_feedback():
     except Exception as e:
         logging.error(f"Error submitting feedback: {str(e)}")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@app.route('/execute_full_loop', methods=['POST'])
+@limiter.limit("3 per minute")
+@csrf.exempt
+def execute_full_loop():
+    """Execute complete OperatorOS loop: Analyst → Researcher → Writer"""
+    try:
+        data = request.get_json() if request.is_json else {}
+        is_valid, error_msg = InputValidator.validate_json_request(data, ['input'])
+        if not is_valid:
+            return jsonify({"error": error_msg}), 400
+        
+        # Initialize session if needed
+        if 'session_id' not in session:
+            session['session_id'] = str(uuid.uuid4())
+            session['created_at'] = datetime.utcnow().isoformat()
+            session['conversation_count'] = 0
+        
+        # Validate input text
+        input_text = data['input']
+        is_valid, error_msg = InputValidator.validate_conversation_input(input_text)
+        if not is_valid:
+            return jsonify({"error": error_msg}), 400
+        
+        # Sanitize input
+        input_text = InputValidator.sanitize_html(input_text.strip())
+        
+        # Create new conversation chain
+        chain = ConversationChain.create_new(
+            input_text,
+            session_id=session.get('session_id'),
+            user_ip=request.remote_addr
+        )
+        
+        # Execute full loop with auto-triggering
+        loop_result = chain.execute_full_loop(input_text)
+        
+        # Store conversation ID in session
+        session['conversation_id'] = chain.conversation.id
+        session['conversation_count'] = session.get('conversation_count', 0) + 1
+        
+        return jsonify({
+            **loop_result,
+            "conversation_id": chain.conversation.id,
+            "session_info": {
+                "session_id": session.get('session_id'),
+                "conversation_count": session.get('conversation_count')
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"Error executing full loop: {str(e)}")
+        return jsonify({"error": "An internal error occurred during loop execution"}), 500
 
 @app.route('/reset_conversation', methods=['POST'])
 def reset_conversation():
