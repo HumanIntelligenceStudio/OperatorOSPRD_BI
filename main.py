@@ -4,6 +4,7 @@ from flask import Flask, render_template, request, jsonify, session, g
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
+from flask_socketio import SocketIO
 from openai import OpenAI
 import uuid
 from datetime import datetime
@@ -32,6 +33,9 @@ def create_app(config_name=None):
     # Initialize CSRF protection
     csrf = CSRFProtect(app)
     
+    # Initialize SocketIO for real-time notifications
+    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+    
     # Initialize rate limiter
     limiter = Limiter(
         app=app,
@@ -49,14 +53,36 @@ def create_app(config_name=None):
             logging.error(f"Error creating database tables: {str(e)}")
             raise e
     
-    return app, limiter, csrf
+    return app, limiter, csrf, socketio
 
 # Create app instance
-app, limiter, csrf = create_app()
+app, limiter, csrf, socketio = create_app()
 
 # Register admin blueprint
 from admin import admin_bp
 app.register_blueprint(admin_bp)
+
+# Initialize notification system with SocketIO
+from notifications import notification_manager, system_monitor
+notification_manager.socketio = socketio
+
+# Schedule periodic health checks
+import threading
+import time
+
+def periodic_health_check():
+    """Run periodic system health checks"""
+    while True:
+        try:
+            time.sleep(300)  # Check every 5 minutes
+            with app.app_context():
+                system_monitor.check_system_health()
+        except Exception as e:
+            logging.error(f"Error in periodic health check: {str(e)}")
+
+# Start background health check thread
+health_check_thread = threading.Thread(target=periodic_health_check, daemon=True)
+health_check_thread.start()
 
 # OpenAI client setup
 openai_client = OpenAI(api_key=app.config['OPENAI_API_KEY'])
@@ -186,6 +212,15 @@ class ConversationChain:
         db.session.add(conversation)
         db.session.commit()
         
+        # Send notification
+        from notifications import notification_manager, NotificationLevel
+        notification_manager.add_notification(
+            "New Conversation Started",
+            f"Conversation {conversation_id[:8]}... initiated",
+            NotificationLevel.INFO,
+            {"conversation_id": conversation_id, "initial_input": initial_input[:100]}
+        )
+        
         chain = cls(conversation_id)
         return chain
     
@@ -225,6 +260,15 @@ class ConversationChain:
             # Check if conversation is complete
             if self.conversation.current_agent_index >= len(self.agents):
                 self.conversation.is_complete = True
+                
+                # Send completion notification
+                from notifications import notification_manager, NotificationLevel
+                notification_manager.add_notification(
+                    "Conversation Completed",
+                    f"Conversation {self.conversation.id[:8]}... completed successfully",
+                    NotificationLevel.INFO,
+                    {"conversation_id": self.conversation.id, "duration": (datetime.utcnow() - self.conversation.created_at).total_seconds()}
+                )
             
             self.conversation.updated_at = datetime.utcnow()
             db.session.commit()
@@ -234,6 +278,17 @@ class ConversationChain:
         except Exception as e:
             db.session.rollback()
             logging.error(f"Error processing input: {str(e)}")
+            
+            # Send error notification
+            from notifications import notification_manager, NotificationLevel
+            notification_manager.add_notification(
+                "Conversation Error",
+                f"Error in conversation {self.conversation.id[:8]}...: {str(e)[:100]}",
+                NotificationLevel.ERROR,
+                {"conversation_id": self.conversation.id, "error": str(e), "agent_index": self.conversation.current_agent_index},
+                send_email=True
+            )
+            
             raise e
     
     def get_next_agent_name(self):
@@ -648,4 +703,4 @@ def request_entity_too_large(error):
     return jsonify({"error": "Request too large"}), 413
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)

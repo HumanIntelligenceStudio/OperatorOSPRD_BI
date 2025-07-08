@@ -15,6 +15,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from main import db, Conversation, ConversationEntry, limiter
 from utils.validators import SecurityValidator
 from config import Config
+from notifications import notification_manager, system_monitor, NotificationLevel
 
 # Create admin blueprint
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -354,3 +355,95 @@ def conversations():
 def system():
     """System monitoring page"""
     return render_template('admin/system.html')
+
+
+# Real-time notification API endpoints
+@admin_bp.route('/api/notifications')
+@admin_required
+@limiter.limit("60 per minute")
+def api_notifications():
+    """API endpoint for getting admin notifications"""
+    try:
+        limit = request.args.get('limit', 50, type=int)
+        level = request.args.get('level')
+        
+        # Convert level string to enum if provided
+        notification_level = None
+        if level:
+            notification_level = NotificationLevel(level)
+        
+        notifications = notification_manager.get_notifications(limit, notification_level)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'notifications': notifications,
+                'total': len(notifications)
+            }
+        })
+    
+    except Exception as e:
+        logging.error(f"Error fetching notifications: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to fetch notifications'
+        }), 500
+
+
+@admin_bp.route('/api/notifications/<notification_id>/acknowledge', methods=['POST'])
+@admin_required
+@limiter.limit("30 per minute")
+def api_acknowledge_notification(notification_id):
+    """API endpoint for acknowledging a notification"""
+    try:
+        success = notification_manager.acknowledge_notification(notification_id)
+        
+        if success:
+            return jsonify({'success': True, 'message': 'Notification acknowledged'})
+        else:
+            return jsonify({'success': False, 'error': 'Notification not found'}), 404
+    
+    except Exception as e:
+        logging.error(f"Error acknowledging notification: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to acknowledge notification'}), 500
+
+
+@admin_bp.route('/api/notifications/clear', methods=['POST'])
+@admin_required
+@limiter.limit("10 per minute")
+def api_clear_notifications():
+    """API endpoint for clearing notifications"""
+    try:
+        level = request.json.get('level') if request.json else None
+        
+        # Convert level string to enum if provided
+        notification_level = None
+        if level:
+            notification_level = NotificationLevel(level)
+        
+        notification_manager.clear_notifications(notification_level)
+        
+        return jsonify({'success': True, 'message': 'Notifications cleared'})
+    
+    except Exception as e:
+        logging.error(f"Error clearing notifications: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to clear notifications'}), 500
+
+
+@admin_bp.route('/api/system/check-health', methods=['POST'])
+@admin_required
+@limiter.limit("5 per minute")
+def api_check_system_health():
+    """API endpoint for triggering system health check"""
+    try:
+        system_monitor.check_system_health()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'System health check completed',
+            'timestamp': datetime.utcnow().isoformat()
+        })
+    
+    except Exception as e:
+        logging.error(f"Error running system health check: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to run system health check'}), 500

@@ -127,6 +127,14 @@ The application follows a simple Flask web application architecture with the fol
 - **Activity Logs**: Real-time system events and error tracking
 - **Security Status**: Authentication, rate limiting, and protection mechanisms
 
+### Real-time Notifications
+- **Live Alerts**: SocketIO-powered real-time notifications for admins
+- **Notification Levels**: Info, Warning, Error, Critical with appropriate styling
+- **Email Alerts**: Automatic email notifications for critical system events
+- **Interactive Management**: Acknowledge, clear, and manage notifications
+- **System Health Monitoring**: Automated periodic health checks with alerts
+- **Toast Notifications**: Real-time popup notifications for immediate attention
+
 ### Access Control
 - **Secure Authentication**: Password-protected admin access with session management
 - **Role-based Access**: Admin-only features with proper authorization
