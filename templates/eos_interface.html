@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OperatorOS EOS: Economic Operating System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .eos-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        
+        .eos-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .eos-title {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .eos-subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .input-container {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        
+        .prompt-input {
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 1rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .prompt-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            outline: none;
+        }
+        
+        .transform-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 15px;
+            padding: 1rem 2rem;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .transform-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .offering-card {
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        
+        .offering-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+        
+        .price-tag {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        .marketing-hook {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+        }
+        
+        .payment-link {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            word-break: break-all;
+        }
+        
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .stat-item {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid #e9ecef;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .copy-btn {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        
+        .copy-btn:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="eos-container">
+        <div class="eos-card">
+            <h1 class="eos-title">
+                <i class="fas fa-rocket"></i> OperatorOS EOS
+            </h1>
+            <p class="eos-subtitle">
+                Economic Operating System: Transform Any Prompt Into Profit
+            </p>
+            
+            <div class="input-container">
+                <label for="promptInput" class="form-label">
+                    <i class="fas fa-lightbulb"></i> Enter any prompt, idea, or request:
+                </label>
+                <textarea 
+                    id="promptInput" 
+                    class="form-control prompt-input" 
+                    placeholder="Examples:&#10;• Help me analyze my fitness form&#10;• I need a business strategy for growth&#10;• Create content that converts&#10;• Automate my workflow processes&#10;• Analyze this opportunity for insights"
+                    rows="4"
+                ></textarea>
+            </div>
+            
+            <button onclick="transformPrompt()" class="btn transform-btn">
+                <i class="fas fa-magic"></i> Transform Into Monetizable Offering
+            </button>
+        </div>
+        
+        <div id="loadingSection" class="eos-card" style="display: none;">
+            <div class="loading">
+                <div class="spinner"></div>
+                <h5>Generating Your Profit-Ready Package...</h5>
+                <p class="text-muted">Soul-aligned analysis in progress</p>
+            </div>
+        </div>
+        
+        <div id="resultsSection" class="eos-card" style="display: none;">
+            <h3><i class="fas fa-gift"></i> Your Monetizable Offering</h3>
+            
+            <div id="offeringDetails" class="offering-card">
+                <!-- Offering details will be populated here -->
+            </div>
+            
+            <div class="quick-stats" id="quickStats">
+                <!-- Quick stats will be populated here -->
+            </div>
+            
+            <div id="marketingHook" class="marketing-hook">
+                <!-- Marketing hook will be populated here -->
+            </div>
+            
+            <div id="paymentLink" class="payment-link" style="display: none;">
+                <!-- Payment link will be populated here -->
+            </div>
+            
+            <div class="mt-3">
+                <button onclick="createAnotherOffering()" class="btn btn-outline-primary">
+                    <i class="fas fa-plus"></i> Create Another Offering
+                </button>
+                <button onclick="copyMarketingHook()" class="btn btn-outline-success ms-2">
+                    <i class="fas fa-copy"></i> Copy Marketing Hook
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentOffering = null;
+        
+        async function transformPrompt() {
+            const prompt = document.getElementById('promptInput').value.trim();
+            
+            if (!prompt) {
+                alert('Please enter a prompt to transform');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loadingSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/eos/transform', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        context: {},
+                        client_email: 'customer@example.com'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentOffering = data;
+                    displayOffering(data);
+                } else {
+                    throw new Error(data.error || 'Transformation failed');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error transforming prompt: ' + error.message);
+            } finally {
+                document.getElementById('loadingSection').style.display = 'none';
+            }
+        }
+        
+        function displayOffering(data) {
+            const offering = data.offering;
+            const payment = data.payment;
+            const deployment = data.deployment;
+            
+            // Populate offering details
+            document.getElementById('offeringDetails').innerHTML = `
+                <h4>${offering.title}</h4>
+                <div class="price-tag">$${offering.price}</div>
+                <p><strong>Value Proposition:</strong> ${offering.value_proposition}</p>
+                <p><strong>Description:</strong> ${offering.description}</p>
+                <p><strong>Delivery:</strong> ${offering.fulfillment_time} via ${offering.delivery_method}</p>
+            `;
+            
+            // Populate quick stats
+            document.getElementById('quickStats').innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-value">$${offering.price}</div>
+                    <div class="stat-label">Price Point</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${offering.fulfillment_time}</div>
+                    <div class="stat-label">Delivery Time</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${Math.round((offering.price / parseFloat(offering.fulfillment_time.split(' ')[0])) * 60)}/hr</div>
+                    <div class="stat-label">Value Rate</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">Ready</div>
+                    <div class="stat-label">Deployment</div>
+                </div>
+            `;
+            
+            // Populate marketing hook
+            document.getElementById('marketingHook').innerHTML = `
+                <h5><i class="fas fa-megaphone"></i> Marketing Hook (Copy-Ready)</h5>
+                <p>${offering.marketing_hook}</p>
+            `;
+            
+            // Show payment link if available
+            if (payment && payment.success && payment.payment_url) {
+                document.getElementById('paymentLink').innerHTML = `
+                    <h5><i class="fas fa-credit-card"></i> Instant Payment Link</h5>
+                    <p><strong>Status:</strong> <span class="badge bg-success">Ready</span></p>
+                    <p><strong>Link:</strong> <a href="${payment.payment_url}" target="_blank">${payment.payment_url}</a></p>
+                    <button onclick="copyPaymentLink('${payment.payment_url}')" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-copy"></i> Copy Link
+                    </button>
+                `;
+                document.getElementById('paymentLink').style.display = 'block';
+            }
+            
+            // Show results
+            document.getElementById('resultsSection').style.display = 'block';
+        }
+        
+        function createAnotherOffering() {
+            document.getElementById('promptInput').value = '';
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('promptInput').focus();
+        }
+        
+        function copyMarketingHook() {
+            if (currentOffering && currentOffering.offering.marketing_hook) {
+                navigator.clipboard.writeText(currentOffering.offering.marketing_hook).then(() => {
+                    alert('Marketing hook copied to clipboard!');
+                });
+            }
+        }
+        
+        function copyPaymentLink(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Payment link copied to clipboard!');
+            });
+        }
+        
+        // Handle Enter key in textarea (Shift+Enter for new line, Enter to transform)
+        document.getElementById('promptInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                transformPrompt();
+            }
+        });
+    </script>
+</body>
+</html>
