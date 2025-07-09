@@ -19,11 +19,26 @@ class Config:
     }
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    # Multi-API Configuration
+    DEFAULT_API_PROVIDER = os.environ.get('DEFAULT_API_PROVIDER', 'openai')
+    
     # OpenAI Configuration
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
     OPENAI_MODEL = os.environ.get('OPENAI_MODEL', 'gpt-3.5-turbo')
     OPENAI_MAX_TOKENS = int(os.environ.get('OPENAI_MAX_TOKENS', '500'))
     OPENAI_TEMPERATURE = float(os.environ.get('OPENAI_TEMPERATURE', '0.7'))
+    
+    # Claude (Anthropic) Configuration
+    CLAUDE_API_KEY = os.environ.get('CLAUDE_API_KEY')
+    CLAUDE_MODEL = os.environ.get('CLAUDE_MODEL', 'claude-3-sonnet-20240229')
+    CLAUDE_MAX_TOKENS = int(os.environ.get('CLAUDE_MAX_TOKENS', '500'))
+    CLAUDE_TEMPERATURE = float(os.environ.get('CLAUDE_TEMPERATURE', '0.7'))
+    
+    # Gemini (Google) Configuration
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+    GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-pro')
+    GEMINI_MAX_TOKENS = int(os.environ.get('GEMINI_MAX_TOKENS', '500'))
+    GEMINI_TEMPERATURE = float(os.environ.get('GEMINI_TEMPERATURE', '0.7'))
     
     # Rate Limiting Configuration
     RATELIMIT_STORAGE_URL = os.environ.get('REDIS_URL', 'memory://')

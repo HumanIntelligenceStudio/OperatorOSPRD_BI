@@ -86,43 +86,137 @@ def periodic_health_check():
 health_check_thread = threading.Thread(target=periodic_health_check, daemon=True)
 health_check_thread.start()
 
-# OpenAI client setup
+# Multi-API client setup
 openai_client = OpenAI(api_key=app.config['OPENAI_API_KEY'])
 
+# Claude client setup
+try:
+    import anthropic
+    claude_client = anthropic.Anthropic(api_key=app.config['CLAUDE_API_KEY']) if app.config['CLAUDE_API_KEY'] else None
+except ImportError:
+    claude_client = None
+    logging.warning("Anthropic library not installed - Claude API unavailable")
+
+# Gemini client setup
+try:
+    import google.generativeai as genai
+    if app.config['GEMINI_API_KEY']:
+        genai.configure(api_key=app.config['GEMINI_API_KEY'])
+        gemini_model = genai.GenerativeModel(app.config['GEMINI_MODEL'])
+    else:
+        gemini_model = None
+except ImportError:
+    gemini_model = None
+    logging.warning("Google GenerativeAI library not installed - Gemini API unavailable")
+
 class Agent:
-    """Base class for all AI agents"""
+    """Base class for all AI agents with multi-API support"""
     
-    def __init__(self, name, role, system_prompt):
+    def __init__(self, name, role, system_prompt, preferred_api=None):
         self.name = name
         self.role = role
         self.system_prompt = system_prompt
+        self.preferred_api = preferred_api or app.config['DEFAULT_API_PROVIDER']
     
-    def generate_response(self, input_text, conversation_history=None):
-        """Generate response using OpenAI API"""
+    def generate_response(self, input_text, conversation_history=None, api_override=None):
+        """Generate response using multi-API routing with fallback"""
+        # Determine which API to use
+        api_to_use = api_override or self.preferred_api or app.config['DEFAULT_API_PROVIDER']
+        
+        # Try primary API first
         try:
-            messages = [
-                {"role": "system", "content": self.system_prompt}
-            ]
-            
-            # Add conversation history if provided
-            if conversation_history:
-                for entry in conversation_history:
-                    messages.append({"role": "user", "content": f"Previous context: {entry}"})
-            
-            messages.append({"role": "user", "content": input_text})
-            
-            response = openai_client.chat.completions.create(
-                model=app.config['OPENAI_MODEL'],
-                messages=messages,
-                max_tokens=app.config['OPENAI_MAX_TOKENS'],
-                temperature=app.config['OPENAI_TEMPERATURE']
-            )
-            
-            return response.choices[0].message.content.strip()
-            
+            if api_to_use == 'claude':
+                return self._generate_claude_response(input_text, conversation_history)
+            elif api_to_use == 'gemini':
+                return self._generate_gemini_response(input_text, conversation_history)
+            else:
+                return self._generate_openai_response(input_text, conversation_history)
         except Exception as e:
-            logging.error(f"Error generating response for {self.name}: {str(e)}")
-            raise Exception(f"Failed to generate response from {self.name}: {str(e)}")
+            logging.warning(f"Primary API {api_to_use} failed for {self.name}: {str(e)}")
+            
+            # Fallback to other available APIs
+            fallback_apis = ['openai', 'claude', 'gemini']
+            fallback_apis.remove(api_to_use)
+            
+            for fallback_api in fallback_apis:
+                try:
+                    logging.info(f"Trying fallback API {fallback_api} for {self.name}")
+                    if fallback_api == 'claude' and claude_client:
+                        return self._generate_claude_response(input_text, conversation_history)
+                    elif fallback_api == 'gemini' and gemini_model:
+                        return self._generate_gemini_response(input_text, conversation_history)
+                    elif fallback_api == 'openai':
+                        return self._generate_openai_response(input_text, conversation_history)
+                except Exception as fallback_error:
+                    logging.warning(f"Fallback API {fallback_api} also failed: {str(fallback_error)}")
+                    continue
+            
+            # If all APIs fail, raise the original error
+            raise Exception(f"All APIs failed for {self.name}. Last error: {str(e)}")
+    
+    def _generate_openai_response(self, input_text, conversation_history=None):
+        """Generate response using OpenAI API"""
+        messages = [{"role": "system", "content": self.system_prompt}]
+        
+        if conversation_history:
+            for entry in conversation_history:
+                messages.append({"role": "user", "content": f"Previous context: {entry}"})
+        
+        messages.append({"role": "user", "content": input_text})
+        
+        response = openai_client.chat.completions.create(
+            model=app.config['OPENAI_MODEL'],
+            messages=messages,
+            max_tokens=app.config['OPENAI_MAX_TOKENS'],
+            temperature=app.config['OPENAI_TEMPERATURE']
+        )
+        
+        return response.choices[0].message.content.strip(), 'openai'
+    
+    def _generate_claude_response(self, input_text, conversation_history=None):
+        """Generate response using Claude API"""
+        if not claude_client:
+            raise Exception("Claude API not available")
+        
+        # Build conversation context
+        context = ""
+        if conversation_history:
+            for entry in conversation_history:
+                context += f"Previous context: {entry}\n"
+        
+        prompt = f"{self.system_prompt}\n\n{context}Human: {input_text}\n\nAssistant:"
+        
+        response = claude_client.messages.create(
+            model=app.config['CLAUDE_MODEL'],
+            max_tokens=app.config['CLAUDE_MAX_TOKENS'],
+            temperature=app.config['CLAUDE_TEMPERATURE'],
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        return response.content[0].text.strip(), 'claude'
+    
+    def _generate_gemini_response(self, input_text, conversation_history=None):
+        """Generate response using Gemini API"""
+        if not gemini_model:
+            raise Exception("Gemini API not available")
+        
+        # Build conversation context
+        context = ""
+        if conversation_history:
+            for entry in conversation_history:
+                context += f"Previous context: {entry}\n"
+        
+        prompt = f"{self.system_prompt}\n\n{context}User: {input_text}"
+        
+        response = gemini_model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                max_output_tokens=app.config['GEMINI_MAX_TOKENS'],
+                temperature=app.config['GEMINI_TEMPERATURE']
+            )
+        )
+        
+        return response.text.strip(), 'gemini'
     
     def extract_next_question(self, response):
         """Extract the question for the next agent from the response"""
@@ -318,18 +412,34 @@ class ConversationChain:
         
         start_time = datetime.utcnow()
         
+        # Check for API prefix selection
+        api_override = None
+        original_input = input_text
+        
+        if input_text.startswith('@claude:'):
+            api_override = 'claude'
+            input_text = input_text[8:].strip()
+        elif input_text.startswith('@gemini:'):
+            api_override = 'gemini'
+            input_text = input_text[8:].strip()
+        elif input_text.startswith('@openai:'):
+            api_override = 'openai'
+            input_text = input_text[9:].strip()
+        
         try:
             current_agent = self.agents[self.conversation.current_agent_index]
             
             # Log agent execution start
             logging.info(f"🎯 AGENT EXECUTION: Starting {current_agent.name} (index {self.conversation.current_agent_index})")
+            if api_override:
+                logging.info(f"🔀 API OVERRIDE: Using {api_override} for this request")
             
             # Get recent conversation history for context
             recent_entries = self.conversation.entries.order_by(ConversationEntry.created_at.desc()).limit(3).all()
             context_history = [entry.to_dict() for entry in reversed(recent_entries)]
             
             # Generate response from current agent with timeout and retry
-            response = self._generate_with_retry(current_agent, input_text, context_history, max_retries=3, timeout_seconds=10)
+            response, api_used = self._generate_with_retry(current_agent, input_text, context_history, max_retries=3, timeout_seconds=15, api_override=api_override)
             
             # Extract question for next agent
             next_question = current_agent.extract_next_question(response)
@@ -345,11 +455,12 @@ class ConversationChain:
                 conversation_id=self.conversation.id,
                 agent_name=current_agent.name,
                 agent_role=current_agent.role,
-                input_text=input_text,
+                input_text=original_input,  # Store original input with prefix if any
                 response_text=response,
                 next_question=next_question,
                 processing_time_seconds=processing_time,
-                model_used=getattr(current_agent, 'model', 'gpt-3.5-turbo'),
+                model_used=self._get_model_name(api_used),
+                api_provider=api_used,
                 error_occurred=False
             )
             
@@ -438,7 +549,16 @@ class ConversationChain:
             
             raise e
     
-    def _generate_with_retry(self, agent, input_text, context_history, max_retries=3, timeout_seconds=15):
+    def _get_model_name(self, api_provider):
+        """Get the appropriate model name based on API provider"""
+        if api_provider == 'claude':
+            return app.config['CLAUDE_MODEL']
+        elif api_provider == 'gemini':
+            return app.config['GEMINI_MODEL']
+        else:
+            return app.config['OPENAI_MODEL']
+    
+    def _generate_with_retry(self, agent, input_text, context_history, max_retries=3, timeout_seconds=15, api_override=None):
         """Generate response with enhanced retry mechanism and timeout"""
         import signal
         import time
@@ -458,7 +578,7 @@ class ConversationChain:
                 
                 try:
                     # Generate response with enhanced validation
-                    response = agent.generate_response(input_text, context_history)
+                    response, api_used = agent.generate_response(input_text, context_history, api_override)
                     signal.alarm(0)  # Cancel alarm
                     
                     # Enhanced response validation
@@ -471,8 +591,8 @@ class ConversationChain:
                                 raise ValueError("Missing required NEXT AGENT QUESTION format")
                         
                         processing_time = (datetime.utcnow() - start_time).total_seconds()
-                        logging.info(f"✅ RETRY SUCCESS: {agent.name} responded successfully in {processing_time:.2f}s")
-                        return response
+                        logging.info(f"✅ RETRY SUCCESS: {agent.name} responded successfully in {processing_time:.2f}s using {api_used}")
+                        return response, api_used
                     else:
                         raise ValueError(f"Response too short ({len(response.strip()) if response else 0} chars) or empty")
                         

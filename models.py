@@ -92,6 +92,7 @@ class ConversationEntry(db.Model):
     processing_time_seconds = db.Column(db.Float, default=0.0)  # Time taken to generate response
     tokens_used = db.Column(db.Integer, default=0)  # Tokens used for this response
     model_used = db.Column(db.String(50), default='gpt-3.5-turbo')  # Model used for response
+    api_provider = db.Column(db.String(20), default='openai')  # API provider used (openai, claude, gemini)
     response_length = db.Column(db.Integer, default=0)  # Length of response in characters
     error_occurred = db.Column(db.Boolean, default=False)  # Whether an error occurred
     error_message = db.Column(db.Text, nullable=True)  # Error message if any
@@ -116,6 +117,7 @@ class ConversationEntry(db.Model):
             'processing_time_seconds': self.processing_time_seconds,
             'tokens_used': self.tokens_used,
             'model_used': self.model_used,
+            'api_provider': self.api_provider,
             'response_length': self.response_length,
             'error_occurred': self.error_occurred,
             'error_message': self.error_message
