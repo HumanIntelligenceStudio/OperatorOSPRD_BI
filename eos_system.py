@@ -121,6 +121,15 @@ class EOSSystem:
                 'tools_required': ['csuite_agents', 'strategic_analysis', 'executive_report']
             }
             
+        elif any(keyword in prompt.lower() for keyword in ['income', 'monetize', 'ai-powered', 'launch', 'teach', 'phone']):
+            return {
+                'title': 'AI Income Stream Launch Kit',
+                'description': 'Complete blueprint for launching AI-powered income streams using just ideas and a mobile device',
+                'value_proposition': 'Transform any idea into a profitable AI-powered business in under 30 minutes',
+                'category': 'ai_monetization',
+                'tools_required': ['ai_business_analysis', 'mobile_optimization', 'income_stream_blueprint']
+            }
+            
         elif any(keyword in prompt.lower() for keyword in ['content', 'marketing', 'social', 'copy']):
             return {
                 'title': 'High-Converting Content Package',
@@ -157,6 +166,7 @@ class EOSSystem:
             'business_strategy': 29.99,
             'content_creation': 19.99,
             'automation_consulting': 24.99,
+            'ai_monetization': 27.99,
             'ai_analysis': 12.99
         }
         
@@ -165,6 +175,7 @@ class EOSSystem:
             'business_strategy': '15 minutes',
             'content_creation': '10 minutes',
             'automation_consulting': '20 minutes',
+            'ai_monetization': '12 minutes',
             'ai_analysis': '8 minutes'
         }
         
@@ -184,6 +195,7 @@ class EOSSystem:
             'business_strategy': DeliveryMethod.PDF_REPORT,
             'content_creation': DeliveryMethod.DIGITAL_GUIDE,
             'automation_consulting': DeliveryMethod.WORKFLOW_AUTOMATION,
+            'ai_monetization': DeliveryMethod.DIGITAL_GUIDE,
             'ai_analysis': DeliveryMethod.AI_ANALYSIS
         }
         
@@ -201,6 +213,8 @@ class EOSSystem:
             'content_creation': f"🔥 Content that actually converts for ${pricing['amount']} → Psychology-driven copy → Platform optimization → Engagement magnets. Stop posting into the void. Start creating content that turns followers into customers.",
             
             'automation_consulting': f"⚡ Save 10+ hours/week with smart automation → Custom workflow blueprint → Step-by-step implementation → ROI in first week. Transform chaos into systems for just ${pricing['amount']}.",
+            
+            'ai_monetization': f"💰 Launch profitable AI income streams with just your phone for ${pricing['amount']} → Complete blueprint → Mobile-first setup → Income in {pricing['fulfillment_time']}. Turn any idea into cash flow using AI. No tech skills required.",
             
             'ai_analysis': f"🧠 Professional AI analysis in {pricing['fulfillment_time']} → Deep insights → Hidden opportunities → Actionable recommendations. What consultants charge hundreds for, delivered instantly for ${pricing['amount']}."
         }
