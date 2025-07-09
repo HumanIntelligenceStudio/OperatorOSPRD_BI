@@ -62,6 +62,10 @@ app, limiter, csrf, socketio = create_app()
 from admin import admin_bp
 app.register_blueprint(admin_bp)
 
+# Register video upload blueprint
+from video_upload import video_bp
+app.register_blueprint(video_bp)
+
 # Initialize notification system with SocketIO
 from notifications import notification_manager, system_monitor
 notification_manager.socketio = socketio

@@ -245,6 +245,37 @@ class StripeManager:
                     {"payment_id": payment.id, "amount": payment.amount}
                 )
                 
+                # Trigger automated fulfillment for AI Form Check Pro Report
+                if "ai form check" in payment.project_name.lower():
+                    try:
+                        from fulfillment_system import fulfillment_system
+                        fulfillment_result = fulfillment_system.trigger_fulfillment(payment.id)
+                        
+                        if fulfillment_result["success"]:
+                            logging.info(f"Automated fulfillment triggered for payment {payment.id}")
+                            self.notification_manager.add_notification(
+                                "Fulfillment Started",
+                                f"AI Form Check fulfillment started for {payment.client_name}",
+                                "info",
+                                {"payment_id": payment.id, "upload_token": fulfillment_result.get("upload_token")}
+                            )
+                        else:
+                            logging.error(f"Fulfillment failed for payment {payment.id}: {fulfillment_result['error']}")
+                            self.notification_manager.add_notification(
+                                "Fulfillment Failed",
+                                f"Automated fulfillment failed for {payment.client_name}: {fulfillment_result['error']}",
+                                "error",
+                                {"payment_id": payment.id, "error": fulfillment_result['error']}
+                            )
+                    except Exception as fulfillment_error:
+                        logging.error(f"Fulfillment system error: {str(fulfillment_error)}")
+                        self.notification_manager.add_notification(
+                            "Fulfillment System Error",
+                            f"Error in fulfillment system for {payment.client_name}: {str(fulfillment_error)}",
+                            "error",
+                            {"payment_id": payment.id, "error": str(fulfillment_error)}
+                        )
+                
                 logging.info(f"Payment marked as paid: {payment.id}")
             
             return {"success": True, "message": "Payment success processed"}
@@ -271,6 +302,25 @@ class StripeManager:
                     "success",
                     {"payment_id": payment.id, "invoice_id": invoice.id}
                 )
+                
+                # Trigger automated fulfillment for AI Form Check Pro Report
+                if "ai form check" in payment.project_name.lower():
+                    try:
+                        from fulfillment_system import fulfillment_system
+                        fulfillment_result = fulfillment_system.trigger_fulfillment(payment.id)
+                        
+                        if fulfillment_result["success"]:
+                            logging.info(f"Automated fulfillment triggered for payment {payment.id}")
+                            self.notification_manager.add_notification(
+                                "Fulfillment Started",
+                                f"AI Form Check fulfillment started for {payment.client_name}",
+                                "info",
+                                {"payment_id": payment.id, "upload_token": fulfillment_result.get("upload_token")}
+                            )
+                        else:
+                            logging.error(f"Fulfillment failed for payment {payment.id}: {fulfillment_result['error']}")
+                    except Exception as fulfillment_error:
+                        logging.error(f"Fulfillment system error: {str(fulfillment_error)}")
                 
                 logging.info(f"Invoice payment marked as paid: {payment.id}")
             
