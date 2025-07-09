@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Flask, render_template, request, jsonify, session, g
+from flask import Flask, render_template, request, jsonify, session, g, send_file
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
@@ -1035,6 +1035,25 @@ def quick_offer_generation():
 def eos_interface():
     """Simple EOS testing interface"""
     return render_template('eos_interface.html')
+
+@app.route('/download/<filename>')
+def download_deliverable(filename):
+    """Download generated deliverable files"""
+    try:
+        from pathlib import Path
+        
+        # Security check - only allow downloads from processed directory
+        safe_filename = filename.replace('..', '').replace('/', '')
+        file_path = Path("processed") / safe_filename
+        
+        if not file_path.exists():
+            return "File not found", 404
+            
+        return send_file(str(file_path), as_attachment=True, download_name=filename)
+        
+    except Exception as e:
+        logging.error(f"Error downloading file {filename}: {str(e)}")
+        return "Download failed", 500
 
 @app.route('/start_conversation', methods=['POST'])
 @limiter.limit("5 per minute")

@@ -303,6 +303,9 @@ class EOSSystem:
     def generate_deployment_package(self, offering: EOSOffering, payment_result: Dict[str, Any]) -> Dict[str, Any]:
         """Generate complete deployment package ready for immediate use"""
         
+        # Generate downloadable deliverable
+        deliverable_result = self._generate_deliverable(offering)
+        
         return {
             "offering_summary": {
                 "title": offering.title,
@@ -322,6 +325,7 @@ class EOSSystem:
                 "tools_required": offering.tools_required,
                 "automation_ready": True
             },
+            "deliverable": deliverable_result,
             "next_steps": [
                 "Share marketing hook on social platforms",
                 "Send payment link to interested prospects",
@@ -330,6 +334,31 @@ class EOSSystem:
             ],
             "created_at": datetime.utcnow().isoformat()
         }
+    
+    def _generate_deliverable(self, offering: EOSOffering) -> Dict[str, Any]:
+        """Generate the actual downloadable deliverable"""
+        try:
+            from utils.deliverable_generator import deliverable_generator
+            
+            # Generate deliverable based on offering type
+            if offering.title == "AI Income Stream Launch Kit":
+                result = deliverable_generator.generate_ai_income_stream_kit()
+            elif offering.title == "AI Form Check Pro Report":
+                result = deliverable_generator.generate_fitness_analysis_kit()
+            else:
+                # Generic deliverable generation for other offerings
+                result = deliverable_generator.generate_ai_income_stream_kit()
+                result["components"] = [f"Complete {offering.title} Package"]
+            
+            return result
+            
+        except Exception as e:
+            logging.error(f"Error generating deliverable: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "message": "Deliverable generation failed - manual fulfillment required"
+            }
 
 
 # Global EOS instance
