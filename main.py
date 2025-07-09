@@ -68,6 +68,198 @@ notification_manager.socketio = socketio
 
 # RefinerAgent will be defined inline to avoid circular imports
 
+# Initialize C-Suite agents manager (after app initialization)
+csuite_manager = None
+
+def handle_csuite_request_direct(input_text):
+    """Direct handler for C-Suite agent requests without complex routing"""
+    try:
+        # Parse the C-Suite agent request
+        agent_code = None
+        clean_input = input_text
+        
+        for code in ['CSA', 'COO', 'CTO', 'CFO', 'CMO', 'CPO', 'CIO']:
+            if input_text.startswith(f'@{code}:'):
+                agent_code = code
+                clean_input = input_text[len(f'@{code}:'):].strip()
+                break
+        
+        if not agent_code:
+            return jsonify({"error": "Invalid C-Suite agent format"}), 400
+        
+        # Simple direct routing to OpenAI with specialized prompts
+        role_prompts = {
+            'CSA': "You are a Chief Strategy Officer providing strategic analysis and competitive intelligence.",
+            'COO': "You are a Chief Operating Officer focused on operational excellence and process optimization.", 
+            'CTO': "You are a Chief Technology Officer providing technical architecture and innovation guidance.",
+            'CFO': "You are a Chief Financial Officer providing financial analysis and investment guidance.",
+            'CMO': "You are a Chief Marketing Officer providing brand strategy and growth guidance.",
+            'CPO': "You are a Chief People Officer providing human capital and organizational guidance.",
+            'CIO': "You are a Chief Intelligence Officer providing strategic intelligence and decision support."
+        }
+        
+        system_prompt = role_prompts.get(agent_code, "You are an executive advisor.")
+        
+        # Generate response using OpenAI
+        start_time = datetime.utcnow()
+        
+        response = openai_client.chat.completions.create(
+            model=app.config['OPENAI_MODEL'],
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": clean_input}
+            ],
+            max_tokens=app.config['OPENAI_MAX_TOKENS'],
+            temperature=app.config['OPENAI_TEMPERATURE']
+        )
+        
+        response_text = response.choices[0].message.content
+        processing_time = (datetime.utcnow() - start_time).total_seconds()
+        
+        # Create conversation record
+        conversation_id = str(uuid.uuid4())
+        conversation = Conversation(
+            id=conversation_id,
+            initial_input=input_text,
+            current_agent_index=0,
+            is_complete=True,
+            session_id=session.get('session_id'),
+            user_ip=get_remote_address()
+        )
+        db.session.add(conversation)
+        
+        entry = ConversationEntry(
+            conversation_id=conversation_id,
+            agent_name=agent_code,
+            agent_role=f"Chief {agent_code} Officer",
+            input_text=clean_input,
+            response_text=response_text,
+            processing_time_seconds=processing_time,
+            tokens_used=response.usage.total_tokens if response.usage else len(response_text.split()) * 1.3,
+            model_used=app.config['OPENAI_MODEL'],
+            api_provider="openai",
+            response_length=len(response_text),
+            error_occurred=False
+        )
+        db.session.add(entry)
+        db.session.commit()
+        
+        session['current_conversation_id'] = conversation_id
+        
+        # Send notification
+        from notifications import NotificationLevel
+        notification_manager.add_notification(
+            f"C-Suite Agent Response",
+            f"{agent_code} executive agent provided strategic intelligence",
+            NotificationLevel.INFO,
+            {"agent": agent_code, "conversation_id": conversation_id}
+        )
+        
+        return jsonify({
+            "success": True,
+            "conversation_id": conversation_id,
+            "result": {
+                "agent": agent_code,
+                "role": f"Chief {agent_code} Officer",
+                "response": response_text,
+                "api_provider": "openai",
+                "processing_time_seconds": processing_time,
+                "conversation_id": conversation_id,
+                "is_csuite": True,
+                "timestamp": entry.created_at.isoformat()
+            },
+            "is_complete": True,
+            "agent_type": "csuite",
+            "conversation_stats": {
+                "entry_count": 1,
+                "total_tokens_used": entry.tokens_used,
+                "error_count": 0,
+                "duration_seconds": processing_time
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in C-Suite agent {agent_code}: {str(e)}")
+        return jsonify({"error": f"C-Suite agent error: {str(e)}"}), 500
+
+def handle_csuite_request(csuite_agent, clean_input, original_input):
+    """Handle C-Suite agent requests"""
+    try:
+        start_time = datetime.utcnow()
+        
+        # Generate response from C-Suite agent
+        response, api_used = csuite_agent.generate_response(clean_input)
+        
+        # Calculate processing time
+        processing_time = (datetime.utcnow() - start_time).total_seconds()
+        
+        # Create a conversation entry for the C-Suite response
+        conversation_id = str(uuid.uuid4())
+        conversation = Conversation(
+            id=conversation_id,
+            initial_input=original_input,
+            current_agent_index=0,
+            is_complete=True,  # C-Suite agents complete in one response
+            session_id=session.get('session_id'),
+            user_ip=get_remote_address()
+        )
+        db.session.add(conversation)
+        
+        # Create the conversation entry
+        entry = ConversationEntry(
+            conversation_id=conversation_id,
+            agent_name=csuite_agent.name,
+            agent_role=csuite_agent.role,
+            input_text=clean_input,
+            response_text=response,
+            processing_time_seconds=processing_time,
+            tokens_used=len(response.split()) * 1.3,  # Rough token estimate
+            model_used=api_used,
+            api_provider=api_used,
+            response_length=len(response),
+            error_occurred=False
+        )
+        db.session.add(entry)
+        db.session.commit()
+        
+        # Store conversation ID in session
+        session['current_conversation_id'] = conversation_id
+        
+        # Send notification
+        notification_manager.add_notification(
+            f"C-Suite Agent Response",
+            f"{csuite_agent.role} provided executive intelligence",
+            NotificationLevel.INFO,
+            {"agent": csuite_agent.name, "conversation_id": conversation_id}
+        )
+        
+        return jsonify({
+            "success": True,
+            "conversation_id": conversation_id,
+            "result": {
+                "agent": csuite_agent.name,
+                "role": csuite_agent.role,
+                "response": response,
+                "api_provider": api_used,
+                "processing_time_seconds": processing_time,
+                "conversation_id": conversation_id,
+                "is_csuite": True,
+                "timestamp": entry.created_at.isoformat()
+            },
+            "is_complete": True,
+            "agent_type": "csuite",
+            "conversation_stats": {
+                "entry_count": 1,
+                "total_tokens_used": entry.tokens_used,
+                "error_count": 0,
+                "duration_seconds": processing_time
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in C-Suite agent {csuite_agent.name}: {str(e)}")
+        return jsonify({"error": f"C-Suite agent error: {str(e)}"}), 500
+
 # Schedule periodic health checks
 import threading
 import time
@@ -786,6 +978,11 @@ def start_conversation():
         # Sanitize input
         input_text = InputValidator.sanitize_html(input_text.strip())
         
+        # Check for C-Suite agent routing
+        if input_text.startswith('@CSA:') or input_text.startswith('@COO:') or input_text.startswith('@CTO:') or \
+           input_text.startswith('@CFO:') or input_text.startswith('@CMO:') or input_text.startswith('@CPO:') or input_text.startswith('@CIO:'):
+            return handle_csuite_request_direct(input_text)
+        
         # Create new conversation chain with enhanced database storage
         chain = ConversationChain.create_new(
             input_text,
@@ -820,6 +1017,55 @@ def start_conversation():
     except Exception as e:
         logging.error(f"Error starting conversation: {str(e)}")
         return jsonify({"error": "An internal error occurred. Please try again."}), 500
+
+@app.route('/csuite_agents', methods=['GET'])
+@limiter.exempt
+def list_csuite_agents():
+    """List all available C-Suite agents and their capabilities"""
+    agents = {
+        'CSA': {
+            'name': 'Chief Strategy Agent',
+            'expertise': 'Strategic planning, competitive intelligence, market analysis',
+            'description': 'Provides strategic guidance, competitive analysis, and long-term planning'
+        },
+        'COO': {
+            'name': 'Chief Operating Agent', 
+            'expertise': 'Operations optimization, process improvement, execution excellence',
+            'description': 'Focuses on operational efficiency, process optimization, and execution'
+        },
+        'CTO': {
+            'name': 'Chief Technology Agent',
+            'expertise': 'Technical architecture, innovation, system scalability',
+            'description': 'Provides technical guidance, architecture recommendations, and innovation strategy'
+        },
+        'CFO': {
+            'name': 'Chief Financial Agent',
+            'expertise': 'Financial analysis, investment guidance, resource allocation',
+            'description': 'Offers financial analysis, investment recommendations, and strategic resource planning'
+        },
+        'CMO': {
+            'name': 'Chief Marketing Agent',
+            'expertise': 'Brand strategy, growth marketing, customer acquisition',
+            'description': 'Develops marketing strategies, brand positioning, and growth initiatives'
+        },
+        'CPO': {
+            'name': 'Chief People Agent',
+            'expertise': 'Human capital, organizational development, team optimization',
+            'description': 'Focuses on people strategy, organizational design, and team effectiveness'
+        },
+        'CIO': {
+            'name': 'Chief Intelligence Agent',
+            'expertise': 'Strategic intelligence, data synthesis, decision support',
+            'description': 'Provides intelligence synthesis, pattern recognition, and strategic insights'
+        }
+    }
+    
+    return jsonify({
+        "success": True,
+        "agents": agents,
+        "usage": "Use @[AGENT_CODE]: followed by your question (e.g., @CSA: Analyze market trends)",
+        "total_agents": len(agents)
+    })
 
 @app.route('/continue_conversation', methods=['POST'])
 @limiter.limit("10 per minute")
