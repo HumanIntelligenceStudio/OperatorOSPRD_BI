@@ -561,13 +561,50 @@ Remember: You're not changing the core content - you're making it more human, mo
 class ConversationChain:
     """Manages the conversation flow between agents using database storage"""
     
-    def __init__(self, conversation_id=None):
-        self.agents = [
+    def __init__(self, conversation_id=None, extended_mode=False):
+        # Core OperatorOS agents - always included
+        self.core_agents = [
             AnalystAgent(),
-            ResearcherAgent(),
+            ResearcherAgent(), 
             WriterAgent(),
-            RefinerAgent()  # Optional 4th agent for response refinement
+            RefinerAgent()
         ]
+        
+        # Extended agents for comprehensive analysis (optional)
+        self.extended_agents = []
+        
+        if extended_mode:
+            # Add C-Suite agents for strategic intelligence
+            try:
+                from csuite_agents import CSuiteAgentManager
+                csuite_manager = CSuiteAgentManager()
+                
+                # Add key strategic agents for comprehensive analysis
+                strategist = csuite_manager.get_agent('CSA')  # Strategy
+                tech_advisor = csuite_manager.get_agent('CTO')  # Technology  
+                financial_advisor = csuite_manager.get_agent('CFO')  # Financial
+                
+                if strategist and tech_advisor and financial_advisor:
+                    self.extended_agents = [strategist, tech_advisor, financial_advisor]
+                    logging.info(f"🏢 EXTENDED MODE: Added {len(self.extended_agents)} C-Suite agents to chain")
+                
+            except Exception as e:
+                logging.warning(f"Could not load C-Suite agents for extended mode: {str(e)}")
+        
+        # Combine core + extended agents
+        self.agents = self.core_agents + self.extended_agents
+        
+        logging.info(f"👥 AGENT CHAIN INITIALIZED: {len(self.agents)} total agents")
+        logging.info(f"📋 Agent Sequence: {' → '.join([agent.name for agent in self.agents])}")
+        
+        if conversation_id:
+            # Load existing conversation from database
+            self.conversation = Conversation.query.get(conversation_id)
+            if not self.conversation:
+                raise ValueError(f"Conversation {conversation_id} not found")
+        else:
+            self.conversation = None
+        logging.info(f"📋 Agent Sequence: {' → '.join([agent.name for agent in self.agents])}")
         
         if conversation_id:
             # Load existing conversation from database
@@ -578,7 +615,7 @@ class ConversationChain:
             self.conversation = None
     
     @classmethod
-    def create_new(cls, initial_input, session_id=None, user_ip=None):
+    def create_new(cls, initial_input, session_id=None, user_ip=None, extended_mode=False):
         """Create a new conversation chain with enhanced persistence"""
         conversation_id = str(uuid.uuid4())
         conversation = Conversation(
@@ -601,7 +638,7 @@ class ConversationChain:
             {"conversation_id": conversation_id, "initial_input": initial_input[:100], "session_id": session_id}
         )
         
-        chain = cls(conversation_id)
+        chain = cls(conversation_id, extended_mode=extended_mode)
         return chain
     
     def process_input(self, input_text):
@@ -821,61 +858,81 @@ class ConversationChain:
         raise Exception(f"All retry attempts failed for {agent.name}")
     
     def execute_full_loop(self, initial_input):
-        """Execute complete OperatorOS loop: Analyst → Researcher → Writer"""
+        """Execute complete OperatorOS loop: Analyst → Researcher → Writer → Refiner → [All Available Agents]"""
         logging.info(f"🚀 STARTING FULL OPERATOROS LOOP")
         logging.info(f"📝 Initial Input: {initial_input}")
+        logging.info(f"👥 Total Available Agents: {len(self.agents)} ({[agent.name for agent in self.agents]})")
         
         loop_results = []
         current_input = initial_input
         
         try:
-            # Step 1: Analyst
-            logging.info(f"🔍 STEP 1: EXECUTING ANALYST AGENT")
-            analyst_result = self.process_input(current_input)
-            loop_results.append(analyst_result)
-            
-            if not analyst_result.get('next_question'):
-                raise Exception("Analyst failed to generate next question")
-            
-            # Auto-trigger Researcher
-            logging.info(f"📚 STEP 2: AUTO-TRIGGERING RESEARCHER AGENT")
-            logging.info(f"🔗 Researcher Input: {analyst_result['next_question']}")
-            researcher_result = self.process_input(analyst_result['next_question'])
-            loop_results.append(researcher_result)
-            
-            if not researcher_result.get('next_question'):
-                raise Exception("Researcher failed to generate next question")
-            
-            # Auto-trigger Writer
-            logging.info(f"✍️ STEP 3: AUTO-TRIGGERING WRITER AGENT")
-            logging.info(f"🔗 Writer Input: {researcher_result['next_question']}")
-            writer_result = self.process_input(researcher_result['next_question'])
-            loop_results.append(writer_result)
-            
-            # Check if loop completed (with 4 agents now available)
-            if self.conversation.current_agent_index >= 3:  # 3 agents minimum (0,1,2 = 3 total)
-                logging.info(f"🎯 LOOP COMPLETED: All 3 agents executed successfully")
+            # Execute all agents in sequence dynamically
+            for step, agent in enumerate(self.agents, 1):
+                if step == 1:
+                    # First agent gets the original input
+                    agent_input = current_input
+                    logging.info(f"🔍 STEP {step}: EXECUTING {agent.name.upper()} AGENT")
+                    logging.info(f"📝 Input: {agent_input}")
+                else:
+                    # Subsequent agents get the next question from previous agent
+                    previous_result = loop_results[-1]
+                    if not previous_result.get('next_question'):
+                        logging.warning(f"⚠️ {loop_results[-1].get('agent_name', 'Previous agent')} failed to generate next question")
+                        # For the final agent (usually Writer), we allow this
+                        if step == len(self.agents):
+                            logging.info(f"🎯 FINAL AGENT: {agent.name} - no next question required")
+                            break
+                        else:
+                            raise Exception(f"{loop_results[-1].get('agent_name', 'Previous agent')} failed to generate next question for {agent.name}")
+                    
+                    agent_input = previous_result['next_question']
+                    logging.info(f"🔄 STEP {step}: AUTO-TRIGGERING {agent.name.upper()} AGENT")
+                    logging.info(f"🔗 {agent.name} Input: {agent_input}")
                 
-                # Send completion notification
-                from notifications import notification_manager, NotificationLevel
-                notification_manager.add_notification(
-                    "OperatorOS Loop Completed",
-                    f"Full loop completed for conversation {self.conversation.id[:8]}... with {len(loop_results)} agents",
-                    NotificationLevel.INFO,
-                    {
-                        "conversation_id": self.conversation.id,
-                        "agents_executed": len(loop_results),
-                        "total_processing_time": sum(r.get('processing_time_seconds', 0) for r in loop_results),
-                        "loop_status": "completed"
-                    }
-                )
+                # Execute current agent
+                agent_result = self.process_input(agent_input)
+                loop_results.append(agent_result)
+                logging.info(f"✅ STEP {step} COMPLETE: {agent.name} executed successfully")
+                
+                # Check if this is the last agent or conversation is marked complete
+                if self.conversation.current_agent_index >= len(self.agents) or self.conversation.is_complete:
+                    logging.info(f"🎯 LOOP COMPLETION: Reached agent {step}/{len(self.agents)} - {agent.name}")
+                    break
+            
+            # Determine final status
+            total_agents_executed = len(loop_results)
+            is_fully_complete = (self.conversation.current_agent_index >= len(self.agents)) or (total_agents_executed >= len(self.agents))
+            
+            if is_fully_complete:
+                logging.info(f"🎯 LOOP COMPLETED: All {total_agents_executed} agents executed successfully")
+                loop_status = "completed"
             else:
-                logging.warning(f"⚠️ LOOP INCOMPLETE: Expected completion but conversation not marked complete")
+                logging.warning(f"⚠️ LOOP INCOMPLETE: Only {total_agents_executed}/{len(self.agents)} agents executed")
+                loop_status = "incomplete"
+                
+            # Send completion notification
+            from notifications import notification_manager, NotificationLevel
+            notification_manager.add_notification(
+                "OperatorOS Extended Loop Completed",
+                f"Extended loop completed for conversation {self.conversation.id[:8]}... with {total_agents_executed}/{len(self.agents)} agents",
+                NotificationLevel.INFO,
+                {
+                    "conversation_id": self.conversation.id,
+                    "agents_executed": total_agents_executed,
+                    "total_agents_available": len(self.agents),
+                    "agent_names": [r.get('agent_name', 'Unknown') for r in loop_results],
+                    "total_processing_time": sum(r.get('processing_time_seconds', 0) for r in loop_results),
+                    "loop_status": loop_status
+                }
+            )
             
             return {
                 "success": True,
-                "loop_status": "completed" if self.conversation.current_agent_index >= 3 else "incomplete",
-                "agents_executed": len(loop_results),
+                "loop_status": loop_status,
+                "agents_executed": total_agents_executed,
+                "total_agents_available": len(self.agents),
+                "agent_sequence": [r.get('agent_name', 'Unknown') for r in loop_results],
                 "conversation_id": self.conversation.id,
                 "results": loop_results
             }
@@ -1292,7 +1349,7 @@ def submit_feedback():
 @limiter.limit("3 per minute")
 @csrf.exempt
 def execute_full_loop():
-    """Execute complete OperatorOS loop: Analyst → Researcher → Writer"""
+    """Execute complete OperatorOS loop: Analyst → Researcher → Writer → Refiner"""
     try:
         data = request.get_json() if request.is_json else {}
         is_valid, error_msg = InputValidator.validate_json_request(data, ['input'])
@@ -1314,11 +1371,15 @@ def execute_full_loop():
         # Sanitize input
         input_text = InputValidator.sanitize_html(input_text.strip())
         
-        # Create new conversation chain
+        # Check for extended mode
+        extended_mode = data.get('extended_mode', False)
+        
+        # Create new conversation chain with extended mode support
         chain = ConversationChain.create_new(
             input_text,
             session_id=session.get('session_id'),
-            user_ip=request.remote_addr
+            user_ip=request.remote_addr,
+            extended_mode=extended_mode
         )
         
         # Execute full loop with auto-triggering
@@ -1331,6 +1392,7 @@ def execute_full_loop():
         return jsonify({
             **loop_result,
             "conversation_id": chain.conversation.id,
+            "extended_mode": extended_mode,
             "session_info": {
                 "session_id": session.get('session_id'),
                 "conversation_count": session.get('conversation_count')
@@ -1340,6 +1402,53 @@ def execute_full_loop():
     except Exception as e:
         logging.error(f"Error executing full loop: {str(e)}")
         return jsonify({"error": "An internal error occurred during loop execution"}), 500
+
+@app.route('/api/execute_full_loop', methods=['POST'])
+@limiter.limit("3 per minute")
+@csrf.exempt
+def api_execute_full_loop():
+    """API version of execute_full_loop for direct API access"""
+    try:
+        data = request.get_json() if request.is_json else {}
+        
+        if not data or 'initial_input' not in data:
+            return jsonify({"error": "initial_input is required"}), 400
+        
+        input_text = data['initial_input'].strip()
+        extended_mode = data.get('extended_mode', False)
+        
+        # Validate input
+        is_valid, error_msg = InputValidator.validate_conversation_input(input_text)
+        if not is_valid:
+            return jsonify({"error": error_msg}), 400
+        
+        # Sanitize input
+        input_text = InputValidator.sanitize_html(input_text)
+        
+        # Create temporary session for API calls
+        temp_session_id = str(uuid.uuid4())
+        
+        # Create new conversation chain with extended mode support
+        chain = ConversationChain.create_new(
+            input_text,
+            session_id=temp_session_id,
+            user_ip=request.remote_addr,
+            extended_mode=extended_mode
+        )
+        
+        # Execute full loop
+        loop_result = chain.execute_full_loop(input_text)
+        
+        return jsonify({
+            **loop_result,
+            "conversation_id": chain.conversation.id,
+            "extended_mode": extended_mode,
+            "api_version": "1.0"
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in API execute_full_loop: {str(e)}")
+        return jsonify({"error": f"Full loop execution failed: {str(e)}"}), 500
 
 @app.route('/reset_conversation', methods=['POST'])
 def reset_conversation():
