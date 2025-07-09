@@ -30,7 +30,7 @@ class Config:
     
     # Claude (Anthropic) Configuration
     CLAUDE_API_KEY = os.environ.get('CLAUDE_API_KEY')
-    CLAUDE_MODEL = os.environ.get('CLAUDE_MODEL', 'claude-3-sonnet-20240229')
+    CLAUDE_MODEL = os.environ.get('CLAUDE_MODEL', 'claude-3-5-sonnet-20241022')
     CLAUDE_MAX_TOKENS = int(os.environ.get('CLAUDE_MAX_TOKENS', '500'))
     CLAUDE_TEMPERATURE = float(os.environ.get('CLAUDE_TEMPERATURE', '0.7'))
     
