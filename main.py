@@ -66,6 +66,8 @@ app.register_blueprint(admin_bp)
 from notifications import notification_manager, system_monitor
 notification_manager.socketio = socketio
 
+# RefinerAgent will be defined inline to avoid circular imports
+
 # Schedule periodic health checks
 import threading
 import time
@@ -225,6 +227,44 @@ Remember: Great writing doesn't just inform - it transforms understanding into c
         
         super().__init__("Writer", "Writing", system_prompt)
 
+class RefinerAgent(Agent):
+    """Agent that refines and enhances previous agent responses for better human clarity"""
+    
+    def __init__(self):
+        system_prompt = """You are a refinement specialist who transforms good responses into exceptional ones that truly serve human understanding.
+
+## Your Purpose
+Take already valuable content and elevate it to create genuine clarity, empathy, and actionable closure for the human.
+
+## What You Do
+1. **Enhance Clarity** - Make complex ideas crystal clear without losing their depth or nuance
+2. **Add Empathy** - Ensure the human feels genuinely seen, understood, and supported
+3. **Improve Actionability** - Transform abstract concepts into concrete, implementable steps
+4. **Complete the Loop** - Give the human a satisfying sense of closure and clear next direction
+5. **Preserve Value** - Keep all the substantive insights while making them more human-centered
+
+## How You Refine
+- Start by acknowledging the valuable work already done
+- Restructure information to flow naturally from their perspective
+- Add empathetic language that shows understanding of their situation
+- Include specific, actionable elements they can implement immediately
+- Create clear bridges between ideas to prevent mental gaps
+- End with genuine value and momentum for their next steps
+
+## Your Refinement Criteria
+- **Clarity**: Can they easily understand and follow the logic?
+- **Empathy**: Do they feel heard and supported throughout?
+- **Actionability**: Are there specific steps they can take right now?
+- **Completeness**: Does this close their mental loop satisfyingly?
+- **Human-Centered**: Does this serve their actual needs, not just provide information?
+
+**IMPORTANT: You must end your response with exactly this format:**
+NEXT AGENT QUESTION: [refined follow-up opportunity that builds naturally on this enhanced foundation]
+
+Remember: You're not changing the core content - you're making it more human, more clear, and more actionable while preserving all the valuable insights."""
+        
+        super().__init__("Refiner", "Refinement", system_prompt)
+
 class ConversationChain:
     """Manages the conversation flow between agents using database storage"""
     
@@ -232,7 +272,8 @@ class ConversationChain:
         self.agents = [
             AnalystAgent(),
             ResearcherAgent(),
-            WriterAgent()
+            WriterAgent(),
+            RefinerAgent()  # Optional 4th agent for response refinement
         ]
         
         if conversation_id:
@@ -492,8 +533,8 @@ class ConversationChain:
             writer_result = self.process_input(researcher_result['next_question'])
             loop_results.append(writer_result)
             
-            # Check if loop completed
-            if self.is_complete():
+            # Check if loop completed (with 4 agents now available)
+            if self.conversation.current_agent_index >= 3:  # 3 agents minimum (0,1,2 = 3 total)
                 logging.info(f"🎯 LOOP COMPLETED: All 3 agents executed successfully")
                 
                 # Send completion notification
@@ -514,7 +555,7 @@ class ConversationChain:
             
             return {
                 "success": True,
-                "loop_status": "completed" if self.is_complete() else "incomplete",
+                "loop_status": "completed" if self.conversation.current_agent_index >= 3 else "incomplete",
                 "agents_executed": len(loop_results),
                 "conversation_id": self.conversation.id,
                 "results": loop_results
