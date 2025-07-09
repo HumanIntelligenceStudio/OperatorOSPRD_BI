@@ -94,6 +94,7 @@
         {% endif %}
         
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="mb-3">
                 <label for="password" class="form-label">
                     <i class="fas fa-lock me-2"></i>Admin Password
