@@ -12,7 +12,7 @@ from flask import Blueprint, render_template, request, jsonify, session, redirec
 from sqlalchemy import func, desc, and_
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from main import db, Conversation, ConversationEntry, limiter
+from main import db, Conversation, ConversationEntry, limiter, csrf
 from models import Payment, PaymentStatus
 from stripe_manager import StripeManager
 from utils.validators import SecurityValidator
@@ -703,6 +703,7 @@ def payments():
 @admin_bp.route('/api/payments/config/test', methods=['GET'])
 @admin_required
 @limiter.limit("10 per minute")
+@csrf.exempt
 def api_test_stripe_config():
     """Test Stripe configuration"""
     try:
@@ -719,6 +720,7 @@ def api_test_stripe_config():
 @admin_bp.route('/api/payments/create', methods=['POST'])
 @admin_required
 @limiter.limit("10 per minute")
+@csrf.exempt
 def api_create_payment():
     """Create a new payment link or invoice"""
     try:

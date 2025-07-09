@@ -123,6 +123,26 @@ class SecurityValidator:
     """Security-focused validation utilities"""
     
     @staticmethod
+    def is_valid_email(email: str) -> bool:
+        """
+        Validate email address format
+        
+        Args:
+            email: Email address to validate
+            
+        Returns:
+            bool: True if email is valid
+        """
+        if not email or not isinstance(email, str):
+            return False
+        
+        # Use the validators library for robust email validation
+        try:
+            return validators.email(email.strip())
+        except Exception:
+            return False
+    
+    @staticmethod
     def check_rate_limit_key(key: str) -> str:
         """
         Generate a safe rate limit key
