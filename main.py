@@ -724,6 +724,13 @@ class ConversationChain:
                 self.conversation.is_complete = True
                 self.conversation.completion_time = datetime.utcnow()
                 
+                # **🚀 CRITICAL ADDITION: Auto-generate deliverable when loop completes**
+                try:
+                    deliverable_result = self._generate_conversation_deliverable()
+                    logging.info(f"✅ DELIVERABLE GENERATED: {deliverable_result.get('filename', 'Unknown')} ({deliverable_result.get('file_size', 'Unknown size')})")
+                except Exception as e:
+                    logging.error(f"❌ DELIVERABLE GENERATION FAILED: {str(e)}")
+                
                 # Send completion notification
                 from notifications import notification_manager, NotificationLevel
                 notification_manager.add_notification(
@@ -907,6 +914,28 @@ class ConversationChain:
             if is_fully_complete:
                 logging.info(f"🎯 LOOP COMPLETED: All {total_agents_executed} agents executed successfully")
                 loop_status = "completed"
+                
+                # **🚀 CRITICAL ADDITION: Auto-generate deliverable when loop completes**
+                try:
+                    deliverable_result = self._generate_conversation_deliverable()
+                    logging.info(f"✅ DELIVERABLE GENERATED: {deliverable_result.get('filename', 'Unknown')} ({deliverable_result.get('file_size', 'Unknown size')})")
+                    
+                    # Add deliverable info to loop results
+                    loop_results.append({
+                        "agent_name": "DeliverableGenerator",
+                        "deliverable_created": True,
+                        "filename": deliverable_result.get('filename'),
+                        "download_url": f"/download/{deliverable_result.get('filename')}",
+                        "file_size": deliverable_result.get('file_size')
+                    })
+                    
+                except Exception as e:
+                    logging.error(f"❌ DELIVERABLE GENERATION FAILED: {str(e)}")
+                    loop_results.append({
+                        "agent_name": "DeliverableGenerator", 
+                        "deliverable_created": False,
+                        "error": str(e)
+                    })
             else:
                 logging.warning(f"⚠️ LOOP INCOMPLETE: Only {total_agents_executed}/{len(self.agents)} agents executed")
                 loop_status = "incomplete"
@@ -979,6 +1008,51 @@ class ConversationChain:
     def is_complete(self):
         """Check if conversation is complete"""
         return self.conversation.is_complete
+    
+    def _generate_conversation_deliverable(self):
+        """Generate comprehensive deliverable ZIP file from completed conversation"""
+        try:
+            from utils.deliverable_generator import DeliverableGenerator
+            
+            # Get all conversation entries
+            conversation_history = self.get_conversation_history()
+            
+            if not conversation_history:
+                raise Exception("No conversation history found for deliverable generation")
+            
+            # Extract initial input and agent insights
+            initial_input = conversation_history[0].get('input_text', 'Unknown prompt')
+            agent_insights = []
+            
+            for entry in conversation_history:
+                agent_insights.append({
+                    'agent_name': entry.get('agent_name', 'Unknown'),
+                    'response': entry.get('response_text', ''),
+                    'next_question': entry.get('next_question', ''),
+                    'processing_time': entry.get('processing_time_seconds', 0)
+                })
+            
+            # Generate deliverable using EOS system
+            deliverable_data = {
+                'conversation_id': self.conversation.id,
+                'initial_input': initial_input,
+                'agent_insights': agent_insights,
+                'completion_time': self.conversation.completion_time.isoformat() if self.conversation.completion_time else datetime.utcnow().isoformat(),
+                'total_agents_executed': len(agent_insights),
+                'session_id': self.conversation.session_id
+            }
+            
+            # Generate ZIP package
+            generator = DeliverableGenerator()
+            result = generator.create_comprehensive_package(deliverable_data)
+            
+            logging.info(f"📦 DELIVERABLE PACKAGE CREATED: {result.get('filename')} ({result.get('file_size')})")
+            
+            return result
+            
+        except Exception as e:
+            logging.error(f"Error generating conversation deliverable: {str(e)}")
+            raise
 
 @app.route('/')
 def index():
