@@ -1253,6 +1253,30 @@ def reset_conversation():
         logging.error(f"Error resetting conversation: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+# Stripe webhook endpoint
+@app.route('/webhooks/stripe', methods=['POST'])
+@limiter.exempt  # Stripe webhooks shouldn't be rate limited
+def stripe_webhook():
+    """Handle Stripe webhook events"""
+    try:
+        from stripe_manager import StripeManager
+        
+        payload = request.get_data()
+        sig_header = request.headers.get('Stripe-Signature')
+        
+        stripe_manager = StripeManager()
+        result = stripe_manager.handle_webhook(payload, sig_header)
+        
+        if result['success']:
+            return jsonify({'status': 'success'}), 200
+        else:
+            logging.error(f"Webhook processing failed: {result.get('error')}")
+            return jsonify({'status': 'error', 'message': result.get('error')}), 400
+            
+    except Exception as e:
+        logging.error(f"Error processing Stripe webhook: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 @app.route('/list_conversations')
 @limiter.limit("20 per minute")
 def list_conversations():

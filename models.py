@@ -145,3 +145,94 @@ def update_response_length(mapper, connection, target):
     """Automatically update response length before update"""
     if target.response_text:
         target.response_length = len(target.response_text)
+
+class UserFeedback(db.Model):
+    """Model for storing user feedback on agent responses"""
+    __tablename__ = 'user_feedback'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    conversation_entry_id = db.Column(db.Integer, db.ForeignKey('conversation_entries.id'), nullable=False)
+    feedback_type = db.Column(db.String(20), nullable=False)  # clarity, empathy, actionability, overall
+    rating = db.Column(db.Integer, nullable=False)  # 1-5 scale
+    comment = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    user_session = db.Column(db.String(128), nullable=True)
+    
+    # Relationship to conversation entry
+    entry = db.relationship('ConversationEntry', backref='feedback')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'conversation_entry_id': self.conversation_entry_id,
+            'feedback_type': self.feedback_type,
+            'rating': self.rating,
+            'comment': self.comment,
+            'created_at': self.created_at.isoformat(),
+            'user_session': self.user_session
+        }
+
+class PaymentStatus:
+    """Enum for payment status"""
+    PENDING = "pending"
+    PAID = "paid"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+class Payment(db.Model):
+    """Model for storing Stripe payment records"""
+    __tablename__ = 'payments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    stripe_payment_id = db.Column(db.String(100), nullable=True, unique=True)  # Stripe payment ID
+    stripe_invoice_id = db.Column(db.String(100), nullable=True, unique=True)  # Stripe invoice ID
+    project_name = db.Column(db.String(200), nullable=False)
+    client_name = db.Column(db.String(100), nullable=False)
+    client_email = db.Column(db.String(100), nullable=False)
+    amount = db.Column(db.Float, nullable=False)  # Amount in dollars
+    currency = db.Column(db.String(3), default='usd', nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    payment_type = db.Column(db.String(20), nullable=False)  # 'link' or 'invoice'
+    status = db.Column(db.String(20), default=PaymentStatus.PENDING, nullable=False)
+    payment_url = db.Column(db.String(500), nullable=True)  # Stripe payment/invoice URL
+    due_date = db.Column(db.DateTime, nullable=True)  # For invoices
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    paid_at = db.Column(db.DateTime, nullable=True)  # When payment was completed
+    
+    # Database indexes for performance
+    __table_args__ = (
+        Index('idx_payment_status', 'status'),
+        Index('idx_payment_client', 'client_email'),
+        Index('idx_payment_created', 'created_at'),
+    )
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'stripe_payment_id': self.stripe_payment_id,
+            'stripe_invoice_id': self.stripe_invoice_id,
+            'project_name': self.project_name,
+            'client_name': self.client_name,
+            'client_email': self.client_email,
+            'amount': self.amount,
+            'currency': self.currency,
+            'description': self.description,
+            'payment_type': self.payment_type,
+            'status': self.status,
+            'payment_url': self.payment_url,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+            'paid_at': self.paid_at.isoformat() if self.paid_at else None
+        }
+    
+    def get_status_badge(self):
+        """Get Bootstrap badge class for status display"""
+        status_classes = {
+            PaymentStatus.PENDING: 'warning',
+            PaymentStatus.PAID: 'success',
+            PaymentStatus.FAILED: 'danger',
+            PaymentStatus.CANCELLED: 'secondary'
+        }
+        return status_classes.get(self.status, 'secondary')

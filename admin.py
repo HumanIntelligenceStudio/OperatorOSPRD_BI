@@ -13,6 +13,8 @@ from sqlalchemy import func, desc, and_
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from main import db, Conversation, ConversationEntry, limiter
+from models import Payment, PaymentStatus
+from stripe_manager import StripeManager
 from utils.validators import SecurityValidator
 from config import Config
 from notifications import notification_manager, system_monitor, NotificationLevel
@@ -689,3 +691,201 @@ def api_clarity_analytics():
     except Exception as e:
         logging.error(f"Error getting clarity analytics: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+# Stripe Payment Management Endpoints
+@admin_bp.route('/payments')
+@admin_required
+@limiter.limit("20 per minute")
+def payments():
+    """Payment management page"""
+    return render_template('admin/payments.html')
+
+@admin_bp.route('/api/payments/config/test', methods=['GET'])
+@admin_required
+@limiter.limit("10 per minute")
+def api_test_stripe_config():
+    """Test Stripe configuration"""
+    try:
+        stripe_manager = StripeManager()
+        result = stripe_manager.test_stripe_connection()
+        return jsonify(result)
+    except Exception as e:
+        logging.error(f"Error testing Stripe config: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to test Stripe configuration: {str(e)}'
+        }), 500
+
+@admin_bp.route('/api/payments/create', methods=['POST'])
+@admin_required
+@limiter.limit("10 per minute")
+def api_create_payment():
+    """Create a new payment link or invoice"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['project_name', 'client_name', 'client_email', 'amount', 'payment_type']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({
+                    'success': False,
+                    'error': f'Missing required field: {field}'
+                }), 400
+        
+        # Validate email format
+        if not SecurityValidator.is_valid_email(data['client_email']):
+            return jsonify({
+                'success': False,
+                'error': 'Invalid email address format'
+            }), 400
+        
+        # Validate amount
+        try:
+            amount = float(data['amount'])
+            if amount <= 0:
+                raise ValueError("Amount must be positive")
+        except (ValueError, TypeError):
+            return jsonify({
+                'success': False,
+                'error': 'Invalid amount - must be a positive number'
+            }), 400
+        
+        stripe_manager = StripeManager()
+        
+        if data['payment_type'] == 'link':
+            result = stripe_manager.create_payment_link(
+                project_name=data['project_name'],
+                client_name=data['client_name'],
+                client_email=data['client_email'],
+                amount=amount,
+                description=data.get('description', '')
+            )
+        elif data['payment_type'] == 'invoice':
+            due_days = data.get('due_days', 30)
+            result = stripe_manager.create_invoice(
+                project_name=data['project_name'],
+                client_name=data['client_name'],
+                client_email=data['client_email'],
+                amount=amount,
+                description=data.get('description', ''),
+                due_days=due_days
+            )
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid payment type - must be "link" or "invoice"'
+            }), 400
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"Error creating payment: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to create payment: {str(e)}'
+        }), 500
+
+@admin_bp.route('/api/payments', methods=['GET'])
+@admin_required
+@limiter.limit("30 per minute")
+def api_get_payments():
+    """Get list of payments with filtering and pagination"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = min(request.args.get('per_page', 20, type=int), 100)
+        status_filter = request.args.get('status')
+        search_query = request.args.get('search', '').strip()
+        
+        # Build query
+        query = Payment.query
+        
+        # Apply status filter
+        if status_filter and status_filter in [PaymentStatus.PENDING, PaymentStatus.PAID, PaymentStatus.FAILED, PaymentStatus.CANCELLED]:
+            query = query.filter(Payment.status == status_filter)
+        
+        # Apply search filter
+        if search_query:
+            search_pattern = f'%{search_query}%'
+            query = query.filter(
+                db.or_(
+                    Payment.project_name.ilike(search_pattern),
+                    Payment.client_name.ilike(search_pattern),
+                    Payment.client_email.ilike(search_pattern),
+                    Payment.description.ilike(search_pattern)
+                )
+            )
+        
+        # Order by most recent first
+        query = query.order_by(Payment.created_at.desc())
+        
+        # Paginate
+        payments = query.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'payments': [payment.to_dict() for payment in payments.items],
+                'pagination': {
+                    'page': page,
+                    'per_page': per_page,
+                    'total': payments.total,
+                    'pages': payments.pages,
+                    'has_next': payments.has_next,
+                    'has_prev': payments.has_prev
+                }
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"Error fetching payments: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to fetch payments'
+        }), 500
+
+@admin_bp.route('/api/payments/stats', methods=['GET'])
+@admin_required
+@limiter.limit("30 per minute")
+def api_payment_stats():
+    """Get payment statistics"""
+    try:
+        days = request.args.get('days', 30, type=int)
+        stripe_manager = StripeManager()
+        stats = stripe_manager.get_payment_stats(days)
+        
+        return jsonify({
+            'success': True,
+            'data': stats
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting payment stats: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to get payment statistics'
+        }), 500
+
+@admin_bp.route('/api/payments/<int:payment_id>', methods=['GET'])
+@admin_required
+@limiter.limit("30 per minute")
+def api_get_payment_detail(payment_id):
+    """Get detailed payment information"""
+    try:
+        payment = Payment.query.get_or_404(payment_id)
+        
+        return jsonify({
+            'success': True,
+            'data': payment.to_dict()
+        })
+        
+    except Exception as e:
+        logging.error(f"Error fetching payment detail: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to fetch payment details'
+        }), 500
