@@ -75,7 +75,10 @@ real_estate_engine = RealEstateEngine()
 
 # Initialize Enhanced 11-Agent Chain and Business Package Generator
 from enhanced_conversation_chain import Enhanced11AgentChain
-from business_package_generator import business_package_generator
+from business_package_generator import BusinessPackageGenerator
+
+# Create business package generator instance
+business_package_generator = BusinessPackageGenerator()
 
 # Initialize notification system with SocketIO
 from notifications import notification_manager, system_monitor

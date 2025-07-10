@@ -1,0 +1,125 @@
+# 🧪 OPERATOROS SYSTEM TEST PROMPT
+
+## **REPLIT AGENT TEST COMMAND**
+
+*Copy this exact prompt to your Replit agent:*
+
+---
+
+**"Run a comprehensive test of the OperatorOS system to validate both UI and backend functionality. Test the complete 11-agent Executive AI Advisory Board pipeline with a real business scenario and verify that professional .md business packages are generated correctly.**
+
+## 🎯 **TEST SCENARIO**
+
+### **Business Prompt to Test:**
+**"I want to launch a premium AI consulting firm that helps Fortune 500 companies implement AI strategies. I need a complete business plan and go-to-market strategy."**
+
+## 🧪 **TEST VALIDATION CHECKLIST**
+
+### **1. UI Entry Point Test**
+- [ ] **Interface Load**: Main UI loads cleanly without errors
+- [ ] **Prompt Input**: Test prompt accepts and processes correctly
+- [ ] **Agent Pipeline**: All 11 agents execute (Analyst → Researcher → Writer → CSA → COO → CTO → CFO → CMO → CPO → CIO → Refiner)
+- [ ] **Processing Display**: Progress indicators show during execution
+- [ ] **Download Generation**: ZIP file with .md files generates automatically
+- [ ] **Download Success**: File downloads to computer successfully
+
+### **2. Backend API Test**
+- [ ] **API Endpoint**: `/api/` endpoint accepts POST requests with business prompts
+- [ ] **Authentication**: API access works with proper tokens/keys
+- [ ] **Same Pipeline**: Identical 11-agent execution as UI
+- [ ] **Same Output**: Identical .md business package generation
+- [ ] **File Delivery**: API returns download link or file stream
+
+### **3. C-Suite Integration Test**
+- [ ] **All 7 C-Suite Agents**: CSA, COO, CTO, CFO, CMO, CPO, CIO all contribute
+- [ ] **Domain Expertise**: Each agent provides specialized business intelligence
+- [ ] **Pipeline Flow**: Smooth agent-to-agent context passing
+- [ ] **Execution Speed**: Complete pipeline under 60 seconds
+- [ ] **Quality Output**: Professional consulting-grade analysis
+
+### **4. .md Package Content Test**
+- [ ] **Executive_Summary.md**: Strategic overview and recommendations
+- [ ] **Business_Analysis.md**: Market analysis and competitive positioning
+- [ ] **Implementation_Plan.md**: Step-by-step execution roadmap
+- [ ] **Financial_Projections.md**: Revenue models and cost analysis
+- [ ] **Marketing_Strategy.md**: Brand positioning and growth tactics
+- [ ] **Operations_Plan.md**: Workflow optimization and process design
+- [ ] **Technology_Strategy.md**: Tech stack and digital transformation
+- [ ] **Risk_Assessment.md**: Challenges and mitigation strategies
+- [ ] **Success_Metrics.md**: KPIs and measurement frameworks
+- [ ] **Action_Items.md**: Immediate next steps and timelines
+
+### **5. System Performance Test**
+- [ ] **UI Responsiveness**: Clean, modern interface with smooth interactions
+- [ ] **Mobile Compatibility**: Works perfectly on mobile and desktop
+- [ ] **Error Handling**: Graceful handling of any issues
+- [ ] **Admin Dashboard**: All admin features accessible and functional
+- [ ] **Loading States**: Visual feedback throughout the process
+
+## 📊 **TEST RESULTS REPORT**
+
+### **After running the test, provide:**
+
+### **Execution Summary:**
+- **Total Processing Time**: ___ seconds
+- **Agents Executed**: ___ out of 11
+- **Files Generated**: ___ out of 10 .md files
+- **Download Success**: ✅ or ❌
+- **Overall Status**: ✅ PASS or ❌ FAIL
+
+### **Content Quality Sample:**
+**Provide a sample from Executive_Summary.md to show quality:**
+```
+[Insert first 3-4 lines of Executive_Summary.md content here]
+```
+
+### **Performance Metrics:**
+- **UI Load Time**: ___ seconds
+- **Agent Pipeline Speed**: ___ seconds
+- **File Generation Time**: ___ seconds
+- **Download Delivery**: ___ seconds
+- **Total User Experience**: ___ seconds
+
+### **Error Log:**
+- **UI Errors**: [List any UI issues encountered]
+- **Backend Errors**: [List any API/processing errors]
+- **Agent Failures**: [List any agent execution failures]
+- **File Generation Issues**: [List any .md generation problems]
+
+## 🎯 **SUCCESS CRITERIA**
+
+### **✅ Test Passes If:**
+- **UI generates complete .md business package** for the AI consulting firm
+- **Backend API generates identical .md business package**
+- **All 11 agents execute successfully** in under 60 seconds
+- **10 professional .md files** contain high-quality business intelligence
+- **Download system works reliably** for both UI and backend
+- **Content quality** meets consulting-grade standards
+
+### **❌ Test Fails If:**
+- **Missing .md files** in the generated package
+- **Poor content quality** or generic responses
+- **Agent pipeline failures** or incomplete execution
+- **UI/backend inconsistencies** in output
+- **Download system failures** or broken file delivery
+
+## 🔧 **TROUBLESHOOTING PROTOCOL**
+
+### **If Test Fails:**
+1. **Identify specific failure points** from the checklist
+2. **Check agent execution logs** for pipeline issues
+3. **Verify file generation system** is working
+4. **Test download endpoints** for delivery issues
+5. **Validate content quality** meets professional standards
+
+### **If Test Passes:**
+1. **Document successful execution** with metrics
+2. **Validate content quality** with sample outputs
+3. **Confirm system readiness** for production use
+4. **Report performance benchmarks** for optimization
+
+---
+
+**TEST OBJECTIVE: Validate that OperatorOS generates professional business intelligence packages from both UI and backend entry points, with complete C-Suite analysis suitable for Fortune 500 consulting engagements.**
+
+**EXPECTED OUTCOME: Complete validation that any business prompt generates a comprehensive, professional .md business package through the 11-agent Executive AI Advisory Board pipeline."**
