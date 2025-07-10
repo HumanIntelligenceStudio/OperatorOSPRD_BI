@@ -290,6 +290,48 @@ class UserFeedback(db.Model):
             'user_session': self.user_session
         }
 
+# Dynamic Agent Creation Models
+class DynamicAgent(db.Model):
+    """Model for storing user-created dynamic agents"""
+    __tablename__ = 'dynamic_agents'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_session = db.Column(db.String(128), nullable=False, index=True)
+    agent_code = db.Column(db.String(20), nullable=False)  # e.g., 'CLO', 'COACH'
+    agent_name = db.Column(db.String(100), nullable=False)  # e.g., 'Chief Lifestyle Officer'
+    agent_function = db.Column(db.Text, nullable=False)  # The function they will perform
+    system_prompt = db.Column(db.Text, nullable=False)  # Generated system prompt
+    domain = db.Column(db.String(200), nullable=False)  # Agent's domain of expertise
+    personality = db.Column(db.String(200), nullable=False)  # Agent's personality traits
+    icon = db.Column(db.String(10), default='🤖')  # Agent's icon
+    is_active = db.Column(db.Boolean, default=True)
+    usage_count = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Database indexes for performance
+    __table_args__ = (
+        Index('idx_dynamic_agent_user_code', 'user_session', 'agent_code'),
+        Index('idx_dynamic_agent_user_active', 'user_session', 'is_active'),
+    )
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_session': self.user_session,
+            'agent_code': self.agent_code,
+            'agent_name': self.agent_name,
+            'agent_function': self.agent_function,
+            'system_prompt': self.system_prompt,
+            'domain': self.domain,
+            'personality': self.personality,
+            'icon': self.icon,
+            'is_active': self.is_active,
+            'usage_count': self.usage_count,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
 class PaymentStatus:
     """Enum for payment status"""
     PENDING = "pending"

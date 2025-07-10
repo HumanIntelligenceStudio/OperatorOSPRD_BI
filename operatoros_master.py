@@ -8,7 +8,8 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 from openai import OpenAI
 from config import Config
-from models import db, Conversation, ConversationEntry
+from models import db, Conversation, ConversationEntry, DynamicAgent
+from dynamic_agent_creator import DynamicAgentCreator
 
 class OperatorOSMaster:
     """
@@ -18,6 +19,9 @@ class OperatorOSMaster:
     
     def __init__(self):
         self.client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+        
+        # Initialize dynamic agent creator
+        self.dynamic_creator = DynamicAgentCreator()
         
         # Initialize C-Suite agent definitions
         self.agents = {
@@ -189,8 +193,17 @@ Your path to complete autonomy starts now. What's your first move?"""
                 'error': str(e)
             }
     
-    def route_to_agent(self, input_text: str) -> Dict[str, Any]:
-        """Route request to specific C-Suite agent"""
+    def route_to_agent(self, input_text: str, user_session: str = None) -> Dict[str, Any]:
+        """Route request to specific C-Suite agent or dynamic agent"""
+        
+        # Check for agent creation commands first
+        if self._is_agent_creation_command(input_text):
+            return self.create_dynamic_agent(input_text, user_session)
+        
+        # Check for agent management commands
+        management_result = self._handle_agent_management(input_text, user_session)
+        if management_result:
+            return management_result
         
         # Parse agent code from input (e.g., "@CFO: What should I invest in?")
         agent_code = None
@@ -202,11 +215,18 @@ Your path to complete autonomy starts now. What's your first move?"""
                 agent_code = parts[0][1:].upper()  # Remove @ and uppercase
                 clean_input = parts[1].strip()
         
+        # Check if it's a built-in C-Suite agent
         if agent_code and agent_code in self.agents:
             return self._generate_agent_response(agent_code, clean_input)
-        else:
-            # Route to most appropriate agent based on content
-            return self._intelligent_routing(input_text)
+        
+        # Check if it's a dynamic agent
+        if agent_code and user_session:
+            dynamic_agent = self.dynamic_creator.get_agent_by_code(user_session, agent_code)
+            if dynamic_agent:
+                return self._generate_dynamic_agent_response(dynamic_agent, clean_input)
+        
+        # Route to most appropriate agent based on content
+        return self._intelligent_routing(input_text)
     
     def cross_agent_analysis(self, input_text: str) -> Dict[str, Any]:
         """Generate multi-agent collaborative analysis for complex decisions"""
@@ -403,6 +423,148 @@ Synthesize recommendations into coordinated action plans that advance overall au
 *Your OperatorOS C-Suite is coordinated and ready for execution.*"""
         
         return formatted
+    
+    def _is_agent_creation_command(self, input_text: str) -> bool:
+        """Check if input is an agent creation command"""
+        return self.dynamic_creator.parse_agent_command(input_text) is not None
+    
+    def _handle_agent_management(self, input_text: str, user_session: str) -> Optional[Dict[str, Any]]:
+        """Handle agent management commands"""
+        if not user_session:
+            return None
+            
+        input_lower = input_text.lower()
+        
+        # List agents command
+        if 'list' in input_lower and 'agents' in input_lower:
+            return self._list_user_agents(user_session)
+        
+        # Retire agent command
+        if 'retire' in input_lower and 'agent' in input_lower:
+            agent_code = self._extract_agent_code_from_command(input_text)
+            if agent_code:
+                result = self.dynamic_creator.retire_agent(user_session, agent_code)
+                return {
+                    'response': result['message'] if result['success'] else result['error'],
+                    'success': result['success'],
+                    'type': 'agent_management'
+                }
+        
+        # Modify agent command
+        if 'modify' in input_lower and 'agent' in input_lower:
+            # Parse modify command: "modify CLO to focus on crypto nomads"
+            parts = input_text.split(' to ', 1)
+            if len(parts) == 2:
+                agent_code = self._extract_agent_code_from_command(parts[0])
+                new_function = parts[1].strip()
+                if agent_code:
+                    result = self.dynamic_creator.modify_agent(user_session, agent_code, new_function)
+                    return {
+                        'response': result['message'] if result['success'] else result['error'],
+                        'success': result['success'],
+                        'type': 'agent_management'
+                    }
+        
+        return None
+    
+    def _extract_agent_code_from_command(self, command: str) -> Optional[str]:
+        """Extract agent code from management command"""
+        import re
+        match = re.search(r'\b([A-Z]{2,4})\b', command.upper())
+        return match.group(1) if match else None
+    
+    def _list_user_agents(self, user_session: str) -> Dict[str, Any]:
+        """List all agents for a user"""
+        agents = self.dynamic_creator.get_user_agents(user_session)
+        
+        if not agents:
+            response = """🤖 **YOUR OPERATOROS AGENT ROSTER**
+
+**Built-in C-Suite Agents:**
+💰 @CFO: Chief Financial Officer - Financial strategy and wealth building
+⚙️ @COO: Chief Operating Officer - Operations and productivity optimization
+🎯 @CSA: Chief Strategy Agent - Strategic planning and autonomy roadmap
+🎨 @CMO: Chief Marketing Officer - Personal brand and income generation
+💻 @CTO: Chief Technology Officer - Technology and automation systems
+🌱 @CPO: Chief People Officer - Health, relationships, and personal development
+🧠 @CIO: Chief Intelligence Officer - Intelligence synthesis and decision support
+
+**Custom Dynamic Agents:** None created yet
+
+Create your first custom agent with: "OperatorOS, spin up [AGENT_NAME] who will [FUNCTION]"
+"""
+        else:
+            agent_list = []
+            for agent in agents:
+                agent_list.append(f"{agent['icon']} @{agent['agent_code']}: {agent['agent_name']} - {agent['agent_function']}")
+            
+            response = f"""🤖 **YOUR OPERATOROS AGENT ROSTER**
+
+**Built-in C-Suite Agents:**
+💰 @CFO: Chief Financial Officer - Financial strategy and wealth building
+⚙️ @COO: Chief Operating Officer - Operations and productivity optimization
+🎯 @CSA: Chief Strategy Agent - Strategic planning and autonomy roadmap
+🎨 @CMO: Chief Marketing Officer - Personal brand and income generation
+💻 @CTO: Chief Technology Officer - Technology and automation systems
+🌱 @CPO: Chief People Officer - Health, relationships, and personal development
+🧠 @CIO: Chief Intelligence Officer - Intelligence synthesis and decision support
+
+**Custom Dynamic Agents:**
+{chr(10).join(agent_list)}
+
+Total custom agents: {len(agents)}
+"""
+        
+        return {
+            'response': response,
+            'success': True,
+            'type': 'agent_list'
+        }
+    
+    def create_dynamic_agent(self, command: str, user_session: str) -> Dict[str, Any]:
+        """Create a dynamic agent from user command"""
+        if not user_session:
+            return {
+                'response': 'Unable to create agent without user session',
+                'success': False,
+                'type': 'agent_creation'
+            }
+        
+        result = self.dynamic_creator.create_dynamic_agent(command, user_session)
+        
+        return {
+            'response': result['message'] if result['success'] else result['error'],
+            'success': result['success'],
+            'type': 'agent_creation',
+            'agent_data': result.get('agent', {})
+        }
+    
+    def _generate_dynamic_agent_response(self, agent: DynamicAgent, input_text: str) -> Dict[str, Any]:
+        """Generate response from a dynamic agent"""
+        result = self.dynamic_creator.generate_agent_response(agent, input_text)
+        
+        if result['success']:
+            formatted_response = f"""{result['icon']} **{result['agent_name']} Response**
+
+{result['response']}
+
+---
+*Domain: {agent.domain}*
+*Usage Count: {agent.usage_count}*"""
+            
+            return {
+                'response': formatted_response,
+                'tokens_used': result['tokens_used'],
+                'success': True,
+                'agent': result['agent_code'],
+                'type': 'dynamic_agent_response'
+            }
+        else:
+            return {
+                'response': result['error'],
+                'success': False,
+                'type': 'dynamic_agent_response'
+            }
     
     def _get_agent_nrt_focus(self, agent_code: str) -> str:
         """Get NRT specialization for each agent"""

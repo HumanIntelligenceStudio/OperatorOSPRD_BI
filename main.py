@@ -1901,7 +1901,7 @@ def daily_autonomy_briefing():
 @limiter.limit("15 per minute")
 @csrf.exempt
 def operatoros_agent_consultation():
-    """Route request to specific OperatorOS C-Suite agent"""
+    """Route request to specific OperatorOS C-Suite agent or dynamic agent"""
     try:
         data = request.get_json()
         if not data or 'input' not in data:
@@ -1909,8 +1909,14 @@ def operatoros_agent_consultation():
         
         input_text = data['input'].strip()
         
-        # Route to appropriate agent
-        result = operatoros_master.route_to_agent(input_text)
+        # Get user session for dynamic agents
+        user_session = session.get('session_id')
+        if not user_session:
+            session['session_id'] = str(uuid.uuid4())
+            user_session = session['session_id']
+        
+        # Route to appropriate agent (now supports dynamic agents)
+        result = operatoros_master.route_to_agent(input_text, user_session)
         
         if result['success']:
             # Create conversation record
@@ -1951,7 +1957,8 @@ def operatoros_agent_consultation():
                 "response": result['response'],
                 "tokens_used": result.get('tokens_used', 0),
                 "type": result.get('type', 'agent_response'),
-                "metrics": operatoros_master.get_autonomy_metrics()
+                "metrics": operatoros_master.get_autonomy_metrics(),
+                "agent_data": result.get('agent_data', {})  # For dynamic agent creation
             })
         else:
             return jsonify({"error": result.get('error', 'Agent consultation failed')}), 500
@@ -2035,6 +2042,173 @@ def operatoros_metrics():
     except Exception as e:
         logging.error(f"Error getting OperatorOS metrics: {str(e)}")
         return jsonify({"error": f"Metrics retrieval failed: {str(e)}"}), 500
+
+# Dynamic Agent Creation API Endpoints
+@app.route('/api/agents/create', methods=['POST'])
+@limiter.limit("10 per minute")
+@csrf.exempt
+def create_dynamic_agent():
+    """Create a new dynamic agent with natural language command"""
+    try:
+        data = request.get_json()
+        if not data or 'command' not in data:
+            return jsonify({"error": "Agent creation command is required"}), 400
+        
+        command = data['command'].strip()
+        
+        # Get user session
+        user_session = session.get('session_id')
+        if not user_session:
+            session['session_id'] = str(uuid.uuid4())
+            user_session = session['session_id']
+        
+        # Create dynamic agent
+        result = operatoros_master.create_dynamic_agent(command, user_session)
+        
+        # Create conversation record if successful
+        if result['success']:
+            conversation_id = str(uuid.uuid4())
+            conversation = Conversation(
+                id=conversation_id,
+                initial_input=command,
+                current_agent_index=0,
+                is_complete=True,
+                session_id=user_session,
+                user_ip=get_remote_address()
+            )
+            db.session.add(conversation)
+            
+            entry = ConversationEntry(
+                conversation_id=conversation_id,
+                agent_name="Dynamic Agent Creator",
+                agent_role="Agent Creation System",
+                input_text=command,
+                response_text=result['response'],
+                processing_time_seconds=0.3,
+                tokens_used=0,
+                model_used="system",
+                api_provider="internal",
+                response_length=len(result['response']),
+                error_occurred=False
+            )
+            db.session.add(entry)
+            db.session.commit()
+            
+            session['current_conversation_id'] = conversation_id
+        
+        return jsonify({
+            "success": result['success'],
+            "response": result['response'],
+            "type": result['type'],
+            "agent_data": result.get('agent_data', {}),
+            "conversation_id": conversation_id if result['success'] else None
+        })
+        
+    except Exception as e:
+        logging.error(f"Error creating dynamic agent: {str(e)}")
+        return jsonify({"error": f"Agent creation failed: {str(e)}"}), 500
+
+@app.route('/api/agents/list', methods=['GET'])
+@limiter.limit("20 per minute")
+def list_user_agents():
+    """List all dynamic agents for the current user"""
+    try:
+        user_session = session.get('session_id')
+        if not user_session:
+            return jsonify({
+                "success": True,
+                "agents": [],
+                "built_in_agents": [
+                    {"code": "CFO", "name": "Chief Financial Officer", "icon": "💰"},
+                    {"code": "COO", "name": "Chief Operating Officer", "icon": "⚙️"},
+                    {"code": "CSA", "name": "Chief Strategy Agent", "icon": "🎯"},
+                    {"code": "CMO", "name": "Chief Marketing Officer", "icon": "🎨"},
+                    {"code": "CTO", "name": "Chief Technology Officer", "icon": "💻"},
+                    {"code": "CPO", "name": "Chief People Officer", "icon": "🌱"},
+                    {"code": "CIO", "name": "Chief Intelligence Officer", "icon": "🧠"}
+                ]
+            })
+        
+        # Get user's dynamic agents
+        from models import DynamicAgent
+        agents = DynamicAgent.query.filter_by(
+            user_session=user_session, 
+            is_active=True
+        ).order_by(DynamicAgent.created_at.desc()).all()
+        
+        agent_list = [agent.to_dict() for agent in agents]
+        
+        return jsonify({
+            "success": True,
+            "agents": agent_list,
+            "built_in_agents": [
+                {"code": "CFO", "name": "Chief Financial Officer", "icon": "💰"},
+                {"code": "COO", "name": "Chief Operating Officer", "icon": "⚙️"},
+                {"code": "CSA", "name": "Chief Strategy Agent", "icon": "🎯"},
+                {"code": "CMO", "name": "Chief Marketing Officer", "icon": "🎨"},
+                {"code": "CTO", "name": "Chief Technology Officer", "icon": "💻"},
+                {"code": "CPO", "name": "Chief People Officer", "icon": "🌱"},
+                {"code": "CIO", "name": "Chief Intelligence Officer", "icon": "🧠"}
+            ]
+        })
+        
+    except Exception as e:
+        logging.error(f"Error listing agents: {str(e)}")
+        return jsonify({"error": f"Failed to list agents: {str(e)}"}), 500
+
+@app.route('/api/agents/retire/<agent_code>', methods=['POST'])
+@limiter.limit("10 per minute")
+@csrf.exempt
+def retire_dynamic_agent(agent_code):
+    """Retire (deactivate) a dynamic agent"""
+    try:
+        user_session = session.get('session_id')
+        if not user_session:
+            return jsonify({"error": "User session not found"}), 400
+        
+        # Retire the agent
+        from dynamic_agent_creator import DynamicAgentCreator
+        creator = DynamicAgentCreator()
+        result = creator.retire_agent(user_session, agent_code)
+        
+        return jsonify({
+            "success": result['success'],
+            "message": result['message'] if result['success'] else result['error']
+        })
+        
+    except Exception as e:
+        logging.error(f"Error retiring agent: {str(e)}")
+        return jsonify({"error": f"Agent retirement failed: {str(e)}"}), 500
+
+@app.route('/api/agents/modify/<agent_code>', methods=['POST'])
+@limiter.limit("10 per minute")
+@csrf.exempt
+def modify_dynamic_agent(agent_code):
+    """Modify a dynamic agent's function"""
+    try:
+        data = request.get_json()
+        if not data or 'new_function' not in data:
+            return jsonify({"error": "New function is required"}), 400
+        
+        user_session = session.get('session_id')
+        if not user_session:
+            return jsonify({"error": "User session not found"}), 400
+        
+        new_function = data['new_function'].strip()
+        
+        # Modify the agent
+        from dynamic_agent_creator import DynamicAgentCreator
+        creator = DynamicAgentCreator()
+        result = creator.modify_agent(user_session, agent_code, new_function)
+        
+        return jsonify({
+            "success": result['success'],
+            "message": result['message'] if result['success'] else result['error']
+        })
+        
+    except Exception as e:
+        logging.error(f"Error modifying agent: {str(e)}")
+        return jsonify({"error": f"Agent modification failed: {str(e)}"}), 500
 
 @app.route('/operatoros')
 def operatoros_interface():
