@@ -1054,6 +1054,15 @@ class ConversationChain:
             logging.error(f"Error generating conversation deliverable: {str(e)}")
             raise
 
+@app.route('/test_drone_business.html')
+def test_drone_business():
+    """Serve the drone business test page"""
+    try:
+        with open('test_drone_business.html', 'r') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "Test page not found", 404
+
 @app.route('/')
 def index():
     """Main page with conversation interface"""
