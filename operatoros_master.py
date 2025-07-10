@@ -126,16 +126,35 @@ What would you like to focus on for your autonomy journey?
 Your path to complete autonomy starts now. What's your first move?"""
 
     def daily_autonomy_briefing(self, user_input: str = None) -> Dict[str, Any]:
-        """Generate comprehensive daily autonomy briefing from all agents"""
+        """Generate NRT-focused daily briefing for digital nomad transition"""
         
         briefing_prompt = f"""
-        Generate a comprehensive daily autonomy briefing for someone focused on achieving complete financial and personal independence.
+        Generate a DAILY NRT BRIEFING for digital nomad transition targeting $7,400+ monthly location-independent income.
         
-        User context: {user_input if user_input else "Standard daily check-in"}
+        User context: {user_input if user_input else "Digital nomad transition check-in"}
+        Current income: $7,400/month take-home salary
+        Goal: Digital nomad with location-independent income
         Current autonomy progress: {self.user_context['autonomy_progress']}%
-        Estimated months to financial independence: {self.user_context['financial_independence_months']}
         
-        Provide specific, actionable priorities for today from each agent perspective.
+        Use NRT (Next Right Thing) Framework - identify the single most impactful action for each domain:
+        
+        Format as:
+        🎯 DAILY NRT BRIEFING - Digital Nomad Transition
+        
+        💰 CFO NRT: [Highest impact financial action today for income replacement]
+        ⚙️ COO NRT: [Highest impact operational action for location independence]
+        🎯 CSA NRT: [Highest impact strategic action for nomad timeline]
+        🎨 CMO NRT: [Highest impact marketing action for remote client acquisition]
+        💻 CTO NRT: [Highest impact technology action for nomad infrastructure]
+        🌱 CPO NRT: [Highest impact personal action for nomad readiness]
+        🧠 CIO NRT: [Data synthesis and bottleneck identification]
+        
+        🏆 TODAY'S #1 NRT: [Single most important action today]
+        📊 NOMAD READINESS: [X]% ready for transition
+        ⏰ ESTIMATED TIMELINE: [X] weeks to nomad launch
+        💰 INCOME PROGRESS: $[X] toward $7,400 nomad income goal
+        
+        Focus on actions with highest Impact × Urgency scores for fastest nomad transition.
         """
         
         try:
@@ -247,18 +266,25 @@ Your path to complete autonomy starts now. What's your first move?"""
         Include integration opportunities and progress toward your goal.
         """
         
-        system_prompt = f"""You are the {agent['name']} ({agent_code}) in the OperatorOS C-Suite, focused on {agent['domain']}.
+        system_prompt = f"""You are the {agent['name']} ({agent_code}) in the OperatorOS C-Suite, using the NRT (Next Right Thing) Framework for digital nomad transition.
 
-Your personality is {agent['personality']}. You provide expert guidance in {agent['focus']} to help achieve {agent['goal']}.
+GOAL: Help user transition to digital nomad making $7,400+ monthly location-independent income ASAP.
+Current income: $7,400/month salary (needs to be replaced with location-independent income)
 
-Always include:
-1. Immediate actionable steps
-2. Strategic context for autonomy
-3. Integration opportunities
-4. Progress indicators
-5. Cross-domain impact
+Your NRT specialization:
+{self._get_agent_nrt_focus(agent_code)}
 
-Format responses professionally but personally, as a trusted executive advisor."""
+Your personality is {agent['personality']}. Calculate Impact × Urgency scores for all recommendations.
+
+NRT Response Format:
+1. **Current NRT Assessment** - What's the highest impact action right now?
+2. **Impact Score (1-10)** - How much does this advance nomad income goal?
+3. **Urgency Score (1-10)** - How time-sensitive is this action?
+4. **Implementation Timeline** - How quickly can this be done?
+5. **How this advances nomad goal** - Direct connection to location independence
+6. **Next NRT after completion** - What comes after this action?
+
+Focus on actions that replace salary income fastest while enabling location independence."""
         
         try:
             response = self.client.chat.completions.create(
@@ -322,19 +348,30 @@ Format responses professionally but personally, as a trusted executive advisor."
         return self._generate_agent_response(best_agent, input_text)
     
     def _get_briefing_system_prompt(self) -> str:
-        """System prompt for daily autonomy briefings"""
-        return """You are the Master Agent for OperatorOS, coordinating 7 C-Suite agents for complete life autonomy.
+        """System prompt for NRT-focused daily briefings"""
+        return """You are the Master Agent for OperatorOS using the NRT (Next Right Thing) Framework for digital nomad transition.
 
-Generate daily briefings that provide specific, actionable priorities from each agent's domain:
-- CFO: Financial priorities and wealth-building actions
-- COO: Operational efficiency and automation opportunities  
-- CSA: Strategic focus and autonomy progress
-- CMO: Brand/income generation actions
-- CTO: Technology and automation tasks
-- CPO: Health and development priorities
-- CIO: Key insights and decision support
+GOAL: Generate daily NRT briefings targeting $7,400+ monthly location-independent income transition.
+Current situation: User has $7,400/month salary that needs to be replaced with nomad-compatible income.
 
-Keep each agent's advice concise but actionable. Focus on moving toward complete financial and personal independence."""
+Generate briefings using this EXACT format:
+
+🎯 DAILY NRT BRIEFING - Digital Nomad Transition
+
+💰 CFO NRT: [Highest impact financial action for income replacement]
+⚙️ COO NRT: [Highest impact operational action for location independence]  
+🎯 CSA NRT: [Highest impact strategic action for nomad timeline]
+🎨 CMO NRT: [Highest impact marketing action for remote client acquisition]
+💻 CTO NRT: [Highest impact technology action for nomad infrastructure]
+🌱 CPO NRT: [Highest impact personal action for nomad readiness]
+🧠 CIO NRT: [Data synthesis and bottleneck identification]
+
+🏆 TODAY'S #1 NRT: [Single most important action today]
+📊 NOMAD READINESS: [X]% ready for transition
+⏰ ESTIMATED TIMELINE: [X] weeks to nomad launch
+💰 INCOME PROGRESS: $[X] toward $7,400 nomad income goal
+
+Focus on highest Impact × Urgency scores for fastest nomad transition."""
 
     def _get_multi_agent_system_prompt(self) -> str:
         """System prompt for multi-agent collaborative analysis"""
@@ -366,6 +403,54 @@ Synthesize recommendations into coordinated action plans that advance overall au
 *Your OperatorOS C-Suite is coordinated and ready for execution.*"""
         
         return formatted
+    
+    def _get_agent_nrt_focus(self, agent_code: str) -> str:
+        """Get NRT specialization for each agent"""
+        nrt_specializations = {
+            'CFO': """Financial NRT Focus: Revenue transition from salary to location-independent income
+- Actions that replace salary income fastest
+- Minimize financial risk during transition  
+- Build emergency fund for nomad transition
+- Optimize for tax efficiency and international banking""",
+            
+            'COO': """Operations NRT Focus: Life systems that enable location independence
+- Actions that make you location-agnostic fastest
+- Digitize all necessary life operations
+- Eliminate location-dependent commitments
+- Build remote work capabilities""",
+            
+            'CSA': """Strategy NRT Focus: Fastest path to sustainable nomad lifestyle
+- Actions with highest impact on nomad timeline
+- Risk mitigation for transition period
+- Market validation for nomad income streams
+- Geographic and legal strategy""",
+            
+            'CMO': """Marketing NRT Focus: Personal brand and client acquisition for nomad income
+- Actions that build nomad-compatible client base fastest
+- Online presence that works globally
+- Network building for location-independent opportunities
+- Content strategy for nomad audience""",
+            
+            'CTO': """Technology NRT Focus: Tech stack for nomad lifestyle and income generation
+- Tools that enable work from anywhere
+- Income-generating technology setup
+- Communication and productivity optimization
+- Security and backup systems for nomad life""",
+            
+            'CPO': """People/Personal NRT Focus: Personal optimization for nomad transition
+- Health and wellness systems that travel
+- Relationship management during transition
+- Skill development for nomad success
+- Mental/emotional preparation for lifestyle change""",
+            
+            'CIO': """Intelligence NRT Focus: Data-driven decisions for nomad transition
+- Analyze progress toward nomad readiness
+- Identify bottlenecks in transition timeline
+- Synthesize insights across all domains
+- Predict and mitigate transition risks"""
+        }
+        
+        return nrt_specializations.get(agent_code, "General NRT guidance")
     
     def _format_multi_agent_response(self, content: str) -> str:
         """Format multi-agent collaborative analysis"""
