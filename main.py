@@ -80,6 +80,10 @@ from business_package_generator import BusinessPackageGenerator
 # Create business package generator instance
 business_package_generator = BusinessPackageGenerator()
 
+# Initialize Flow Platform Agents
+from flow_agents import FlowAgentManager
+flow_agent_manager = FlowAgentManager()
+
 # Initialize notification system with SocketIO
 from notifications import notification_manager, system_monitor
 notification_manager.socketio = socketio
@@ -1805,6 +1809,148 @@ def ratelimit_handler(e):
 def request_entity_too_large(error):
     """Handle request too large errors"""
     return jsonify({"error": "Request too large"}), 413
+
+# Flow Platform Routes
+@app.route('/flow')
+def flow_platform():
+    """Replit Flow Platform - Dual-purpose personal flow and project builder"""
+    return render_template('flow_platform.html')
+
+@app.route('/api/flow/generate', methods=['POST'])
+@limiter.limit("10 per minute")
+def generate_personal_flow():
+    """Generate personalized daily flow plan"""
+    try:
+        data = request.get_json()
+        
+        # Validate input
+        energy = data.get('energy')
+        priority = data.get('priority', '').strip()
+        open_loops = data.get('open_loops', '').strip()
+        
+        if not energy or not priority:
+            return jsonify({"success": False, "error": "Energy level and priority are required"}), 400
+        
+        # Generate user ID if not in session
+        if 'user_id' not in session:
+            session['user_id'] = str(uuid.uuid4())
+        
+        user_id = session['user_id']
+        start_time = datetime.utcnow()
+        
+        # Generate flow plan using Flow Agent
+        result = flow_agent_manager.generate_personal_flow(energy, priority, open_loops)
+        
+        processing_time = (datetime.utcnow() - start_time).total_seconds()
+        
+        # Save session to database
+        from models import FlowSession
+        flow_session = FlowSession(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            mode='personal',
+            input_data={
+                'energy': energy,
+                'priority': priority,
+                'open_loops': open_loops
+            },
+            output_data={
+                'response': result.get('response'),
+                'tokens_used': result.get('tokens_used', 0)
+            },
+            tokens_used=result.get('tokens_used', 0),
+            processing_time=processing_time,
+            success=result.get('success', True)
+        )
+        
+        db.session.add(flow_session)
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "response": result.get('response'),
+            "processing_time": processing_time,
+            "tokens_used": result.get('tokens_used', 0),
+            "session_id": flow_session.id
+        })
+        
+    except Exception as e:
+        logging.error(f"Error generating personal flow: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/flow/project/build', methods=['POST'])
+@limiter.limit("5 per minute")
+def build_project_strategy():
+    """Build comprehensive project strategy using 4-agent pipeline"""
+    try:
+        data = request.get_json()
+        
+        # Validate input
+        vision = data.get('vision', '').strip()
+        project_type = data.get('type', '').strip()
+        
+        if not vision or not project_type:
+            return jsonify({"success": False, "error": "Project vision and type are required"}), 400
+        
+        # Generate user ID if not in session
+        if 'user_id' not in session:
+            session['user_id'] = str(uuid.uuid4())
+        
+        user_id = session['user_id']
+        start_time = datetime.utcnow()
+        
+        # Build project strategy using Project Agent pipeline
+        result = flow_agent_manager.build_project_strategy(vision, project_type)
+        
+        processing_time = (datetime.utcnow() - start_time).total_seconds()
+        
+        # Save session to database
+        from models import FlowSession, Project
+        flow_session = FlowSession(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            mode='project',
+            input_data={
+                'vision': vision,
+                'project_type': project_type
+            },
+            output_data={
+                'strategy': result.get('strategy'),
+                'analysis': result.get('analysis'),
+                'research': result.get('research'),
+                'tokens_used': result.get('tokens_used', 0)
+            },
+            tokens_used=result.get('tokens_used', 0),
+            processing_time=processing_time,
+            success=result.get('success', True)
+        )
+        
+        db.session.add(flow_session)
+        
+        # Save as project record
+        project = Project(
+            user_id=user_id,
+            project_name=vision[:100] + '...' if len(vision) > 100 else vision,
+            project_type=project_type,
+            vision_text=vision,
+            strategy_output=result
+        )
+        
+        db.session.add(project)
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "strategy": result.get('strategy'),
+            "processing_time": processing_time,
+            "tokens_used": result.get('tokens_used', 0),
+            "session_id": flow_session.id,
+            "project_id": project.id
+        })
+        
+    except Exception as e:
+        logging.error(f"Error building project strategy: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # Real Estate Engine API Endpoint
 @app.route('/api/real_estate_engine', methods=['POST'])

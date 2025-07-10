@@ -101,19 +101,18 @@ class ConversationEntry(db.Model):
     __table_args__ = (
         Index('idx_entry_conversation_time', 'conversation_id', 'created_at'),
         Index('idx_entry_agent_time', 'agent_name', 'created_at'),
-        Index('idx_entry_search', 'conversation_id', 'agent_name', 'created_at'),
     )
     
     def to_dict(self):
         return {
             'id': self.id,
             'conversation_id': self.conversation_id,
-            'agent': self.agent_name,
-            'role': self.agent_role,
-            'input': self.input_text,
-            'response': self.response_text,
+            'agent_name': self.agent_name,
+            'agent_role': self.agent_role,
+            'input_text': self.input_text,
+            'response_text': self.response_text,
             'next_question': self.next_question,
-            'timestamp': self.created_at.isoformat(),
+            'created_at': self.created_at.isoformat(),
             'processing_time_seconds': self.processing_time_seconds,
             'tokens_used': self.tokens_used,
             'model_used': self.model_used,
@@ -122,15 +121,134 @@ class ConversationEntry(db.Model):
             'error_occurred': self.error_occurred,
             'error_message': self.error_message
         }
+
+# Flow Platform Models
+class FlowSession(db.Model):
+    """Model for storing Flow Platform sessions"""
+    __tablename__ = 'flow_sessions'
     
-    def get_response_stats(self):
-        """Get statistics about this response"""
+    id = db.Column(db.String(36), primary_key=True)  # UUID string
+    user_id = db.Column(db.String(128), nullable=False, index=True)
+    mode = db.Column(db.String(20), nullable=False, index=True)  # 'personal' or 'project'
+    input_data = db.Column(db.JSON)
+    output_data = db.Column(db.JSON)
+    tokens_used = db.Column(db.Integer, default=0)
+    processing_time = db.Column(db.Float, default=0.0)
+    success = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    
+    # Database indexes for performance
+    __table_args__ = (
+        Index('idx_flow_user_mode_time', 'user_id', 'mode', 'created_at'),
+        Index('idx_flow_mode_time', 'mode', 'created_at'),
+    )
+    
+    def to_dict(self):
         return {
-            'response_length': len(self.response_text),
-            'has_next_question': bool(self.next_question and self.next_question.strip()),
-            'processing_time': self.processing_time_seconds,
+            'id': self.id,
+            'user_id': self.user_id,
+            'mode': self.mode,
+            'input_data': self.input_data,
+            'output_data': self.output_data,
             'tokens_used': self.tokens_used,
-            'model_used': self.model_used
+            'processing_time': self.processing_time,
+            'success': self.success,
+            'created_at': self.created_at.isoformat()
+        }
+
+class UserPreferences(db.Model):
+    """Model for storing user preferences and patterns"""
+    __tablename__ = 'user_preferences'
+    
+    user_id = db.Column(db.String(128), primary_key=True)
+    preferred_mode = db.Column(db.String(20), default='personal')
+    energy_patterns = db.Column(db.JSON, default=dict)
+    project_history = db.Column(db.JSON, default=list)
+    notification_settings = db.Column(db.JSON, default=dict)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    def to_dict(self):
+        return {
+            'user_id': self.user_id,
+            'preferred_mode': self.preferred_mode,
+            'energy_patterns': self.energy_patterns,
+            'project_history': self.project_history,
+            'notification_settings': self.notification_settings,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+class DailyPattern(db.Model):
+    """Model for tracking daily patterns for personal optimization"""
+    __tablename__ = 'daily_patterns'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(128), nullable=False, index=True)
+    date = db.Column(db.Date, nullable=False, index=True)
+    energy_level = db.Column(db.String(20))  # 'high', 'medium', 'low'
+    completed_priority = db.Column(db.Text)
+    open_loops_count = db.Column(db.Integer, default=0)
+    satisfaction_score = db.Column(db.Integer)  # 1-5 scale
+    flow_quality = db.Column(db.Integer)  # 1-5 scale
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Database indexes for performance
+    __table_args__ = (
+        Index('idx_daily_user_date', 'user_id', 'date'),
+        Index('idx_daily_user_energy', 'user_id', 'energy_level'),
+    )
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'date': self.date.isoformat(),
+            'energy_level': self.energy_level,
+            'completed_priority': self.completed_priority,
+            'open_loops_count': self.open_loops_count,
+            'satisfaction_score': self.satisfaction_score,
+            'flow_quality': self.flow_quality,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat()
+        }
+
+class Project(db.Model):
+    """Model for tracking projects in the project builder mode"""
+    __tablename__ = 'projects'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(128), nullable=False, index=True)
+    project_name = db.Column(db.String(255))
+    project_type = db.Column(db.String(50))  # 'business', 'creative', etc.
+    status = db.Column(db.String(50), default='active', index=True)
+    vision_text = db.Column(db.Text)
+    strategy_output = db.Column(db.JSON)
+    download_count = db.Column(db.Integer, default=0)
+    last_accessed = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Database indexes for performance
+    __table_args__ = (
+        Index('idx_project_user_status', 'user_id', 'status'),
+        Index('idx_project_user_time', 'user_id', 'created_at'),
+    )
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'project_name': self.project_name,
+            'project_type': self.project_type,
+            'status': self.status,
+            'vision_text': self.vision_text,
+            'strategy_output': self.strategy_output,
+            'download_count': self.download_count,
+            'last_accessed': self.last_accessed.isoformat() if self.last_accessed else None,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
         }
 
 # Database event listeners for automatic field updates

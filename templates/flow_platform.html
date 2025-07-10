@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Replit Flow Platform - Dual-Purpose Life & Project Builder</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* Custom Flow Platform Styles */
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+        }
+
+        .mode-toggle {
+            background: #2d2d2d;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .mode-toggle h1 {
+            margin-bottom: 1rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .mode-toggle p {
+            color: #b3b3b3;
+            margin-bottom: 1.5rem;
+        }
+
+        .question-cards .card {
+            background: #2d2d2d;
+            border: 1px solid #444;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .question-cards .card:hover {
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .flow-container, .project-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .btn-group .btn {
+            min-width: 90px;
+            font-weight: 500;
+        }
+
+        #flow-output, #project-output {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Energy Level Visual Indicators */
+        .energy-high { border-left: 4px solid #28a745; }
+        .energy-medium { border-left: 4px solid #ffc107; }
+        .energy-low { border-left: 4px solid #dc3545; }
+
+        /* Progress Animation */
+        .progress-bar-animated {
+            animation: progress-bar-stripes 1s linear infinite;
+        }
+
+        .card-body {
+            background: #2d2d2d;
+        }
+
+        .form-control, .form-select {
+            background: #3d3d3d;
+            border: 1px solid #555;
+            color: #fff;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: #3d3d3d;
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            color: #fff;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+
+        .btn-outline-primary {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .btn-outline-primary:hover {
+            background: #667eea;
+            border-color: #667eea;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+        }
+
+        .alert {
+            border-radius: 8px;
+        }
+
+        .spinner-border {
+            color: #667eea;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #2d2d2d 0%, #3d3d3d 100%);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Mode Toggle Header -->
+        <div class="mode-toggle">
+            <h1><i class="fas fa-rocket"></i> Replit Flow Platform</h1>
+            <p>Dual-purpose system for personal life optimization and project development</p>
+            
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-primary" id="personal-mode">
+                    <i class="fas fa-user"></i> Personal Flow
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="project-mode">
+                    <i class="fas fa-project-diagram"></i> Project Builder
+                </button>
+            </div>
+        </div>
+
+        <!-- Personal Flow Interface -->
+        <div id="flow-interface">
+            <div class="flow-container">
+                <h2><i class="fas fa-stream"></i> Daily Flow Check-In</h2>
+                <p class="text-muted">Answer 3 simple questions to generate your personalized daily flow plan</p>
+                
+                <!-- 3 Core Questions -->
+                <div class="question-cards">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5><i class="fas fa-battery-full"></i> Energy Level Today</h5>
+                            <p class="text-muted">How's your energy feeling right now?</p>
+                            <div class="btn-group" role="group">
+                                <input type="radio" class="btn-check" name="energy" id="energy-high" value="high">
+                                <label class="btn btn-outline-success" for="energy-high">
+                                    <i class="fas fa-bolt"></i> High
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="energy" id="energy-medium" value="medium">
+                                <label class="btn btn-outline-warning" for="energy-medium">
+                                    <i class="fas fa-sun"></i> Medium
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="energy" id="energy-low" value="low">
+                                <label class="btn btn-outline-danger" for="energy-low">
+                                    <i class="fas fa-moon"></i> Low
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5><i class="fas fa-target"></i> One Thing to Complete Today</h5>
+                            <p class="text-muted">What's the ONE most important thing you want to accomplish?</p>
+                            <textarea class="form-control" rows="3" id="priority-input" placeholder="What's the ONE thing that would make today feel successful?"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5><i class="fas fa-loop"></i> Open Loops from Yesterday</h5>
+                            <p class="text-muted">What's still on your mind that needs attention?</p>
+                            <textarea class="form-control" rows="3" id="loops-input" placeholder="What unfinished tasks or thoughts are creating mental noise?"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn btn-primary btn-lg" id="generate-flow">
+                        <i class="fas fa-magic"></i> Generate Today's Flow
+                    </button>
+                </div>
+                
+                <!-- Flow Output -->
+                <div id="flow-output" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Project Builder Interface -->
+        <div id="project-interface" class="hidden">
+            <div class="project-container">
+                <h2><i class="fas fa-rocket"></i> Project Development Studio</h2>
+                <p class="text-muted">Transform your vision into a comprehensive project strategy</p>
+                
+                <!-- Project Input -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5><i class="fas fa-lightbulb"></i> Describe Your Project Vision</h5>
+                        <p class="text-muted">Share your idea, goal, or project concept - be as detailed or brief as you want</p>
+                        <textarea class="form-control" rows="4" id="project-vision" placeholder="What do you want to build? What problem are you solving? What's your vision?"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Project Type Selection -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5><i class="fas fa-route"></i> Select Development Path</h5>
+                        <p class="text-muted">Choose the type of project to get specialized guidance</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="projectType" id="business-project" value="business">
+                                    <label class="form-check-label" for="business-project">
+                                        <i class="fas fa-briefcase"></i> Business Project
+                                        <small class="d-block text-muted">Startups, products, services, monetization</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="projectType" id="creative-project" value="creative">
+                                    <label class="form-check-label" for="creative-project">
+                                        <i class="fas fa-palette"></i> Creative Project
+                                        <small class="d-block text-muted">Art, content, media, personal projects</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn btn-success btn-lg" id="build-project">
+                        <i class="fas fa-cogs"></i> Build Project Strategy
+                    </button>
+                </div>
+                
+                <!-- Project Output -->
+                <div id="project-output" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Features Overview -->
+        <div class="container mt-5">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h4>Personal Flow AI</h4>
+                    <p>Get personalized daily plans that respect your energy and priorities, helping you move through life with intention.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h4>Project Intelligence</h4>
+                    <p>Transform ideas into comprehensive strategies with our 4-agent pipeline: Analysis → Research → Strategy → Refinement.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <h4>Dual-Purpose Design</h4>
+                    <p>One platform for both personal optimization and professional project development. Switch modes instantly.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mode Toggle Logic
+        document.getElementById('personal-mode').addEventListener('click', function() {
+            switchMode('personal');
+        });
+
+        document.getElementById('project-mode').addEventListener('click', function() {
+            switchMode('project');
+        });
+
+        function switchMode(mode) {
+            if (mode === 'personal') {
+                document.getElementById('flow-interface').classList.remove('hidden');
+                document.getElementById('project-interface').classList.add('hidden');
+                document.getElementById('personal-mode').classList.add('btn-primary');
+                document.getElementById('personal-mode').classList.remove('btn-outline-primary');
+                document.getElementById('project-mode').classList.add('btn-outline-primary');
+                document.getElementById('project-mode').classList.remove('btn-primary');
+            } else {
+                document.getElementById('flow-interface').classList.add('hidden');
+                document.getElementById('project-interface').classList.remove('hidden');
+                document.getElementById('project-mode').classList.add('btn-primary');
+                document.getElementById('project-mode').classList.remove('btn-outline-primary');
+                document.getElementById('personal-mode').classList.add('btn-outline-primary');
+                document.getElementById('personal-mode').classList.remove('btn-primary');
+            }
+            
+            // Save preference
+            localStorage.setItem('preferredMode', mode);
+        }
+
+        // Load preferred mode on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const preferredMode = localStorage.getItem('preferredMode') || 'personal';
+            switchMode(preferredMode);
+        });
+
+        // Personal Flow Generation
+        document.getElementById('generate-flow').addEventListener('click', async function() {
+            const energy = document.querySelector('input[name="energy"]:checked')?.value;
+            const priority = document.getElementById('priority-input').value.trim();
+            const openLoops = document.getElementById('loops-input').value.trim();
+            
+            if (!energy) {
+                alert('Please select your energy level.');
+                return;
+            }
+            
+            if (!priority) {
+                alert('Please describe your main priority for today.');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('flow-output').innerHTML = `
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="spinner-border" role="status"></div>
+                        <p class="mt-2">Generating your personalized flow plan...</p>
+                    </div>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('/api/flow/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        energy: energy,
+                        priority: priority,
+                        open_loops: openLoops
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Display formatted result
+                    document.getElementById('flow-output').innerHTML = `
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-check-circle text-success"></i> Your Daily Flow Plan</h5>
+                            </div>
+                            <div class="card-body">
+                                ${marked.parse(result.response)}
+                                <div class="mt-3 text-muted small">
+                                    <i class="fas fa-clock"></i> Generated in ${result.processing_time?.toFixed(2) || 0}s
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+                
+            } catch (error) {
+                document.getElementById('flow-output').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Error generating flow plan. Please try again.
+                        <small class="d-block mt-1">${error.message}</small>
+                    </div>
+                `;
+            }
+        });
+
+        // Project Building Logic
+        document.getElementById('build-project').addEventListener('click', async function() {
+            const vision = document.getElementById('project-vision').value.trim();
+            const projectType = document.querySelector('input[name="projectType"]:checked')?.value;
+            
+            if (!vision) {
+                alert('Please describe your project vision.');
+                return;
+            }
+            
+            if (!projectType) {
+                alert('Please select a project type.');
+                return;
+            }
+            
+            // Show loading with progress
+            document.getElementById('project-output').innerHTML = `
+                <div class="card">
+                    <div class="card-body">
+                        <h5><i class="fas fa-cogs"></i> Building Your Project Strategy...</h5>
+                        <div class="progress mb-3">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 25%">
+                                Analyzing...
+                            </div>
+                        </div>
+                        <div id="progress-text">Starting project analysis...</div>
+                    </div>
+                </div>
+            `;
+            
+            // Update progress
+            let progress = 25;
+            const progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += 15;
+                    document.querySelector('.progress-bar').style.width = progress + '%';
+                    
+                    if (progress === 40) {
+                        document.getElementById('progress-text').innerHTML = 'Conducting market research...';
+                    } else if (progress === 55) {
+                        document.getElementById('progress-text').innerHTML = 'Creating strategic framework...';
+                    } else if (progress === 70) {
+                        document.getElementById('progress-text').innerHTML = 'Refining strategy...';
+                    } else if (progress >= 85) {
+                        document.getElementById('progress-text').innerHTML = 'Finalizing project plan...';
+                    }
+                }
+            }, 1500);
+            
+            try {
+                const response = await fetch('/api/flow/project/build', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        vision: vision,
+                        type: projectType
+                    })
+                });
+                
+                const result = await response.json();
+                clearInterval(progressInterval);
+                
+                if (result.success) {
+                    // Display formatted result
+                    document.getElementById('project-output').innerHTML = `
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-check-circle text-success"></i> Project Strategy Complete</h5>
+                            </div>
+                            <div class="card-body">
+                                ${marked.parse(result.strategy)}
+                                
+                                <div class="mt-4 p-3 bg-dark rounded">
+                                    <h6><i class="fas fa-chart-line"></i> Strategy Metrics</h6>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <small class="text-muted">Processing Time</small>
+                                            <div>${result.processing_time?.toFixed(2) || 0}s</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <small class="text-muted">Tokens Used</small>
+                                            <div>${result.tokens_used || 0}</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <small class="text-muted">Project Type</small>
+                                            <div class="text-capitalize">${projectType}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+                
+            } catch (error) {
+                clearInterval(progressInterval);
+                document.getElementById('project-output').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Error building project strategy. Please try again.
+                        <small class="d-block mt-1">${error.message}</small>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
