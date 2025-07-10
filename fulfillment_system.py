@@ -217,15 +217,15 @@ class FulfillmentSystem:
             analysis_result = self.generate_form_analysis(processed_video_path, payment.client_name)
             
             if analysis_result["success"]:
-                # Generate PDF report
-                pdf_result = self.generate_pdf_report(analysis_result["analysis"], payment.client_name)
+                # Generate Markdown report
+                report_result = self.generate_markdown_report(analysis_result["analysis"], payment.client_name)
                 
-                if pdf_result["success"]:
+                if report_result["success"]:
                     # Send delivery email
                     delivery_result = self.send_delivery_email(
                         payment.client_name,
                         payment.client_email,
-                        pdf_result["pdf_path"],
+                        report_result["report_path"],
                         analysis_result["analysis"]
                     )
                     
@@ -255,7 +255,7 @@ class FulfillmentSystem:
                     else:
                         return delivery_result
                 else:
-                    return pdf_result
+                    return report_result
             else:
                 return analysis_result
                 
@@ -329,34 +329,104 @@ class FulfillmentSystem:
             logging.error(f"Error generating analysis: {str(e)}")
             return {"success": False, "error": f"Analysis error: {str(e)}"}
     
-    def generate_pdf_report(self, analysis: Dict, client_name: str) -> Dict[str, Any]:
-        """Generate PDF report using Canva template integration"""
+    def generate_markdown_report(self, analysis: Dict, client_name: str) -> Dict[str, Any]:
+        """Generate Markdown report instead of PDF"""
         try:
             # Create report content
             report_content = self.create_report_content(analysis, client_name)
             
-            # In production, integrate with Canva API or PDF generation library
-            # For now, create a simple HTML-to-PDF conversion
+            report_filename = f"AI_Form_Check_Report_{client_name.replace(' ', '_')}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.md"
+            md_path = self.processed_folder / report_filename
             
-            report_filename = f"AI_Form_Check_Report_{client_name.replace(' ', '_')}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.pdf"
-            pdf_path = self.processed_folder / report_filename
+            # Generate Markdown report
+            markdown_report = self.create_markdown_report(analysis, client_name)
             
-            # Generate HTML report (simulate PDF generation)
-            html_report = self.create_html_report(analysis, client_name)
+            # Save as Markdown
+            with open(md_path, 'w') as f:
+                f.write(markdown_report)
             
-            # Save as HTML for now (in production, convert to PDF)
-            with open(pdf_path.with_suffix('.html'), 'w') as f:
-                f.write(html_report)
-            
-            # Create a mock PDF file
-            with open(pdf_path, 'wb') as f:
-                f.write(b'%PDF-1.4\nMock PDF for AI Form Check Pro Report')
-            
-            return {"success": True, "pdf_path": pdf_path}
+            return {"success": True, "report_path": md_path}
             
         except Exception as e:
-            logging.error(f"Error generating PDF: {str(e)}")
-            return {"success": False, "error": f"PDF generation error: {str(e)}"}
+            logging.error(f"Error generating Markdown report: {str(e)}")
+            return {"success": False, "error": f"Markdown generation error: {str(e)}"}
+    
+    def create_markdown_report(self, analysis: Dict, client_name: str) -> str:
+        """Create professional Markdown report"""
+        # Build findings section
+        findings_md = ""
+        for finding in analysis["key_findings"]:
+            status_emoji = "✅" if finding["status"] == "Good" else "⚠️" if finding["status"] == "Fair" else "❌"
+            findings_md += f"""
+### {status_emoji} {finding["category"]} - {finding["score"]}/100
+
+**Status:** {finding["status"]}  
+**Feedback:** {finding["feedback"]}  
+**Improvement:** {finding["improvement"]}
+
+---
+"""
+        
+        # Build recommendations list
+        recommendations_md = "\n".join([f"- {rec}" for rec in analysis["personalized_recommendations"]])
+        
+        # Build exercises list
+        exercises_md = "\n".join([f"- {ex}" for ex in analysis["corrective_exercises"]])
+        
+        return f"""# 🎯 AI Form Check Pro Report
+
+## {client_name}
+**Personalized Movement Analysis & Recommendations**
+
+---
+
+## 📊 Overall Form Score: {analysis["overall_score"]}/100
+
+**Exercise Analyzed:** {analysis["exercise_detected"]}  
+**Repetitions:** {analysis["reps_analyzed"]} | **Duration:** {analysis["video_duration"]}  
+**Analysis Date:** {datetime.now().strftime('%B %d, %Y')}
+
+---
+
+## 🔍 Detailed Analysis
+
+{findings_md}
+
+## 💡 Personalized Recommendations
+
+{recommendations_md}
+
+## 🏋️ Corrective Exercises
+
+{exercises_md}
+
+## 📈 4-Week Progression Plan
+
+**Weeks 1-2:** {analysis["progression_plan"]["week_1_2"]}
+
+**Weeks 3-4:** {analysis["progression_plan"]["week_3_4"]}
+
+**Weeks 5-6:** {analysis["progression_plan"]["week_5_6"]}
+
+**Ongoing:** {analysis["progression_plan"]["ongoing"]}
+
+---
+
+## 📝 Report Summary
+
+This comprehensive analysis was generated using advanced AI movement analysis technology. The recommendations are personalized to your current form and movement patterns.
+
+**Key Focus Areas:**
+- Form corrections identified and prioritized
+- Specific exercises to address weaknesses
+- Progressive plan for continued improvement
+- Injury prevention through proper movement patterns
+
+---
+
+*Report generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}*  
+*Powered by OperatorOS AI Form Analysis*
+"""
     
     def create_html_report(self, analysis: Dict, client_name: str) -> str:
         """Create HTML report with professional styling"""
@@ -463,8 +533,8 @@ class FulfillmentSystem:
         }
     
     def send_delivery_email(self, client_name: str, client_email: str, 
-                          pdf_path: Path, analysis: Dict) -> Dict[str, Any]:
-        """Send delivery email with PDF report attached"""
+                          report_path: Path, analysis: Dict) -> Dict[str, Any]:
+        """Send delivery email with Markdown report attached"""
         try:
             subject = f"🎯 Your AI Form Check Pro Report is Ready! ({analysis['overall_score']}/100)"
             
@@ -533,7 +603,7 @@ class FulfillmentSystem:
             </html>
             """
             
-            return self.send_email_with_attachment(client_email, subject, html_body, pdf_path)
+            return self.send_email_with_attachment(client_email, subject, html_body, report_path)
             
         except Exception as e:
             logging.error(f"Error sending delivery email: {str(e)}")
