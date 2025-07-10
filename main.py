@@ -1362,7 +1362,7 @@ def continue_conversation():
 
 @app.route('/get_conversation_history')
 def get_conversation_history():
-    """Get the current conversation history"""
+    """Get the current conversation history and conversation info"""
     try:
         conversation_id = session.get('conversation_id')
         if not conversation_id:
@@ -1377,6 +1377,12 @@ def get_conversation_history():
         return jsonify({
             "success": True,
             "history": chain.get_conversation_history(),
+            "conversation": {
+                "id": chain.conversation.id,
+                "is_complete": chain.conversation.is_complete,
+                "created_at": chain.conversation.created_at.isoformat(),
+                "updated_at": chain.conversation.updated_at.isoformat()
+            },
             "is_complete": chain.is_complete
         })
         
