@@ -84,6 +84,9 @@ business_package_generator = BusinessPackageGenerator()
 from flow_agents import FlowAgentManager
 flow_agent_manager = FlowAgentManager()
 
+# Initialize OperatorOS Master Agent
+from operatoros_master import operatoros_master
+
 # Initialize notification system with SocketIO
 from notifications import notification_manager, system_monitor
 notification_manager.socketio = socketio
@@ -1815,6 +1818,228 @@ def request_entity_too_large(error):
 def flow_platform():
     """Replit Flow Platform - Dual-purpose personal flow and project builder"""
     return render_template('flow_platform.html')
+
+# OperatorOS Master Agent Routes
+@app.route('/api/operatoros/activate', methods=['GET'])
+@limiter.limit("5 per minute")
+def activate_operatoros():
+    """Activate OperatorOS Master Agent system"""
+    try:
+        activation_message = operatoros_master.activate_operatoros()
+        
+        return jsonify({
+            "success": True,
+            "message": activation_message,
+            "system_status": "activated",
+            "available_agents": list(operatoros_master.agents.keys()),
+            "metrics": operatoros_master.get_autonomy_metrics()
+        })
+        
+    except Exception as e:
+        logging.error(f"Error activating OperatorOS: {str(e)}")
+        return jsonify({"error": f"OperatorOS activation failed: {str(e)}"}), 500
+
+@app.route('/api/operatoros/daily-briefing', methods=['POST'])
+@limiter.limit("10 per minute")
+@csrf.exempt
+def daily_autonomy_briefing():
+    """Generate comprehensive daily autonomy briefing"""
+    try:
+        data = request.get_json() or {}
+        user_input = data.get('input', '')
+        
+        # Generate daily briefing
+        result = operatoros_master.daily_autonomy_briefing(user_input)
+        
+        if result['success']:
+            # Create conversation record
+            conversation_id = str(uuid.uuid4())
+            conversation = Conversation(
+                id=conversation_id,
+                initial_input=user_input or "Daily autonomy briefing",
+                current_agent_index=0,
+                is_complete=True,
+                session_id=session.get('session_id'),
+                user_ip=get_remote_address()
+            )
+            db.session.add(conversation)
+            
+            entry = ConversationEntry(
+                conversation_id=conversation_id,
+                agent_name="OperatorOS Master",
+                agent_role="Master Life Operating System Agent",
+                input_text=user_input or "Daily briefing request",
+                response_text=result['response'],
+                processing_time_seconds=0.5,
+                tokens_used=result.get('tokens_used', 0),
+                model_used="gpt-3.5-turbo",
+                api_provider="openai",
+                response_length=len(result['response']),
+                error_occurred=False
+            )
+            db.session.add(entry)
+            db.session.commit()
+            
+            session['current_conversation_id'] = conversation_id
+            
+            return jsonify({
+                "success": True,
+                "conversation_id": conversation_id,
+                "briefing": result['response'],
+                "tokens_used": result.get('tokens_used', 0),
+                "type": "daily_briefing",
+                "metrics": operatoros_master.get_autonomy_metrics()
+            })
+        else:
+            return jsonify({"error": result.get('error', 'Briefing generation failed')}), 500
+        
+    except Exception as e:
+        logging.error(f"Error generating daily briefing: {str(e)}")
+        return jsonify({"error": f"Daily briefing failed: {str(e)}"}), 500
+
+@app.route('/api/operatoros/agent', methods=['POST'])
+@limiter.limit("15 per minute")
+@csrf.exempt
+def operatoros_agent_consultation():
+    """Route request to specific OperatorOS C-Suite agent"""
+    try:
+        data = request.get_json()
+        if not data or 'input' not in data:
+            return jsonify({"error": "Input is required"}), 400
+        
+        input_text = data['input'].strip()
+        
+        # Route to appropriate agent
+        result = operatoros_master.route_to_agent(input_text)
+        
+        if result['success']:
+            # Create conversation record
+            conversation_id = str(uuid.uuid4())
+            conversation = Conversation(
+                id=conversation_id,
+                initial_input=input_text,
+                current_agent_index=0,
+                is_complete=True,
+                session_id=session.get('session_id'),
+                user_ip=get_remote_address()
+            )
+            db.session.add(conversation)
+            
+            agent_name = result.get('agent', 'OperatorOS Agent')
+            entry = ConversationEntry(
+                conversation_id=conversation_id,
+                agent_name=agent_name,
+                agent_role=f"OperatorOS {agent_name}",
+                input_text=input_text,
+                response_text=result['response'],
+                processing_time_seconds=0.5,
+                tokens_used=result.get('tokens_used', 0),
+                model_used="gpt-3.5-turbo",
+                api_provider="openai",
+                response_length=len(result['response']),
+                error_occurred=False
+            )
+            db.session.add(entry)
+            db.session.commit()
+            
+            session['current_conversation_id'] = conversation_id
+            
+            return jsonify({
+                "success": True,
+                "conversation_id": conversation_id,
+                "agent": result.get('agent'),
+                "response": result['response'],
+                "tokens_used": result.get('tokens_used', 0),
+                "type": result.get('type', 'agent_response'),
+                "metrics": operatoros_master.get_autonomy_metrics()
+            })
+        else:
+            return jsonify({"error": result.get('error', 'Agent consultation failed')}), 500
+        
+    except Exception as e:
+        logging.error(f"Error in agent consultation: {str(e)}")
+        return jsonify({"error": f"Agent consultation failed: {str(e)}"}), 500
+
+@app.route('/api/operatoros/multi-agent', methods=['POST'])
+@limiter.limit("5 per minute")
+@csrf.exempt
+def operatoros_multi_agent_analysis():
+    """Generate multi-agent collaborative analysis"""
+    try:
+        data = request.get_json()
+        if not data or 'input' not in data:
+            return jsonify({"error": "Input is required"}), 400
+        
+        input_text = data['input'].strip()
+        
+        # Generate cross-agent analysis
+        result = operatoros_master.cross_agent_analysis(input_text)
+        
+        if result['success']:
+            # Create conversation record
+            conversation_id = str(uuid.uuid4())
+            conversation = Conversation(
+                id=conversation_id,
+                initial_input=input_text,
+                current_agent_index=0,
+                is_complete=True,
+                session_id=session.get('session_id'),
+                user_ip=get_remote_address()
+            )
+            db.session.add(conversation)
+            
+            entry = ConversationEntry(
+                conversation_id=conversation_id,
+                agent_name="OperatorOS Multi-Agent",
+                agent_role="Collaborative C-Suite Analysis",
+                input_text=input_text,
+                response_text=result['response'],
+                processing_time_seconds=1.0,
+                tokens_used=result.get('tokens_used', 0),
+                model_used="gpt-3.5-turbo",
+                api_provider="openai",
+                response_length=len(result['response']),
+                error_occurred=False
+            )
+            db.session.add(entry)
+            db.session.commit()
+            
+            session['current_conversation_id'] = conversation_id
+            
+            return jsonify({
+                "success": True,
+                "conversation_id": conversation_id,
+                "analysis": result['response'],
+                "tokens_used": result.get('tokens_used', 0),
+                "type": "multi_agent_analysis",
+                "metrics": operatoros_master.get_autonomy_metrics()
+            })
+        else:
+            return jsonify({"error": result.get('error', 'Multi-agent analysis failed')}), 500
+        
+    except Exception as e:
+        logging.error(f"Error in multi-agent analysis: {str(e)}")
+        return jsonify({"error": f"Multi-agent analysis failed: {str(e)}"}), 500
+
+@app.route('/api/operatoros/metrics', methods=['GET'])
+@limiter.limit("20 per minute")
+def operatoros_metrics():
+    """Get current OperatorOS autonomy metrics"""
+    try:
+        metrics = operatoros_master.get_autonomy_metrics()
+        return jsonify({
+            "success": True,
+            "metrics": metrics
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting OperatorOS metrics: {str(e)}")
+        return jsonify({"error": f"Metrics retrieval failed: {str(e)}"}), 500
+
+@app.route('/operatoros')
+def operatoros_interface():
+    """OperatorOS Master Agent interface"""
+    return render_template('operatoros_interface.html')
 
 @app.route('/api/flow/generate', methods=['POST'])
 @limiter.limit("10 per minute")

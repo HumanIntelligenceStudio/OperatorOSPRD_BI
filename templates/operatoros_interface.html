@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OperatorOS - Your Personal Life Operating System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d1b69 100%);
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+
+        .operatoros-header {
+            background: rgba(45, 45, 45, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid #667eea;
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .operatoros-logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .c-suite-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .agent-card {
+            background: rgba(45, 45, 45, 0.8);
+            border: 1px solid #555;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .agent-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #667eea, transparent);
+            transition: left 0.5s ease;
+        }
+
+        .agent-card:hover::before {
+            left: 100%;
+        }
+
+        .agent-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .agent-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #667eea;
+        }
+
+        .agent-domain {
+            font-size: 0.9rem;
+            color: #b3b3b3;
+            margin-bottom: 1rem;
+        }
+
+        .agent-focus {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .main-interface {
+            background: rgba(45, 45, 45, 0.8);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 1px solid #555;
+        }
+
+        .input-section {
+            margin-bottom: 2rem;
+        }
+
+        .operatoros-input {
+            background: rgba(61, 61, 61, 0.8);
+            border: 2px solid #555;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1.1rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .operatoros-input:focus {
+            background: rgba(61, 61, 61, 0.9);
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            color: #fff;
+        }
+
+        .btn-operatoros {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-operatoros:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .response-area {
+            background: rgba(30, 30, 30, 0.8);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid #444;
+            margin-top: 1.5rem;
+            min-height: 200px;
+        }
+
+        .metrics-display {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid #667eea;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            background: rgba(45, 45, 45, 0.8);
+            border: 2px solid #555;
+            border-radius: 8px;
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .mode-btn:hover, .mode-btn.active {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+        }
+
+        .autonomy-progress {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 20px;
+            height: 8px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .autonomy-progress-bar {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        @media (max-width: 768px) {
+            .c-suite-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .mode-selector {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="operatoros-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col">
+                    <div class="operatoros-logo">
+                        🚀 OperatorOS
+                    </div>
+                    <p class="mb-0 text-muted">Your Personal Life Operating System</p>
+                </div>
+                <div class="col-auto">
+                    <span class="badge bg-success">ACTIVATED</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Mode Selection -->
+        <div class="mode-selector">
+            <div class="mode-btn active" data-mode="daily">
+                🌅 Daily Autonomy Briefing
+            </div>
+            <div class="mode-btn" data-mode="agent">
+                👥 C-Suite Consultation
+            </div>
+            <div class="mode-btn" data-mode="multi">
+                🤝 Multi-Agent Analysis
+            </div>
+        </div>
+
+        <!-- C-Suite Agents Overview -->
+        <div class="c-suite-grid">
+            <div class="agent-card" data-agent="CFO">
+                <div class="agent-icon">💰</div>
+                <div class="agent-name">Chief Financial Officer</div>
+                <div class="agent-domain">Financial automation and wealth building</div>
+                <div class="agent-focus">Investment optimization, passive income development</div>
+            </div>
+            <div class="agent-card" data-agent="COO">
+                <div class="agent-icon">⚙️</div>
+                <div class="agent-name">Chief Operating Officer</div>
+                <div class="agent-domain">Life operations and productivity optimization</div>
+                <div class="agent-focus">Daily routines, automation, efficiency</div>
+            </div>
+            <div class="agent-card" data-agent="CSA">
+                <div class="agent-icon">🎯</div>
+                <div class="agent-name">Chief Strategy Agent</div>
+                <div class="agent-domain">Life strategy and autonomy roadmap</div>
+                <div class="agent-focus">Goal achievement, independence planning</div>
+            </div>
+            <div class="agent-card" data-agent="CMO">
+                <div class="agent-icon">🎨</div>
+                <div class="agent-name">Chief Marketing Officer</div>
+                <div class="agent-domain">Personal brand and income generation</div>
+                <div class="agent-focus">Network building, influence creation</div>
+            </div>
+            <div class="agent-card" data-agent="CTO">
+                <div class="agent-icon">💻</div>
+                <div class="agent-name">Chief Technology Officer</div>
+                <div class="agent-domain">Technology and automation systems</div>
+                <div class="agent-focus">Tech stack optimization, automation tools</div>
+            </div>
+            <div class="agent-card" data-agent="CPO">
+                <div class="agent-icon">🌱</div>
+                <div class="agent-name">Chief People Officer</div>
+                <div class="agent-domain">Health, relationships, personal development</div>
+                <div class="agent-focus">Physical/mental optimization, relationships</div>
+            </div>
+            <div class="agent-card" data-agent="CIO">
+                <div class="agent-icon">🧠</div>
+                <div class="agent-name">Chief Intelligence Officer</div>
+                <div class="agent-domain">Intelligence synthesis and decision support</div>
+                <div class="agent-focus">Pattern recognition, cross-domain insights</div>
+            </div>
+        </div>
+
+        <!-- Main Interface -->
+        <div class="main-interface">
+            <div class="input-section">
+                <div id="daily-mode" class="mode-content">
+                    <h4>🌅 Daily Autonomy Check-In</h4>
+                    <p class="text-muted">Get your coordinated C-Suite briefing for complete life optimization</p>
+                    <textarea class="form-control operatoros-input" id="daily-input" rows="3" 
+                              placeholder="Optional: Share your current focus, challenges, or goals for personalized recommendations..."></textarea>
+                    <div class="mt-3">
+                        <button class="btn btn-operatoros" onclick="generateDailyBriefing()">
+                            <i class="fas fa-rocket me-2"></i>Get Today's Autonomy Briefing
+                        </button>
+                    </div>
+                </div>
+
+                <div id="agent-mode" class="mode-content" style="display: none;">
+                    <h4>👥 C-Suite Agent Consultation</h4>
+                    <p class="text-muted">Consult with specific agents using @CFO:, @COO:, @CSA:, etc.</p>
+                    <textarea class="form-control operatoros-input" id="agent-input" rows="3" 
+                              placeholder="@CFO: How should I optimize my investment portfolio?&#10;@COO: What automation tools should I implement?&#10;@CSA: What's my 5-year independence strategy?"></textarea>
+                    <div class="mt-3">
+                        <button class="btn btn-operatoros" onclick="consultAgent()">
+                            <i class="fas fa-users me-2"></i>Consult C-Suite Agent
+                        </button>
+                    </div>
+                </div>
+
+                <div id="multi-mode" class="mode-content" style="display: none;">
+                    <h4>🤝 Multi-Agent Collaborative Analysis</h4>
+                    <p class="text-muted">Get comprehensive analysis from multiple agents working together</p>
+                    <textarea class="form-control operatoros-input" id="multi-input" rows="3" 
+                              placeholder="Should I start a side business? What career change should I make? How do I achieve financial independence faster?"></textarea>
+                    <div class="mt-3">
+                        <button class="btn btn-operatoros" onclick="getMultiAgentAnalysis()">
+                            <i class="fas fa-brain me-2"></i>Get Collaborative Analysis
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div class="loading-spinner" id="loading-spinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Your OperatorOS C-Suite is analyzing...</p>
+            </div>
+
+            <!-- Response Area -->
+            <div class="response-area" id="response-area" style="display: none;">
+                <div id="response-content"></div>
+            </div>
+
+            <!-- Autonomy Metrics -->
+            <div class="metrics-display" id="metrics-display" style="display: none;">
+                <h6><i class="fas fa-chart-line me-2"></i>Autonomy Progress</h6>
+                <div class="autonomy-progress">
+                    <div class="autonomy-progress-bar" id="autonomy-progress-bar" style="width: 0%"></div>
+                </div>
+                <div class="metric-item">
+                    <span>Autonomy Progress:</span>
+                    <span id="autonomy-percentage">0%</span>
+                </div>
+                <div class="metric-item">
+                    <span>Financial Independence:</span>
+                    <span id="financial-timeline">-- months</span>
+                </div>
+                <div class="metric-item">
+                    <span>Life Automation:</span>
+                    <span id="automation-percentage">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mode switching
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const mode = this.getAttribute('data-mode');
+                
+                // Update active mode button
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show/hide mode content
+                document.querySelectorAll('.mode-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                document.getElementById(mode + '-mode').style.display = 'block';
+            });
+        });
+
+        // Agent card interactions
+        document.querySelectorAll('.agent-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const agent = this.getAttribute('data-agent');
+                const agentInput = document.getElementById('agent-input');
+                agentInput.value = `@${agent}: `;
+                agentInput.focus();
+                
+                // Switch to agent mode
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('[data-mode="agent"]').classList.add('active');
+                document.querySelectorAll('.mode-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                document.getElementById('agent-mode').style.display = 'block';
+            });
+        });
+
+        function showLoading() {
+            document.getElementById('loading-spinner').style.display = 'block';
+            document.getElementById('response-area').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-spinner').style.display = 'none';
+        }
+
+        function showResponse(content) {
+            document.getElementById('response-content').innerHTML = marked.parse(content);
+            document.getElementById('response-area').style.display = 'block';
+        }
+
+        function updateMetrics(metrics) {
+            if (metrics) {
+                document.getElementById('metrics-display').style.display = 'block';
+                document.getElementById('autonomy-percentage').textContent = metrics.autonomy_progress + '%';
+                document.getElementById('financial-timeline').textContent = metrics.financial_independence_months + ' months';
+                document.getElementById('automation-percentage').textContent = metrics.automation_percentage + '%';
+                document.getElementById('autonomy-progress-bar').style.width = metrics.autonomy_progress + '%';
+            }
+        }
+
+        async function generateDailyBriefing() {
+            const input = document.getElementById('daily-input').value;
+            showLoading();
+
+            try {
+                const response = await fetch('/api/operatoros/daily-briefing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ input: input })
+                });
+
+                const data = await response.json();
+                hideLoading();
+
+                if (data.success) {
+                    showResponse(data.briefing);
+                    updateMetrics(data.metrics);
+                } else {
+                    showResponse(`**Error:** ${data.error}`);
+                }
+            } catch (error) {
+                hideLoading();
+                showResponse(`**Error:** Failed to generate briefing. Please try again.`);
+            }
+        }
+
+        async function consultAgent() {
+            const input = document.getElementById('agent-input').value;
+            if (!input.trim()) {
+                alert('Please enter your consultation request');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/operatoros/agent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ input: input })
+                });
+
+                const data = await response.json();
+                hideLoading();
+
+                if (data.success) {
+                    showResponse(data.response);
+                    updateMetrics(data.metrics);
+                } else {
+                    showResponse(`**Error:** ${data.error}`);
+                }
+            } catch (error) {
+                hideLoading();
+                showResponse(`**Error:** Failed to consult agent. Please try again.`);
+            }
+        }
+
+        async function getMultiAgentAnalysis() {
+            const input = document.getElementById('multi-input').value;
+            if (!input.trim()) {
+                alert('Please enter your analysis request');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/operatoros/multi-agent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ input: input })
+                });
+
+                const data = await response.json();
+                hideLoading();
+
+                if (data.success) {
+                    showResponse(data.analysis);
+                    updateMetrics(data.metrics);
+                } else {
+                    showResponse(`**Error:** ${data.error}`);
+                }
+            } catch (error) {
+                hideLoading();
+                showResponse(`**Error:** Failed to generate analysis. Please try again.`);
+            }
+        }
+
+        // Load initial metrics
+        async function loadMetrics() {
+            try {
+                const response = await fetch('/api/operatoros/metrics');
+                const data = await response.json();
+                if (data.success) {
+                    updateMetrics(data.metrics);
+                }
+            } catch (error) {
+                console.log('Failed to load initial metrics');
+            }
+        }
+
+        // Load metrics on page load
+        loadMetrics();
+    </script>
+</body>
+</html>
