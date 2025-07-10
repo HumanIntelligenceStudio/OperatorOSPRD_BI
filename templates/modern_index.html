@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OperatorOS - Executive AI Advisory Board</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #3b82f6;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-light: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #1e293b 100%);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--accent-color) !important;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            padding: 4rem 0;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .main-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-control {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--text-light);
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            background: rgba(30, 41, 59, 0.9);
+            border-color: var(--accent-color);
+            color: var(--text-light);
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(148, 163, 184, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            color: var(--text-light);
+            border-radius: 12px;
+            padding: 0.8rem 1.5rem;
+            font-weight: 500;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(148, 163, 184, 0.3);
+            color: var(--text-light);
+        }
+
+        .agent-card {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+            border-color: var(--accent-color);
+        }
+
+        .agent-icon {
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .progress-container {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .progress {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 10px;
+            height: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .result-card {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+            border-color: var(--accent-color);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            
+            .main-card {
+                padding: 1rem;
+            }
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 1rem 1.5rem;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-color);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .badge {
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .badge-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(59, 130, 246, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-brain me-2"></i>OperatorOS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#c-suite">C-Suite</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin">Admin</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section">
+        <div class="container">
+            <h1 class="hero-title">Executive AI Advisory Board</h1>
+            <p class="hero-subtitle">Transform Any Business Challenge Into Strategic Intelligence</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">11</div>
+                    <div class="stat-label">AI Agents</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">7</div>
+                    <div class="stat-label">C-Suite Executives</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">10</div>
+                    <div class="stat-label">Strategic Files</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">&lt;60s</div>
+                    <div class="stat-label">Processing Time</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="main-card">
+                    <h2 class="mb-4">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Business Intelligence Generator
+                    </h2>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Universal Business Package:</strong> Every prompt generates a comprehensive 10-file strategic intelligence package with analysis from our complete C-Suite advisory board.
+                    </div>
+
+                    <form id="businessForm">
+                        <div class="input-group">
+                            <textarea 
+                                class="form-control" 
+                                id="businessPrompt" 
+                                rows="4" 
+                                placeholder="Describe your business challenge, opportunity, or strategic question...&#10;&#10;Examples:&#10;• Help me create a strategic plan for launching a new AI consulting service&#10;• Analyze market opportunities for sustainable fashion brand&#10;• Develop a comprehensive marketing strategy for B2B SaaS platform"
+                                maxlength="2000"
+                                required
+                            ></textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                            <button type="submit" class="btn btn-primary flex-fill me-md-2">
+                                <i class="fas fa-rocket me-2"></i>
+                                Generate Business Intelligence
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="clearForm()">
+                                <i class="fas fa-refresh me-2"></i>
+                                Clear
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Progress Section -->
+                    <div id="progressContainer" class="progress-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-cogs me-2"></i>
+                            C-Suite Advisory Board Processing
+                        </h5>
+                        <div class="progress mb-3">
+                            <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div id="currentAgent" class="text-center">
+                            <i class="fas fa-spinner spinner me-2"></i>
+                            Initializing 11-Agent Pipeline...
+                        </div>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div id="resultContainer" class="result-card">
+                        <h5 class="mb-3">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Strategic Intelligence Package Ready
+                        </h5>
+                        <div id="packageDetails" class="mb-3"></div>
+                        <div class="text-center">
+                            <button id="downloadBtn" class="download-btn">
+                                <i class="fas fa-download me-2"></i>
+                                Download Business Intelligence Package
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Error Section -->
+                    <div id="errorContainer" class="alert alert-danger" style="display: none;">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span id="errorMessage"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <section id="features" class="my-5">
+            <div class="text-center mb-5">
+                <h2>Complete Executive Intelligence Platform</h2>
+                <p class="text-muted">Professional-grade business intelligence with C-Suite advisory board analysis</p>
+            </div>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h4>11-Agent Pipeline</h4>
+                    <p>Comprehensive analysis through Analyst, Researcher, Writer, and 7 C-Suite executives for complete strategic intelligence.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h4>10 Strategic Files</h4>
+                    <p>Executive Summary, Business Analysis, Implementation Plan, Financial Projections, and 6 additional professional deliverables.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-download"></i>
+                    </div>
+                    <h4>Instant Download</h4>
+                    <p>Professional ZIP package delivered directly to your computer with git-ready markdown files for immediate use.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h4>Sub-60 Second Processing</h4>
+                    <p>Complete C-Suite analysis and strategic intelligence generation in under 60 seconds with guaranteed delivery.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- C-Suite Section -->
+        <section id="c-suite" class="my-5">
+            <div class="text-center mb-5">
+                <h2>Meet Your C-Suite Advisory Board</h2>
+                <p class="text-muted">7 specialized executive AI agents providing strategic intelligence across all business domains</p>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="agent-card">
+                        <div class="agent-icon">
+                            <i class="fas fa-chess-king"></i>
+                        </div>
+                        <h5>Chief Strategy Agent</h5>
+                        <p class="text-muted">Strategic planning, competitive intelligence, and market positioning</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="agent-card">
+                        <div class="agent-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h5>Chief Operating Agent</h5>
+                        <p class="text-muted">Operations optimization, process improvement, and execution excellence</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="agent-card">
+                        <div class="agent-icon">
+                            <i class="fas fa-laptop-code"></i>
+                        </div>
+                        <h5>Chief Technology Agent</h5>
+                        <p class="text-muted">Technical architecture, innovation, and digital transformation</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="agent-card">
+                        <div class="agent-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h5>Chief Financial Agent</h5>
+                        <p class="text-muted">Financial strategy, investment analysis, and resource optimization</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="agent-card">
+                        <div class="agent-icon">
+                            <i class="fas fa-bullhorn"></i>
+                        </div>
+                        <h5>Chief Marketing Agent</h5>
+                        <p class="text-muted">Brand strategy, growth marketing, and customer acquisition</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="agent-card">
+                        <div class="agent-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h5>Chief People Agent</h5>
+                        <p class="text-muted">Human capital, organizational development, and team optimization</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="agent-card">
+                        <div class="agent-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <h5>Chief Intelligence Agent</h5>
+                        <p class="text-muted">Strategic intelligence, data synthesis, and decision support</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="text-center py-4 mt-5">
+        <div class="container">
+            <p class="text-muted">
+                &copy; 2025 OperatorOS - Executive AI Advisory Board. 
+                Professional strategic intelligence for business leaders.
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('businessForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const prompt = document.getElementById('businessPrompt').value.trim();
+            if (!prompt) {
+                showError('Please enter a business challenge or question.');
+                return;
+            }
+            
+            // Show progress
+            showProgress();
+            
+            try {
+                const response = await fetch('/api/business_intelligence', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess(data);
+                } else {
+                    showError(data.error || 'An error occurred while processing your request.');
+                }
+                
+            } catch (error) {
+                showError('Network error. Please check your connection and try again.');
+            }
+        });
+        
+        function showProgress() {
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('errorContainer').style.display = 'none';
+            
+            const agents = [
+                'Analyst', 'Researcher', 'Writer', 'Chief Strategy Agent', 
+                'Chief Operating Agent', 'Chief Technology Agent', 'Chief Financial Agent',
+                'Chief Marketing Agent', 'Chief People Agent', 'Chief Intelligence Agent', 'Refiner'
+            ];
+            
+            let currentStep = 0;
+            const progressBar = document.getElementById('progressBar');
+            const currentAgent = document.getElementById('currentAgent');
+            
+            const progressInterval = setInterval(() => {
+                if (currentStep < agents.length) {
+                    const progress = ((currentStep + 1) / agents.length) * 100;
+                    progressBar.style.width = progress + '%';
+                    currentAgent.innerHTML = `<i class="fas fa-spinner spinner me-2"></i>Processing: ${agents[currentStep]}`;
+                    currentStep++;
+                } else {
+                    clearInterval(progressInterval);
+                    currentAgent.innerHTML = '<i class="fas fa-check me-2"></i>Finalizing strategic intelligence package...';
+                }
+            }, 2000);
+        }
+        
+        function showSuccess(data) {
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'block';
+            document.getElementById('errorContainer').style.display = 'none';
+            
+            const packageDetails = document.getElementById('packageDetails');
+            packageDetails.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Package ID:</strong> ${data.package_id}</p>
+                        <p><strong>Files Generated:</strong> ${data.file_count} strategic documents</p>
+                        <p><strong>Processing Time:</strong> ${data.processing_time.toFixed(2)} seconds</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Agents Completed:</strong> ${data.agents_completed}/11</p>
+                        <p><strong>Package Size:</strong> ${(data.package_size / 1024).toFixed(1)} KB</p>
+                        <p><strong>Status:</strong> <span class="badge badge-success">Ready for Download</span></p>
+                    </div>
+                </div>
+            `;
+            
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.onclick = () => window.location.href = data.download_url;
+        }
+        
+        function showError(message) {
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('errorContainer').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+        
+        function clearForm() {
+            document.getElementById('businessPrompt').value = '';
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('errorContainer').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

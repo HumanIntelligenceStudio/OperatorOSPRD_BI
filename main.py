@@ -73,6 +73,10 @@ from eos_system import eos_system
 from real_estate_engine import RealEstateEngine
 real_estate_engine = RealEstateEngine()
 
+# Initialize Enhanced 11-Agent Chain and Business Package Generator
+from enhanced_conversation_chain import Enhanced11AgentChain
+from business_package_generator import business_package_generator
+
 # Initialize notification system with SocketIO
 from notifications import notification_manager, system_monitor
 notification_manager.socketio = socketio
@@ -1069,8 +1073,8 @@ def test_drone_business():
 
 @app.route('/')
 def index():
-    """Main page with conversation interface"""
-    return render_template('index.html')
+    """Main page with modern executive interface"""
+    return render_template('modern_index.html')
 
 @app.route('/health')
 @limiter.exempt
@@ -1845,6 +1849,139 @@ def api_real_estate_engine():
     except Exception as e:
         logging.error(f"Error in real estate engine API: {str(e)}")
         return jsonify({"error": f"Real estate processing failed: {str(e)}"}), 500
+
+# Universal Business Intelligence API Endpoints
+@app.route('/api/business_intelligence', methods=['POST'])
+@limiter.limit("5 per minute")
+@csrf.exempt
+def api_business_intelligence():
+    """
+    Universal Business Intelligence API - Generates comprehensive business packages
+    Transforms any business prompt into professional 10-file .md package
+    """
+    try:
+        data = request.get_json() if request.is_json else {}
+        
+        if not data or 'prompt' not in data:
+            return jsonify({"error": "Business prompt is required"}), 400
+        
+        prompt = data['prompt'].strip()
+        
+        # Validate input
+        is_valid, error_msg = InputValidator.validate_conversation_input(prompt)
+        if not is_valid:
+            return jsonify({"error": error_msg}), 400
+        
+        # Sanitize input
+        prompt = InputValidator.sanitize_html(prompt)
+        
+        # Create temporary session for API calls
+        temp_session_id = str(uuid.uuid4())
+        
+        # Execute Enhanced 11-Agent Pipeline
+        chain = Enhanced11AgentChain.create_new(
+            prompt, 
+            session_id=temp_session_id,
+            user_ip=request.remote_addr
+        )
+        
+        # Execute complete C-Suite pipeline
+        result = chain.execute_complete_pipeline(prompt)
+        
+        if result["success"]:
+            business_package = result["business_package"]
+            logging.info(f"Business Intelligence package generated: {business_package.get('package_id', 'Unknown')}")
+            
+            return jsonify({
+                "success": True,
+                "package_id": business_package.get("package_id"),
+                "download_url": business_package.get("download_url"),
+                "file_count": business_package.get("file_count", 10),
+                "files": business_package.get("files_generated", []),
+                "processing_time": result.get("processing_time", 0),
+                "agents_completed": result.get("agents_completed", 11),
+                "conversation_id": result.get("conversation_id"),
+                "business_context": business_package.get("business_context", {}),
+                "package_size": business_package.get("package_size_bytes", 0)
+            })
+        else:
+            return jsonify({"success": False, "error": result.get("error", "Unknown error")}), 500
+        
+    except Exception as e:
+        logging.error(f"Error in business intelligence API: {str(e)}")
+        return jsonify({"error": f"Business intelligence processing failed: {str(e)}"}), 500
+
+@app.route('/api/executive_advisory', methods=['POST'])
+@limiter.limit("3 per minute")
+@csrf.exempt
+def api_executive_advisory():
+    """
+    Executive Advisory API - Premium C-Suite intelligence for enterprise clients
+    Generates executive-grade strategic intelligence packages
+    """
+    try:
+        data = request.get_json() if request.is_json else {}
+        
+        if not data or 'business_challenge' not in data:
+            return jsonify({"error": "Business challenge description is required"}), 400
+        
+        business_challenge = data['business_challenge'].strip()
+        priority_level = data.get('priority_level', 'standard')  # standard, urgent, strategic
+        
+        # Validate input
+        is_valid, error_msg = InputValidator.validate_conversation_input(business_challenge)
+        if not is_valid:
+            return jsonify({"error": error_msg}), 400
+        
+        # Sanitize input
+        business_challenge = InputValidator.sanitize_html(business_challenge)
+        
+        # Create session for tracking
+        session_id = str(uuid.uuid4())
+        
+        # Execute Enhanced 11-Agent Pipeline with executive focus
+        chain = Enhanced11AgentChain.create_new(
+            business_challenge, 
+            session_id=session_id,
+            user_ip=request.remote_addr
+        )
+        
+        # Execute complete C-Suite pipeline
+        result = chain.execute_complete_pipeline(business_challenge)
+        
+        if result["success"]:
+            business_package = result["business_package"]
+            
+            # Add executive-specific metadata
+            executive_metadata = {
+                "executive_grade": True,
+                "c_suite_analysis": True,
+                "strategic_intelligence": True,
+                "priority_level": priority_level,
+                "enterprise_ready": True
+            }
+            
+            logging.info(f"Executive Advisory package generated: {business_package.get('package_id', 'Unknown')}")
+            
+            return jsonify({
+                "success": True,
+                "package_id": business_package.get("package_id"),
+                "download_url": business_package.get("download_url"),
+                "executive_grade": True,
+                "c_suite_agents": 7,
+                "strategic_files": business_package.get("file_count", 10),
+                "processing_time": result.get("processing_time", 0),
+                "intelligence_level": "Executive C-Suite",
+                "business_value": "Strategic Intelligence Package",
+                "metadata": executive_metadata,
+                "conversation_id": result.get("conversation_id")
+            })
+        else:
+            return jsonify({"success": False, "error": result.get("error", "Unknown error")}), 500
+        
+    except Exception as e:
+        logging.error(f"Error in executive advisory API: {str(e)}")
+        return jsonify({"error": f"Executive advisory processing failed: {str(e)}"}), 500
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
