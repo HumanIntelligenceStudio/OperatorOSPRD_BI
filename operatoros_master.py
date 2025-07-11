@@ -196,6 +196,19 @@ Your path to complete autonomy starts now. What's your first move?"""
     def route_to_agent(self, input_text: str, user_session: str = None) -> Dict[str, Any]:
         """Route request to specific C-Suite agent or dynamic agent"""
         
+        # Check for dashboard command first
+        if '@all dashboard' in input_text.lower() or input_text.lower().strip() == '@all dashboard':
+            from dashboard_automation import ExecutiveDashboardGenerator
+            generator = ExecutiveDashboardGenerator()
+            dashboard_content = generator.generate_executive_dashboard()
+            return {
+                'response': dashboard_content,
+                'success': True,
+                'agent': 'Executive Dashboard',
+                'type': 'dashboard',
+                'tokens_used': 0
+            }
+        
         # Check for agent creation commands first
         if self._is_agent_creation_command(input_text):
             return self.create_dynamic_agent(input_text, user_session)

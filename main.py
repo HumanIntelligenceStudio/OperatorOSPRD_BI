@@ -1897,6 +1897,42 @@ def daily_autonomy_briefing():
         logging.error(f"Error generating daily briefing: {str(e)}")
         return jsonify({"error": f"Daily briefing failed: {str(e)}"}), 500
 
+@app.route('/api/dashboard', methods=['POST'])
+@limiter.limit("10 per minute")
+@csrf.exempt
+def dashboard_endpoint():
+    """Generate executive dashboard for all C-Suite agents"""
+    try:
+        data = request.get_json()
+        input_text = data.get('input', '').strip() if data else ''
+        
+        # Check if this is a dashboard command
+        if '@all dashboard' in input_text.lower() or input_text.lower() == '@all dashboard':
+            # Import dashboard generator
+            from dashboard_automation import ExecutiveDashboardGenerator
+            
+            # Generate dashboard
+            generator = ExecutiveDashboardGenerator()
+            dashboard_content = generator.generate_executive_dashboard()
+            
+            return jsonify({
+                "success": True,
+                "response": dashboard_content,
+                "timestamp": datetime.utcnow().isoformat(),
+                "agent_type": "dashboard",
+                "conversation_stats": {
+                    "dashboard_type": "executive_summary",
+                    "agents_synthesized": 8,
+                    "sections_generated": 6
+                }
+            })
+        else:
+            return jsonify({"error": "Use '@all dashboard' command to generate executive dashboard"}), 400
+        
+    except Exception as e:
+        logging.error(f"Error generating dashboard: {str(e)}")
+        return jsonify({"error": f"Dashboard generation error: {str(e)}"}), 500
+
 @app.route('/api/operatoros/agent', methods=['POST'])
 @limiter.limit("15 per minute")
 @csrf.exempt
