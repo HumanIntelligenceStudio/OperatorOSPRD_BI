@@ -106,59 +106,58 @@ class OperatorOSMaster:
         """Initial activation response when OperatorOS is first started"""
         return """🚀 OPERATOROS ACTIVATED
 
-Your personal life operating system is now online. I'm your Master Agent coordinating your C-Suite of AI executives focused on achieving complete autonomy.
+Your personal life operating system is now online. I'm your Master Agent coordinating your C-Suite of AI executives focused on achieving complete freedom and optimization.
 
-Ready to optimize your life across all domains:
-💰 Financial independence through wealth building and passive income
-⚙️ Life automation through optimized routines and systems
-🎯 Strategic planning through clear autonomy roadmaps
-🎨 Income generation through personal brand and influence
-💻 Technology automation through smart tools and systems
-🌱 Health optimization through data-driven wellness
-🧠 Intelligence synthesis through pattern recognition and insights
+Ready to transform your life across all domains:
+💰 Financial independence and wealth building for any income level
+⚙️ Life automation and peak performance optimization
+🎯 Strategic planning for your unique autonomy goals
+🎨 Personal brand and income generation strategies
+💻 Technology automation and productivity systems
+🌱 Health, wellness, and sustainable performance
+🧠 Intelligence synthesis and better decision-making
 
-What would you like to focus on for your autonomy journey?
+Whether you're a student, professional, parent, entrepreneur, or anyone seeking more freedom - your personal AI executive team is ready.
 
-**Options:**
-- Daily check-in and optimization briefing
+**Universal Options:**
+- Daily optimization briefing for your situation
 - Specific agent consultation (@CFO, @COO, @CSA, etc.)
-- Autonomy strategy and timeline planning
-- Financial independence roadmap
-- Life automation setup
-- Cross-domain optimization analysis
+- Financial independence planning (any income level)
+- Life automation and productivity setup
+- Career acceleration and transition strategies
+- Location independence and remote optimization
 
 Your path to complete autonomy starts now. What's your first move?"""
 
     def daily_autonomy_briefing(self, user_input: str = None) -> Dict[str, Any]:
-        """Generate NRT-focused daily briefing for digital nomad transition"""
+        """Generate NRT-focused daily briefing for universal life optimization"""
         
         briefing_prompt = f"""
-        Generate a DAILY NRT BRIEFING for digital nomad transition targeting $7,400+ monthly location-independent income.
+        Generate a DAILY NRT BRIEFING for universal life optimization and autonomy achievement.
         
-        User context: {user_input if user_input else "Digital nomad transition check-in"}
-        Current income: $7,400/month take-home salary
-        Goal: Digital nomad with location-independent income
+        User context: {user_input if user_input else "Life optimization check-in"}
         Current autonomy progress: {self.user_context['autonomy_progress']}%
         
         Use NRT (Next Right Thing) Framework - identify the single most impactful action for each domain:
         
         Format as:
-        🎯 DAILY NRT BRIEFING - Digital Nomad Transition
+        🎯 DAILY NRT BRIEFING - Life Optimization & Autonomy
         
-        💰 CFO NRT: [Highest impact financial action today for income replacement]
-        ⚙️ COO NRT: [Highest impact operational action for location independence]
-        🎯 CSA NRT: [Highest impact strategic action for nomad timeline]
-        🎨 CMO NRT: [Highest impact marketing action for remote client acquisition]
-        💻 CTO NRT: [Highest impact technology action for nomad infrastructure]
-        🌱 CPO NRT: [Highest impact personal action for nomad readiness]
+        💰 CFO NRT: [Highest impact financial action today for wealth building]
+        ⚙️ COO NRT: [Highest impact operational action for life optimization]
+        🎯 CSA NRT: [Highest impact strategic action for autonomy timeline]
+        🎨 CMO NRT: [Highest impact personal brand action for income generation]
+        💻 CTO NRT: [Highest impact technology action for automation]
+        🌱 CPO NRT: [Highest impact personal action for peak performance]
         🧠 CIO NRT: [Data synthesis and bottleneck identification]
         
         🏆 TODAY'S #1 NRT: [Single most important action today]
-        📊 NOMAD READINESS: [X]% ready for transition
-        ⏰ ESTIMATED TIMELINE: [X] weeks to nomad launch
-        💰 INCOME PROGRESS: $[X] toward $7,400 nomad income goal
+        📊 AUTONOMY PROGRESS: [X]% toward complete freedom
+        ⏰ OPTIMIZATION TIMELINE: [X] weeks to next milestone
+        💰 FINANCIAL PROGRESS: [Current progress toward financial independence]
         
-        Focus on actions with highest Impact × Urgency scores for fastest nomad transition.
+        Focus on actions with highest Impact × Urgency scores for fastest autonomy achievement.
+        Adapt recommendations based on user's unique situation and goals.
         """
         
         try:

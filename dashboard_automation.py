@@ -71,8 +71,8 @@ class ExecutiveDashboardGenerator:
             },
             "CSA": {
                 "status": "🟢 Operational",
-                "key_metric": "Healthcare AI Specialization",
-                "progress": "Premium positioning active",
+                "key_metric": "Universal Life Optimization",
+                "progress": "Strategic planning ready",
                 "confidence": "30% compliance premium secured"
             },
             "CMO": {
@@ -135,10 +135,10 @@ class ExecutiveDashboardGenerator:
             ],
             "growth_opportunities": [
                 {
-                    "insight": "Healthcare AI Thought Leadership",
+                    "insight": "Universal Life Optimization Thought Leadership",
                     "agents": "CMO + CSA + CIO",
                     "impact": "🟡 Medium",
-                    "description": "Weekly webinar series and LinkedIn authority building"
+                    "description": "Weekly content series and authority building across all life domains"
                 },
                 {
                     "insight": "Digital Product Scaling",
@@ -184,7 +184,7 @@ class ExecutiveDashboardGenerator:
                     "insight": "Partnership Channel Development",
                     "agents": "CMO + CSA + COO",
                     "impact": "🔮 Future",
-                    "description": "Healthcare vendor partnerships and consulting firm relationships"
+                    "description": "Universal vendor partnerships and consulting firm relationships across all industries"
                 },
                 {
                     "insight": "Autonomy Milestone Planning",
@@ -202,10 +202,10 @@ class ExecutiveDashboardGenerator:
         
         next_steps = {
             "today": {
-                "top_priority": "Send 3 personalized outreach emails to Regional Medical Center, MedTech Solutions, and Community Health Network",
+                "top_priority": "Send 3 personalized outreach emails to target prospects in any industry seeking life optimization",
                 "financial": "Confirm premium pricing ($300/hour) implementation across all materials and proposals",
                 "operational": "Schedule 2 demo presentations for Thursday and Friday this week",
-                "growth": "Post healthcare AI insight on LinkedIn targeting 500+ healthcare executives"
+                "growth": "Post life optimization insight on LinkedIn targeting professionals seeking autonomy"
             },
             "this_week": {
                 "strategic_initiatives": [
@@ -218,7 +218,7 @@ class ExecutiveDashboardGenerator:
                 ],
                 "development": [
                     "Practice and refine 15-minute demo presentation for maximum conversion",
-                    "Research and contact 25 additional healthcare executives for pipeline building"
+                    "Research and contact 25 additional professionals across all industries for pipeline building"
                 ]
             },
             "this_month": {
@@ -227,8 +227,8 @@ class ExecutiveDashboardGenerator:
                     "Secure 2 retainer clients at $5,000/month each for recurring revenue"
                 ],
                 "strategic_projects": [
-                    "Launch Healthcare AI Implementation Toolkit for $1,500 passive income",
-                    "Establish thought leadership through weekly webinar series and content"
+                    "Launch Universal Life Optimization Toolkit for $1,500 passive income",
+                    "Establish thought leadership through weekly content series across all life domains"
                 ]
             }
         }

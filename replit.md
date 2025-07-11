@@ -7,10 +7,10 @@ This is a Flask-based personal life operating system that implements a comprehen
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
-Project Vision: Personal life operating system for individual autonomy and financial independence.
-Target User: Individuals (25-45) seeking complete financial independence, life automation, and location independence.
-Focus Areas: Personal finance optimization, life automation, strategic planning for autonomy, wealth building, personal brand development.
-Use Case: Personal AI executive team managing all aspects of individual life optimization, not business consultation platform.
+Project Vision: Universal personal life operating system for complete autonomy and financial independence.
+Target User: Anyone seeking life optimization (22-65, $30K-$300K+ income, global reach) - students, professionals, parents, entrepreneurs, retirees.
+Focus Areas: Universal life optimization, financial independence, location freedom, automation, strategic planning, peak performance.
+Use Case: Personal AI C-Suite executive team for anyone seeking freedom and optimization, regardless of background or profession.
 
 ## System Architecture
 
