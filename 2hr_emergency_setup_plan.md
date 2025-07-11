@@ -42,8 +42,8 @@
 #### Minutes 101-120: Client Acquisition Ready
 - **Invoice Template:** Use Wave or QuickBooks template
 - **Professional Email:** Google Workspace (instant setup)
-- **LinkedIn Update:** "Now offering Epic consulting services"
-- **First Client Outreach:** Prepare 3 immediate prospects
+- **Professional Website:** Quick setup using Squarespace or Wix (30 min)
+- **Direct Outreach Strategy:** Prepare confidential prospect contact plan
 
 ### 📋 PARALLEL ACTIONS (Do Simultaneously):
 1. **LLC filing** while **EIN application** processes
