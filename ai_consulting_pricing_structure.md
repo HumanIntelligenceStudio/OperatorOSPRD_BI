@@ -4,33 +4,36 @@
 
 ### CORE CONSULTING SERVICES
 
-**AI Strategy Development - $200/hour**
+**AI Strategy Development - $300/hour**
 - AI readiness assessment and gap analysis
 - Strategic AI implementation roadmap
 - Business case development and ROI analysis
 - Executive briefings and board presentations
+- Healthcare AI compliance and HIPAA considerations
 
-**AI Implementation Planning - $175/hour**
+**AI Implementation Planning - $225/hour**
 - Technical architecture design
 - Vendor evaluation and selection
 - Project timeline and milestone planning
 - Risk assessment and mitigation strategies
+- Healthcare compliance integration
 
-**AI Training & Support - $150/hour**
+**AI Training & Support - $175/hour**
 - Staff training and workshops
 - Documentation and knowledge transfer
 - Ongoing support and troubleshooting
 - Performance monitoring and optimization
+- Compliance training and certification
 
 ### SPECIALIZED SERVICES
 
-**AI Vendor Evaluation - $225/hour**
+**AI Vendor Evaluation - $275/hour**
 - Comprehensive vendor assessment
 - Technology stack comparison
 - Contract negotiation support
 - Implementation cost analysis
 
-**AI ROI Analysis - $250/hour**
+**AI ROI Analysis - $300/hour**
 - Financial impact modeling
 - Cost-benefit analysis
 - Performance metrics development
@@ -38,13 +41,13 @@
 
 ### PROJECT-BASED PRICING
 
-**AI Strategy Assessment Package - $1,500**
+**AI Strategy Assessment Package - $2,500**
 - 6-8 hour comprehensive assessment
 - Current state analysis
 - Gap identification and recommendations
 - Implementation roadmap (high-level)
 
-**AI Implementation Planning Package - $3,500**
+**AI Implementation Planning Package - $5,000**
 - 15-20 hour detailed planning engagement
 - Technical architecture design
 - Vendor evaluation and selection
