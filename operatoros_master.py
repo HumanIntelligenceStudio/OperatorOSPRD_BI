@@ -1,6 +1,7 @@
 """
 OperatorOS Master Agent - Personal Life Operating System
 Coordinates C-Suite of AI agents for complete autonomy and financial independence
+Enhanced with OperatorOS Production Memory Foundation Layer
 """
 import os
 import logging
@@ -10,6 +11,7 @@ from openai import OpenAI
 from config import Config
 from models import db, Conversation, ConversationEntry, DynamicAgent
 from dynamic_agent_creator import DynamicAgentCreator
+from operatoros_memory import OperatorOSMemory
 
 class OperatorOSMaster:
     """

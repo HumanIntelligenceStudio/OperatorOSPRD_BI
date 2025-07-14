@@ -1,6 +1,7 @@
 """
 Enhanced 11-Agent Conversation Chain for Complete C-Suite Advisory Board
 Implements: Analyst → Researcher → Writer → CSA → COO → CTO → CFO → CMO → CPO → CIO → Refiner
+Enhanced with OperatorOS Production Memory Foundation Layer
 """
 
 import logging
@@ -10,6 +11,7 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional
 from models import db, Conversation, ConversationEntry
 from business_package_generator import business_package_generator
+from operatoros_memory import OperatorOSMemory
 
 class Enhanced11AgentChain:
     """

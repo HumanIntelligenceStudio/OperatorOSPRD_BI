@@ -1,6 +1,7 @@
 """
 C-Suite of Agents Implementation for OperatorOS
 Comprehensive AI executive team with specialized domain expertise
+Enhanced with OperatorOS Production Memory Foundation Layer
 """
 
 import logging
@@ -10,14 +11,16 @@ import openai
 import anthropic
 import google.generativeai as genai
 from config import Config
+from operatoros_memory import OperatorOSMemory
 
 class BaseCSuiteAgent:
-    """Base class for C-Suite agents with multi-API support"""
+    """Base class for C-Suite agents with OperatorOS Memory Foundation Layer"""
     
     def __init__(self, name, role, system_prompt, preferred_api="openai"):
         self.name = name
         self.role = role
-        self.system_prompt = system_prompt
+        # Apply OperatorOS memory foundation to agent prompt
+        self.system_prompt = OperatorOSMemory.apply_memory_filter(system_prompt)
         self.preferred_api = preferred_api
         
     def generate_response(self, input_text, conversation_history=None, api_override=None):
