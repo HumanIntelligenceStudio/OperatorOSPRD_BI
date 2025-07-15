@@ -120,27 +120,27 @@ def handle_csuite_request_direct(input_text):
         agent_code = None
         clean_input = input_text
         
-        for code in ['CSA', 'COO', 'CTO', 'CFO', 'CMO', 'CPO', 'CIO']:
+        for code in ['Strategy', 'Operations', 'Technology', 'Finance', 'Marketing', 'People', 'Data']:
             if input_text.startswith(f'@{code}:'):
                 agent_code = code
                 clean_input = input_text[len(f'@{code}:'):].strip()
                 break
         
         if not agent_code:
-            return jsonify({"error": "Invalid C-Suite agent format"}), 400
+            return jsonify({"error": "Invalid agent format"}), 400
         
         # Simple direct routing to OpenAI with specialized prompts
         role_prompts = {
-            'CSA': "You are a Chief Strategy Officer providing strategic analysis and competitive intelligence.",
-            'COO': "You are a Chief Operating Officer focused on operational excellence and process optimization.", 
-            'CTO': "You are a Chief Technology Officer providing technical architecture and innovation guidance.",
-            'CFO': "You are a Chief Financial Officer providing financial analysis and investment guidance.",
-            'CMO': "You are a Chief Marketing Officer providing brand strategy and growth guidance.",
-            'CPO': "You are a Chief People Officer providing human capital and organizational guidance.",
-            'CIO': "You are a Chief Intelligence Officer providing strategic intelligence and decision support."
+            'Strategy': "You are a Strategy Advisor providing strategic analysis and competitive intelligence.",
+            'Operations': "You are an Operations Expert focused on operational excellence and process optimization.", 
+            'Technology': "You are a Tech Expert providing technical architecture and innovation guidance.",
+            'Finance': "You are a Finance Expert providing financial analysis and investment guidance.",
+            'Marketing': "You are a Marketing Expert providing brand strategy and growth guidance.",
+            'People': "You are a People Expert providing human capital and organizational guidance.",
+            'Data': "You are a Data Analyst providing strategic intelligence and decision support."
         }
         
-        system_prompt = role_prompts.get(agent_code, "You are an executive advisor.")
+        system_prompt = role_prompts.get(agent_code, "You are a business advisor.")
         
         # Generate response using OpenAI
         start_time = datetime.utcnow()
@@ -173,7 +173,7 @@ def handle_csuite_request_direct(input_text):
         entry = ConversationEntry(
             conversation_id=conversation_id,
             agent_name=agent_code,
-            agent_role=f"Chief {agent_code} Officer",
+        agent_role=agent_code + " Expert",
             input_text=clean_input,
             response_text=response_text,
             processing_time_seconds=processing_time,

@@ -161,11 +161,11 @@ class BaseAgent:
         
         return response.text, "gemini"
 
-class ChiefStrategyAgent(BaseAgent):
-    """Chief Strategy Agent (CSA) - Long-term vision, competitive intelligence, and strategic decision frameworks"""
+class StrategyAdvisor(BaseAgent):
+    """Strategy Advisor - Long-term vision, competitive intelligence, and strategic decision frameworks"""
     
     def __init__(self):
-        system_prompt = """You are the Chief Strategy Agent (CSA), serving as the strategic intelligence officer and long-term visionary.
+        system_prompt = """You are a Strategy Advisor, serving as the strategic intelligence specialist and long-term visionary.
 
 CORE RESPONSIBILITIES:
 - Business strategy and competitive intelligence
@@ -197,17 +197,17 @@ INTELLIGENCE FOCUS:
 - Risk mitigation and scenario planning"""
 
         super().__init__(
-            name="CSA",
-            role="Chief Strategy Agent",
+            name="Strategy",
+            role="Strategy Advisor",
             system_prompt=system_prompt,
             preferred_api="claude"
         )
 
-class ChiefOperatingAgent(BaseAgent):
-    """Chief Operating Agent (COO) - Execution excellence, process optimization, and operational efficiency"""
+class OperationsExpert(BaseAgent):
+    """Operations Expert - Execution excellence, process optimization, and operational efficiency"""
     
     def __init__(self):
-        system_prompt = """You are the Chief Operating Agent (COO), focused on execution excellence and operational efficiency.
+        system_prompt = """You are an Operations Expert, focused on execution excellence and operational efficiency.
 
 CORE RESPONSIBILITIES:
 - Daily operations and process optimization
@@ -239,17 +239,17 @@ OPERATIONAL FOCUS:
 - Team productivity and workflow optimization"""
 
         super().__init__(
-            name="COO",
-            role="Chief Operating Agent",
+            name="Operations",
+            role="Operations Expert",
             system_prompt=system_prompt,
             preferred_api="openai"
         )
 
-class ChiefTechnologyAgent(BaseAgent):
-    """Chief Technology Agent (CTO) - Technical architecture, innovation pipeline, and digital transformation"""
+class TechExpert(BaseAgent):
+    """Tech Expert - Technical architecture, innovation pipeline, and digital transformation"""
     
     def __init__(self):
-        system_prompt = """You are the Chief Technology Agent (CTO), responsible for technical architecture and innovation strategy.
+        system_prompt = """You are a Technology Expert, responsible for technical architecture and innovation strategy.
 
 CORE RESPONSIBILITIES:
 - Technology stack evaluation and architecture
@@ -281,17 +281,17 @@ TECHNOLOGY FOCUS:
 - Technology adoption and innovation cycles"""
 
         super().__init__(
-            name="CTO",
-            role="Chief Technology Agent",
+            name="Technology",
+            role="Tech Expert",
             system_prompt=system_prompt,
             preferred_api="gemini"
         )
 
-class ChiefFinancialAgent(BaseAgent):
-    """Chief Financial Agent (CFO) - Financial strategy, resource optimization, and investment intelligence"""
+class FinanceExpert(BaseAgent):
+    """Finance Expert - Financial strategy, resource optimization, and investment intelligence"""
     
     def __init__(self):
-        system_prompt = """You are the Chief Financial Agent (CFO), managing financial strategy and investment intelligence.
+        system_prompt = """You are a Finance Expert, managing financial strategy and investment intelligence.
 
 CORE RESPONSIBILITIES:
 - Financial planning and resource optimization
@@ -323,17 +323,17 @@ FINANCIAL FOCUS:
 - Financial risk management and mitigation"""
 
         super().__init__(
-            name="CFO",
-            role="Chief Financial Agent",
+            name="Finance",
+            role="Finance Expert",
             system_prompt=system_prompt,
             preferred_api="openai"
         )
 
-class ChiefMarketingAgent(BaseAgent):
-    """Chief Marketing Agent (CMO) - Brand strategy, market positioning, and growth acceleration"""
+class MarketingExpert(BaseAgent):
+    """Marketing Expert - Brand strategy, market positioning, and growth acceleration"""
     
     def __init__(self):
-        system_prompt = """You are the Chief Marketing Agent (CMO), driving brand strategy and growth acceleration.
+        system_prompt = """You are a Marketing Expert, driving brand strategy and growth acceleration.
 
 CORE RESPONSIBILITIES:
 - Brand positioning and messaging strategy
@@ -365,17 +365,17 @@ MARKETING FOCUS:
 - Community building and customer advocacy"""
 
         super().__init__(
-            name="CMO",
-            role="Chief Marketing Agent",
+            name="Marketing",
+            role="Marketing Expert",
             system_prompt=system_prompt,
             preferred_api="claude"
         )
 
-class ChiefPeopleAgent(BaseAgent):
-    """Chief People Agent (CPO) - Human capital optimization, culture development, and leadership effectiveness"""
+class PeopleExpert(BaseAgent):
+    """People Expert - Human capital optimization, culture development, and leadership effectiveness"""
     
     def __init__(self):
-        system_prompt = """You are the Chief People Agent (CPO), optimizing human capital and organizational effectiveness.
+        system_prompt = """You are a People Expert, optimizing human capital and organizational effectiveness.
 
 CORE RESPONSIBILITIES:
 - Team development and leadership coaching
@@ -407,17 +407,17 @@ PEOPLE FOCUS:
 - Work-life balance and well-being initiatives"""
 
         super().__init__(
-            name="CPO",
-            role="Chief People Agent",
+            name="People",
+            role="People Expert",
             system_prompt=system_prompt,
             preferred_api="openai"
         )
 
-class ChiefIntelligenceAgent(BaseAgent):
-    """Chief Intelligence Agent (CIO) - Information synthesis, pattern recognition, and decision intelligence"""
+class DataAnalyst(BaseAgent):
+    """Data Analyst - Information synthesis, pattern recognition, and decision intelligence"""
     
     def __init__(self):
-        system_prompt = """You are the Chief Intelligence Agent (CIO), synthesizing information and generating strategic intelligence.
+        system_prompt = """You are a Data Analyst, synthesizing information and generating strategic intelligence.
 
 CORE RESPONSIBILITIES:
 - Cross-domain intelligence synthesis
@@ -449,8 +449,8 @@ INTELLIGENCE FOCUS:
 - Decision support and scenario modeling"""
 
         super().__init__(
-            name="CIO",
-            role="Chief Intelligence Agent",
+            name="Data",
+            role="Data Analyst",
             system_prompt=system_prompt,
             preferred_api="claude"
         )
@@ -460,13 +460,13 @@ class AgentTeamManager:
     
     def __init__(self):
         self.agents = {
-            'CSA': ChiefStrategyAgent(),
-            'COO': ChiefOperatingAgent(),
-            'CTO': ChiefTechnologyAgent(),
-            'CFO': ChiefFinancialAgent(),
-            'CMO': ChiefMarketingAgent(),
-            'CPO': ChiefPeopleAgent(),
-            'CIO': ChiefIntelligenceAgent()
+            'Strategy': StrategyAdvisor(),
+            'Operations': OperationsExpert(),
+            'Technology': TechExpert(),
+            'Finance': FinanceExpert(),
+            'Marketing': MarketingExpert(),
+            'People': PeopleExpert(),
+            'Data': DataAnalyst()
         }
         
     def get_agent(self, agent_code: str) -> Optional[BaseAgent]:
@@ -476,13 +476,13 @@ class AgentTeamManager:
     def list_agents(self) -> Dict[str, str]:
         """List all available agents"""
         return {
-            'CSA': 'Chief Strategy Agent - Strategic planning and competitive intelligence',
-            'COO': 'Chief Operating Agent - Operations and process optimization',
-            'CTO': 'Chief Technology Agent - Technology architecture and innovation',
-            'CFO': 'Chief Financial Agent - Financial strategy and investment analysis',
-            'CMO': 'Chief Marketing Agent - Brand strategy and growth acceleration',
-            'CPO': 'Chief People Agent - Human capital and organizational development',
-            'CIO': 'Chief Intelligence Agent - Information synthesis and decision support'
+            'Strategy': 'Strategy Advisor - Strategic planning and competitive intelligence',
+            'Operations': 'Operations Expert - Operations and process optimization',
+            'Technology': 'Tech Expert - Technology architecture and innovation',
+            'Finance': 'Finance Expert - Financial strategy and investment analysis',
+            'Marketing': 'Marketing Expert - Brand strategy and growth acceleration',
+            'People': 'People Expert - Human capital and organizational development',
+            'Data': 'Data Analyst - Information synthesis and decision support'
         }
     
     def route_to_agent(self, input_text: str) -> tuple[Optional[BaseAgent], str]:
