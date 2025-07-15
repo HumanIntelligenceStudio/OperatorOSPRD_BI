@@ -11,6 +11,7 @@ from datetime import datetime
 from models import db, Conversation, ConversationEntry
 from config import config, Config
 from utils.validators import InputValidator, SecurityValidator
+from multi_llm_provider import multi_llm, LLMProvider
 
 # Initialize Flask app
 def create_app(config_name=None):
@@ -2566,6 +2567,148 @@ def api_executive_advisory():
     except Exception as e:
         logging.error(f"Error in executive advisory API: {str(e)}")
         return jsonify({"error": f"Executive advisory processing failed: {str(e)}"}), 500
+
+# Multi-LLM Testing Routes
+@app.route('/llm-test')
+def llm_test_dashboard():
+    """Multi-LLM testing dashboard"""
+    return render_template('llm_test_dashboard.html')
+
+@app.route('/api/llm/status')
+@limiter.limit("30 per minute")
+@csrf.exempt  # API endpoint
+def llm_status():
+    """Get status of all LLM providers"""
+    try:
+        status = multi_llm.get_provider_status()
+        return jsonify(status)
+    except Exception as e:
+        logging.error(f"Error getting LLM status: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/llm/test-all', methods=['POST'])
+@limiter.limit("10 per minute")
+@csrf.exempt  # API endpoint
+def test_all_llm_providers():
+    """Test all available LLM providers"""
+    try:
+        results = multi_llm.test_all_providers()
+        
+        # Convert results to JSON-serializable format
+        json_results = {}
+        for provider, response in results.items():
+            json_results[provider] = {
+                "content": response.content,
+                "provider": response.provider.value,
+                "model": response.model,
+                "usage": response.usage,
+                "success": response.success,
+                "error": response.error
+            }
+        
+        return jsonify(json_results)
+        
+    except Exception as e:
+        logging.error(f"Error testing LLM providers: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/llm/custom-test', methods=['POST'])
+@limiter.limit("15 per minute")
+@csrf.exempt  # API endpoint
+def custom_llm_test():
+    """Run a custom test on specified provider(s)"""
+    try:
+        data = request.get_json()
+        prompt = data.get('prompt', '')
+        provider_name = data.get('provider')
+        
+        if not prompt.strip():
+            return jsonify({"error": "Prompt cannot be empty"}), 400
+        
+        # Convert provider name to enum
+        provider = None
+        if provider_name:
+            try:
+                provider = LLMProvider(provider_name)
+            except ValueError:
+                return jsonify({"error": f"Invalid provider: {provider_name}"}), 400
+        
+        # Create messages from prompt
+        messages = [
+            {
+                "role": "system",
+                "content": "You are an OperatorOS agent following production memory guidelines. Respond with precision and clarity - no flattery, no soothing, no inflation."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+        
+        # Generate response
+        response = multi_llm.generate_response(
+            messages=messages,
+            provider=provider,
+            max_tokens=500,
+            temperature=0.7
+        )
+        
+        return jsonify({
+            "content": response.content,
+            "provider": response.provider.value,
+            "model": response.model,
+            "usage": response.usage,
+            "success": response.success,
+            "error": response.error
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in custom LLM test: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/llm/chat', methods=['POST'])
+@limiter.limit("30 per minute")
+@csrf.exempt  # API endpoint
+def llm_chat():
+    """General LLM chat endpoint with provider selection"""
+    try:
+        data = request.get_json()
+        messages = data.get('messages', [])
+        provider_name = data.get('provider')
+        max_tokens = data.get('max_tokens', 1000)
+        temperature = data.get('temperature', 0.7)
+        
+        if not messages:
+            return jsonify({"error": "Messages cannot be empty"}), 400
+        
+        # Convert provider name to enum if specified
+        provider = None
+        if provider_name:
+            try:
+                provider = LLMProvider(provider_name)
+            except ValueError:
+                return jsonify({"error": f"Invalid provider: {provider_name}"}), 400
+        
+        # Generate response
+        response = multi_llm.generate_response(
+            messages=messages,
+            provider=provider,
+            max_tokens=max_tokens,
+            temperature=temperature
+        )
+        
+        return jsonify({
+            "content": response.content,
+            "provider": response.provider.value,
+            "model": response.model,
+            "usage": response.usage,
+            "success": response.success,
+            "error": response.error
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in LLM chat: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
