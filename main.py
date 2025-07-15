@@ -84,8 +84,7 @@ app.register_blueprint(admin_bp)
 from video_upload import video_bp
 app.register_blueprint(video_bp)
 
-# Initialize EOS System
-from eos_system import eos_system
+
 
 # Initialize Real Estate Engine
 from real_estate_engine import RealEstateEngine
@@ -1068,7 +1067,7 @@ class ConversationChain:
                     'processing_time': entry.get('processing_time_seconds', 0)
                 })
             
-            # Generate deliverable using EOS system
+            # Generate deliverable using business package generator
             deliverable_data = {
                 'conversation_id': self.conversation.id,
                 'initial_input': initial_input,
@@ -1134,83 +1133,7 @@ def health_check():
             "error": str(e)
         }), 500
 
-# EOS (Economic Operating System) Endpoints
-@app.route('/api/eos/transform', methods=['POST'])
-@limiter.limit("5 per minute")
-@csrf.exempt
-def transform_prompt_to_offering():
-    """Transform any prompt into a monetizable offering using EOS"""
-    try:
-        data = request.get_json()
-        if not data or 'prompt' not in data:
-            return jsonify({"error": "Prompt is required"}), 400
-        
-        prompt = data['prompt'].strip()
-        context = data.get('context', {})
-        client_email = data.get('client_email')
-        
-        # Transform prompt using EOS
-        offering = eos_system.transform_prompt(prompt, context)
-        
-        # Create payment link
-        payment_result = eos_system.create_instant_payment_link(offering, client_email)
-        
-        # Generate deployment package
-        deployment_package = eos_system.generate_deployment_package(offering, payment_result)
-        
-        return jsonify({
-            "success": True,
-            "offering": {
-                "title": offering.title,
-                "description": offering.description,
-                "value_proposition": offering.value_proposition,
-                "price": offering.price,
-                "fulfillment_time": offering.fulfillment_time,
-                "delivery_method": offering.delivery_method.value,
-                "marketing_hook": offering.marketing_hook
-            },
-            "payment": payment_result,
-            "deployment": deployment_package
-        })
-        
-    except Exception as e:
-        logging.error(f"Error in EOS transform: {str(e)}")
-        return jsonify({"error": f"EOS transformation failed: {str(e)}"}), 500
 
-@app.route('/api/eos/quick-offer', methods=['POST'])
-@limiter.limit("10 per minute")
-@csrf.exempt
-def quick_offer_generation():
-    """Generate quick monetizable offer from simple input"""
-    try:
-        data = request.get_json()
-        if not data or 'input' not in data:
-            return jsonify({"error": "Input is required"}), 400
-        
-        input_text = data['input'].strip()
-        
-        # Quick transformation
-        offering = eos_system.transform_prompt(input_text)
-        
-        return jsonify({
-            "success": True,
-            "quick_offer": {
-                "title": offering.title,
-                "price": f"${offering.price}",
-                "hook": offering.marketing_hook,
-                "value": offering.value_proposition,
-                "delivery": offering.fulfillment_time
-            }
-        })
-        
-    except Exception as e:
-        logging.error(f"Error in quick offer generation: {str(e)}")
-        return jsonify({"error": f"Quick offer generation failed: {str(e)}"}), 500
-
-@app.route('/eos')
-def eos_interface():
-    """Simple EOS testing interface"""
-    return render_template('eos_interface.html')
 
 @app.route('/download/<filename>')
 def download_deliverable(filename):
