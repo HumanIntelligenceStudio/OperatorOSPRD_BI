@@ -1,6 +1,6 @@
 """
-C-Suite of Agents Implementation for OperatorOS
-Comprehensive AI executive team with specialized domain expertise
+Team of Agents Implementation for OperatorOS
+Comprehensive AI agent team with specialized domain expertise
 Enhanced with OperatorOS Production Memory Foundation Layer
 """
 
@@ -14,8 +14,8 @@ from config import Config
 from operatoros_memory import OperatorOSMemory
 from intelligent_agent_router import intelligent_router, AgentRequest, AgentType
 
-class BaseCSuiteAgent:
-    """Base class for C-Suite agents with OperatorOS Memory Foundation Layer"""
+class BaseAgent:
+    """Base class for agents with OperatorOS Memory Foundation Layer"""
     
     def __init__(self, name, role, system_prompt, preferred_api="openai"):
         self.name = name
@@ -161,7 +161,7 @@ class BaseCSuiteAgent:
         
         return response.text, "gemini"
 
-class ChiefStrategyAgent(BaseCSuiteAgent):
+class ChiefStrategyAgent(BaseAgent):
     """Chief Strategy Agent (CSA) - Long-term vision, competitive intelligence, and strategic decision frameworks"""
     
     def __init__(self):
@@ -203,7 +203,7 @@ INTELLIGENCE FOCUS:
             preferred_api="claude"
         )
 
-class ChiefOperatingAgent(BaseCSuiteAgent):
+class ChiefOperatingAgent(BaseAgent):
     """Chief Operating Agent (COO) - Execution excellence, process optimization, and operational efficiency"""
     
     def __init__(self):
@@ -245,7 +245,7 @@ OPERATIONAL FOCUS:
             preferred_api="openai"
         )
 
-class ChiefTechnologyAgent(BaseCSuiteAgent):
+class ChiefTechnologyAgent(BaseAgent):
     """Chief Technology Agent (CTO) - Technical architecture, innovation pipeline, and digital transformation"""
     
     def __init__(self):
@@ -287,7 +287,7 @@ TECHNOLOGY FOCUS:
             preferred_api="gemini"
         )
 
-class ChiefFinancialAgent(BaseCSuiteAgent):
+class ChiefFinancialAgent(BaseAgent):
     """Chief Financial Agent (CFO) - Financial strategy, resource optimization, and investment intelligence"""
     
     def __init__(self):
@@ -329,7 +329,7 @@ FINANCIAL FOCUS:
             preferred_api="openai"
         )
 
-class ChiefMarketingAgent(BaseCSuiteAgent):
+class ChiefMarketingAgent(BaseAgent):
     """Chief Marketing Agent (CMO) - Brand strategy, market positioning, and growth acceleration"""
     
     def __init__(self):
@@ -371,7 +371,7 @@ MARKETING FOCUS:
             preferred_api="claude"
         )
 
-class ChiefPeopleAgent(BaseCSuiteAgent):
+class ChiefPeopleAgent(BaseAgent):
     """Chief People Agent (CPO) - Human capital optimization, culture development, and leadership effectiveness"""
     
     def __init__(self):
@@ -413,7 +413,7 @@ PEOPLE FOCUS:
             preferred_api="openai"
         )
 
-class ChiefIntelligenceAgent(BaseCSuiteAgent):
+class ChiefIntelligenceAgent(BaseAgent):
     """Chief Intelligence Agent (CIO) - Information synthesis, pattern recognition, and decision intelligence"""
     
     def __init__(self):
@@ -455,8 +455,8 @@ INTELLIGENCE FOCUS:
             preferred_api="claude"
         )
 
-class CSuiteAgentManager:
-    """Manager for C-Suite agent coordination and routing"""
+class AgentTeamManager:
+    """Manager for agent team coordination and routing"""
     
     def __init__(self):
         self.agents = {
@@ -469,12 +469,12 @@ class CSuiteAgentManager:
             'CIO': ChiefIntelligenceAgent()
         }
         
-    def get_agent(self, agent_code: str) -> Optional[BaseCSuiteAgent]:
-        """Get specific C-Suite agent by code"""
+    def get_agent(self, agent_code: str) -> Optional[BaseAgent]:
+        """Get specific agent by code"""
         return self.agents.get(agent_code.upper())
     
     def list_agents(self) -> Dict[str, str]:
-        """List all available C-Suite agents"""
+        """List all available agents"""
         return {
             'CSA': 'Chief Strategy Agent - Strategic planning and competitive intelligence',
             'COO': 'Chief Operating Agent - Operations and process optimization',
@@ -485,8 +485,8 @@ class CSuiteAgentManager:
             'CIO': 'Chief Intelligence Agent - Information synthesis and decision support'
         }
     
-    def route_to_agent(self, input_text: str) -> tuple[Optional[BaseCSuiteAgent], str]:
-        """Route input to appropriate C-Suite agent based on prefix"""
+    def route_to_agent(self, input_text: str) -> tuple[Optional[BaseAgent], str]:
+        """Route input to appropriate agent based on prefix"""
         for code, agent in self.agents.items():
             if input_text.startswith(f'@{code}:'):
                 clean_input = input_text[len(f'@{code}:'):].strip()
@@ -494,11 +494,11 @@ class CSuiteAgentManager:
         return None, input_text
     
     def get_executive_briefing(self, days: int = 7) -> Dict[str, str]:
-        """Generate executive briefing from all C-Suite agents"""
+        """Generate executive briefing from all agents"""
         briefing = {}
         for code, agent in self.agents.items():
             briefing[code] = f"Executive briefing from {agent.role} for the last {days} days"
         return briefing
 
-# Global C-Suite manager instance
-csuite_manager = CSuiteAgentManager()
+# Global agent team manager instance
+agent_team_manager = AgentTeamManager()

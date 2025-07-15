@@ -22,8 +22,25 @@ def create_app(config_name=None):
     config_name = config_name or os.environ.get('FLASK_ENV', 'development')
     app.config.from_object(config[config_name])
     
-    # Validate required environment variables
-    Config.validate_required_env_vars()
+    # Check for required environment variables and prompt if missing
+    try:
+        Config.validate_required_env_vars()
+    except Exception as e:
+        print(f"❌ Missing required environment variables: {e}")
+        print("🔧 Running secret setup wizard...")
+        
+        try:
+            from secret_setup import SecretKeySetup
+            setup = SecretKeySetup()
+            if setup.run_setup():
+                print("✅ Environment configured. Please restart the application.")
+                sys.exit(0)
+            else:
+                print("❌ Setup failed. Please configure environment variables manually.")
+                sys.exit(1)
+        except ImportError:
+            print("❌ Secret setup wizard not available. Please configure environment variables manually.")
+            sys.exit(1)
     
     # Setup logging
     Config.setup_logging()
@@ -95,7 +112,7 @@ notification_manager.socketio = socketio
 # RefinerAgent will be defined inline to avoid circular imports
 
 # Initialize C-Suite agents manager (after app initialization)
-from csuite_agents import csuite_manager
+from csuite_agents import agent_team_manager
 
 def handle_csuite_request_direct(input_text):
     """Direct handler for C-Suite agent requests without complex routing"""
@@ -593,22 +610,22 @@ class ConversationChain:
         self.extended_agents = []
         
         if extended_mode:
-            # Add C-Suite agents for strategic intelligence
+            # Add agent team for strategic intelligence
             try:
-                from csuite_agents import CSuiteAgentManager
-                csuite_manager = CSuiteAgentManager()
+                from csuite_agents import AgentTeamManager
+                agent_team_manager = AgentTeamManager()
                 
                 # Add key strategic agents for comprehensive analysis
-                strategist = csuite_manager.get_agent('CSA')  # Strategy
-                tech_advisor = csuite_manager.get_agent('CTO')  # Technology  
-                financial_advisor = csuite_manager.get_agent('CFO')  # Financial
+                strategist = agent_team_manager.get_agent('CSA')  # Strategy
+                tech_advisor = agent_team_manager.get_agent('CTO')  # Technology  
+                financial_advisor = agent_team_manager.get_agent('CFO')  # Financial
                 
                 if strategist and tech_advisor and financial_advisor:
                     self.extended_agents = [strategist, tech_advisor, financial_advisor]
-                    logging.info(f"🏢 EXTENDED MODE: Added {len(self.extended_agents)} C-Suite agents to chain")
+                    logging.info(f"🏢 EXTENDED MODE: Added {len(self.extended_agents)} agents to chain")
                 
             except Exception as e:
-                logging.warning(f"Could not load C-Suite agents for extended mode: {str(e)}")
+                logging.warning(f"Could not load agents for extended mode: {str(e)}")
         
         # Combine core + extended agents
         self.agents = self.core_agents + self.extended_agents
@@ -2715,18 +2732,18 @@ def llm_chat():
         logging.error(f"Error in LLM chat: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/csuite/intelligent-test', methods=['POST'])
+@app.route('/api/agents/intelligent-test', methods=['POST'])
 @limiter.limit("15 per minute")
 @csrf.exempt  # API endpoint
-def test_intelligent_csuite():
-    """Test C-Suite agents with intelligent LLM routing"""
+def test_intelligent_agents():
+    """Test agent team with intelligent LLM routing"""
     try:
         data = request.get_json()
         agent_code = data.get('agent_code', 'CFO')  # Default to CFO for testing
         prompt = data.get('prompt', 'Analyze current market conditions and provide financial recommendations.')
         
         # Get the agent
-        agent = csuite_manager.get_agent(agent_code)
+        agent = agent_team_manager.get_agent(agent_code)
         if not agent:
             return jsonify({"error": f"Agent {agent_code} not found"}), 404
         
@@ -2744,7 +2761,7 @@ def test_intelligent_csuite():
         })
         
     except Exception as e:
-        logging.error(f"Error in intelligent C-Suite test: {str(e)}")
+        logging.error(f"Error in intelligent agent test: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/routing/stats')

@@ -88,10 +88,10 @@
             </div>
         </div>
 
-        <!-- C-Suite Agent Testing -->
+        <!-- Team of Agents Testing -->
         <div class="test-section">
-            <h4>👔 C-Suite Agent Intelligent Routing</h4>
-            <p>Test how different C-Suite agents automatically get routed to optimal LLM providers:</p>
+            <h4>👔 Team of Agents Intelligent Routing</h4>
+            <p>Test how different agents automatically get routed to optimal LLM providers:</p>
             
             <div class="row" id="agent-cards">
                 <!-- Agent cards will be loaded here -->
@@ -196,7 +196,7 @@
             responseContainer.innerHTML = '<div class="alert alert-info">Processing request...</div>';
             
             try {
-                const response = await fetch('/api/csuite/intelligent-test', {
+                const response = await fetch('/api/agents/intelligent-test', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
