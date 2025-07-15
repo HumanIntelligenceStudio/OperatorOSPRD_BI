@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OperatorOS Intelligent LLM Routing Demo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .agent-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .agent-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .provider-badge {
+            font-size: 0.8em;
+            margin-left: 0.5rem;
+        }
+        .routing-info {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+        .response-content {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">🎯 OperatorOS Intelligent LLM Routing</span>
+            <span class="badge bg-success">Production Ready</span>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2>Intelligent Multi-LLM System</h2>
+                <p class="text-muted">
+                    This system automatically selects the best LLM (OpenAI, Anthropic, or Gemini) for each agent and task type.
+                    The routing decisions are based on task content analysis, agent preferences, and provider strengths.
+                </p>
+            </div>
+        </div>
+
+        <!-- Routing Statistics -->
+        <div class="test-section">
+            <h4>🧠 System Intelligence Status</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <button class="btn btn-info" onclick="loadRoutingStats()">
+                        <span id="stats-spinner" class="spinner-border spinner-border-sm d-none"></span>
+                        Load Routing Statistics
+                    </button>
+                    <div id="routing-stats" class="mt-3"></div>
+                </div>
+                <div class="col-md-6">
+                    <div class="routing-info">
+                        <h6>Intelligent Selection Rules:</h6>
+                        <ul class="mb-0">
+                            <li><strong>Anthropic:</strong> Analysis, Financial, Business Strategy</li>
+                            <li><strong>OpenAI:</strong> Technical, Coding, General Tasks</li>
+                            <li><strong>Gemini:</strong> Research, Fast Processing</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- C-Suite Agent Testing -->
+        <div class="test-section">
+            <h4>👔 C-Suite Agent Intelligent Routing</h4>
+            <p>Test how different C-Suite agents automatically get routed to optimal LLM providers:</p>
+            
+            <div class="row" id="agent-cards">
+                <!-- Agent cards will be loaded here -->
+            </div>
+
+            <div class="mt-4">
+                <div class="row">
+                    <div class="col-md-8">
+                        <textarea id="agent-prompt" class="form-control" rows="3" 
+                                  placeholder="Enter your prompt for the selected agent...">Analyze current market conditions and provide strategic recommendations for Q4 2025.</textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <select id="selected-agent" class="form-select mb-2">
+                            <option value="CFO">CFO - Chief Financial Officer</option>
+                            <option value="CTO">CTO - Chief Technology Officer</option>
+                            <option value="CMO">CMO - Chief Marketing Officer</option>
+                            <option value="COO">COO - Chief Operating Officer</option>
+                            <option value="CSA">CSA - Chief Strategy Advisor</option>
+                            <option value="CPO">CPO - Chief People Officer</option>
+                            <option value="CIO">CIO - Chief Intelligence Officer</option>
+                        </select>
+                        <button class="btn btn-primary w-100" onclick="testAgentRouting()">
+                            <span id="agent-spinner" class="spinner-border spinner-border-sm d-none"></span>
+                            Test Intelligent Routing
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="agent-response" class="mt-3"></div>
+        </div>
+
+        <!-- Direct LLM Comparison -->
+        <div class="test-section">
+            <h4>⚖️ Provider Selection Comparison</h4>
+            <p>Compare how the same prompt gets routed to different providers based on content analysis:</p>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    <textarea id="comparison-prompt" class="form-control mb-3" rows="2" 
+                              placeholder="Enter a prompt to see which LLM gets selected...">Design a scalable API architecture for a financial trading platform with real-time data processing.</textarea>
+                    <button class="btn btn-success" onclick="testProviderSelection()">
+                        <span id="selection-spinner" class="spinner-border spinner-border-sm d-none"></span>
+                        Test Provider Selection
+                    </button>
+                </div>
+            </div>
+            
+            <div id="selection-results" class="mt-3"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedAgent = 'CFO';
+
+        // Load routing statistics
+        async function loadRoutingStats() {
+            const spinner = document.getElementById('stats-spinner');
+            const container = document.getElementById('routing-stats');
+            
+            spinner.classList.remove('d-none');
+            
+            try {
+                const response = await fetch('/api/routing/stats');
+                const data = await response.json();
+                
+                container.innerHTML = `
+                    <div class="card">
+                        <div class="card-body">
+                            <h6>Available Providers: ${data.provider_status.total_providers}</h6>
+                            <p><strong>Models:</strong></p>
+                            <ul>
+                                ${Object.entries(data.provider_status.model_mappings).map(([provider, model]) => 
+                                    `<li>${provider.toUpperCase()}: ${model}</li>`
+                                ).join('')}
+                            </ul>
+                            <span class="badge bg-success">System: ${data.system_status}</span>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            } finally {
+                spinner.classList.add('d-none');
+            }
+        }
+
+        // Test agent routing
+        async function testAgentRouting() {
+            const spinner = document.getElementById('agent-spinner');
+            const responseContainer = document.getElementById('agent-response');
+            const prompt = document.getElementById('agent-prompt').value;
+            const agentCode = document.getElementById('selected-agent').value;
+            
+            if (!prompt.trim()) {
+                alert('Please enter a prompt');
+                return;
+            }
+            
+            spinner.classList.remove('d-none');
+            responseContainer.innerHTML = '<div class="alert alert-info">Processing request...</div>';
+            
+            try {
+                const response = await fetch('/api/csuite/intelligent-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        agent_code: agentCode,
+                        prompt: prompt
+                    })
+                });
+                
+                const data = await response.json();
+                
+                responseContainer.innerHTML = `
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <strong>${data.agent_name}</strong>
+                            <span class="badge bg-primary provider-badge">Routed to: ${data.provider_used.toUpperCase()}</span>
+                        </div>
+                        <div class="card-body">
+                            <h6>Prompt:</h6>
+                            <p class="text-muted">${data.prompt}</p>
+                            <h6>AI Response:</h6>
+                            <div class="response-content">${data.response}</div>
+                            <small class="text-muted mt-2 d-block">
+                                ✅ Intelligent routing enabled | Timestamp: ${data.timestamp}
+                            </small>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                responseContainer.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            } finally {
+                spinner.classList.add('d-none');
+            }
+        }
+
+        // Test provider selection
+        async function testProviderSelection() {
+            const spinner = document.getElementById('selection-spinner');
+            const resultsContainer = document.getElementById('selection-results');
+            const prompt = document.getElementById('comparison-prompt').value;
+            
+            if (!prompt.trim()) {
+                alert('Please enter a prompt');
+                return;
+            }
+            
+            spinner.classList.remove('d-none');
+            resultsContainer.innerHTML = '<div class="alert alert-info">Analyzing prompt and selecting optimal provider...</div>';
+            
+            try {
+                const response = await fetch('/api/llm/custom-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        provider: null // Let system choose
+                    })
+                });
+                
+                const data = await response.json();
+                
+                resultsContainer.innerHTML = `
+                    <div class="card">
+                        <div class="card-header">
+                            <strong>Intelligent Selection Result</strong>
+                            <span class="badge bg-success provider-badge">Selected: ${data.provider.toUpperCase()}</span>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Prompt Analysis:</strong> "${prompt}"</p>
+                            <p><strong>Model Used:</strong> ${data.model}</p>
+                            <div class="response-content">${data.content}</div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    🎯 System automatically selected ${data.provider.toUpperCase()} based on prompt content analysis
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                resultsContainer.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            } finally {
+                spinner.classList.add('d-none');
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRoutingStats();
+        });
+    </script>
+</body>
+</html>

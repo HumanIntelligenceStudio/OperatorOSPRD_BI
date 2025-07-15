@@ -12,6 +12,7 @@ import anthropic
 import google.generativeai as genai
 from config import Config
 from operatoros_memory import OperatorOSMemory
+from intelligent_agent_router import intelligent_router, AgentRequest, AgentType
 
 class BaseCSuiteAgent:
     """Base class for C-Suite agents with OperatorOS Memory Foundation Layer"""
@@ -24,27 +25,50 @@ class BaseCSuiteAgent:
         self.preferred_api = preferred_api
         
     def generate_response(self, input_text, conversation_history=None, api_override=None):
-        """Generate response using multi-API routing with fallback"""
-        api_to_use = api_override or self.preferred_api
+        """Generate response using intelligent LLM routing"""
         
-        try:
-            if api_to_use == "claude":
-                return self._generate_claude_response(input_text, conversation_history)
-            elif api_to_use == "gemini":
-                return self._generate_gemini_response(input_text, conversation_history)
-            else:  # default to openai
-                return self._generate_openai_response(input_text, conversation_history)
-        except Exception as e:
-            logging.warning(f"Primary API {api_to_use} failed: {str(e)}")
-            # Fallback to OpenAI if available
-            if api_to_use != "openai":
-                try:
-                    return self._generate_openai_response(input_text, conversation_history)
-                except Exception as fallback_e:
-                    logging.error(f"Fallback to OpenAI also failed: {str(fallback_e)}")
-                    raise e
-            else:
-                raise e
+        # Convert agent name to AgentType for intelligent routing
+        agent_type_mapping = {
+            "CSA": AgentType.CSA,
+            "COO": AgentType.COO,
+            "CTO": AgentType.CTO,
+            "CFO": AgentType.CFO,
+            "CMO": AgentType.CMO,
+            "CPO": AgentType.CPO,
+            "CIO": AgentType.CIO
+        }
+        
+        agent_type = agent_type_mapping.get(self.name, AgentType.GENERAL)
+        
+        # Build messages from conversation history and current input
+        messages = [{"role": "system", "content": self.system_prompt}]
+        
+        if conversation_history:
+            for entry in conversation_history[-3:]:  # Last 3 entries for context
+                messages.append({"role": "user", "content": entry.get('input_text', '')})
+                messages.append({"role": "assistant", "content": entry.get('response_text', '')})
+        
+        messages.append({"role": "user", "content": input_text})
+        
+        # Create intelligent agent request
+        request = AgentRequest(
+            agent_type=agent_type,
+            messages=messages,
+            user_input=input_text,
+            context={"conversation_history": conversation_history},
+            priority="normal",
+            require_precision=True
+        )
+        
+        # Route through intelligent system
+        result = intelligent_router.route_agent_request(request)
+        
+        if result["success"]:
+            return result["content"], result["provider_used"]
+        else:
+            # Fallback to original system if intelligent routing fails
+            logging.warning(f"Intelligent routing failed for {self.name}: {result.get('error')}")
+            return self._fallback_generate_response(input_text, conversation_history)
     
     def _generate_openai_response(self, input_text, conversation_history=None):
         """Generate response using OpenAI API"""
@@ -67,6 +91,29 @@ class BaseCSuiteAgent:
         )
         
         return response.choices[0].message.content, "openai"
+    
+    def _fallback_generate_response(self, input_text, conversation_history=None):
+        """Fallback response generation using original system"""
+        api_to_use = self.preferred_api
+        
+        try:
+            if api_to_use == "claude":
+                return self._generate_claude_response(input_text, conversation_history)
+            elif api_to_use == "gemini":
+                return self._generate_gemini_response(input_text, conversation_history)
+            else:  # default to openai
+                return self._generate_openai_response(input_text, conversation_history)
+        except Exception as e:
+            logging.warning(f"Primary API {api_to_use} failed: {str(e)}")
+            # Fallback to OpenAI if available
+            if api_to_use != "openai":
+                try:
+                    return self._generate_openai_response(input_text, conversation_history)
+                except Exception as fallback_e:
+                    logging.error(f"Fallback to OpenAI also failed: {str(fallback_e)}")
+                    raise e
+            else:
+                raise e
     
     def _generate_claude_response(self, input_text, conversation_history=None):
         """Generate response using Claude API"""
@@ -422,7 +469,7 @@ class CSuiteAgentManager:
             'CIO': ChiefIntelligenceAgent()
         }
         
-    def get_agent(self, agent_code: str) -> Optional[Agent]:
+    def get_agent(self, agent_code: str) -> Optional[BaseCSuiteAgent]:
         """Get specific C-Suite agent by code"""
         return self.agents.get(agent_code.upper())
     
@@ -438,7 +485,7 @@ class CSuiteAgentManager:
             'CIO': 'Chief Intelligence Agent - Information synthesis and decision support'
         }
     
-    def route_to_agent(self, input_text: str) -> tuple[Optional[Agent], str]:
+    def route_to_agent(self, input_text: str) -> tuple[Optional[BaseCSuiteAgent], str]:
         """Route input to appropriate C-Suite agent based on prefix"""
         for code, agent in self.agents.items():
             if input_text.startswith(f'@{code}:'):

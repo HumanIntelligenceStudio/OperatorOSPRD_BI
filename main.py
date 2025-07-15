@@ -95,7 +95,7 @@ notification_manager.socketio = socketio
 # RefinerAgent will be defined inline to avoid circular imports
 
 # Initialize C-Suite agents manager (after app initialization)
-csuite_manager = None
+from csuite_agents import csuite_manager
 
 def handle_csuite_request_direct(input_text):
     """Direct handler for C-Suite agent requests without complex routing"""
@@ -2574,6 +2574,11 @@ def llm_test_dashboard():
     """Multi-LLM testing dashboard"""
     return render_template('llm_test_dashboard.html')
 
+@app.route('/intelligent-routing')
+def intelligent_routing_demo():
+    """Intelligent LLM routing demonstration"""
+    return render_template('intelligent_routing_demo.html')
+
 @app.route('/api/llm/status')
 @limiter.limit("30 per minute")
 @csrf.exempt  # API endpoint
@@ -2708,6 +2713,59 @@ def llm_chat():
         
     except Exception as e:
         logging.error(f"Error in LLM chat: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/csuite/intelligent-test', methods=['POST'])
+@limiter.limit("15 per minute")
+@csrf.exempt  # API endpoint
+def test_intelligent_csuite():
+    """Test C-Suite agents with intelligent LLM routing"""
+    try:
+        data = request.get_json()
+        agent_code = data.get('agent_code', 'CFO')  # Default to CFO for testing
+        prompt = data.get('prompt', 'Analyze current market conditions and provide financial recommendations.')
+        
+        # Get the agent
+        agent = csuite_manager.get_agent(agent_code)
+        if not agent:
+            return jsonify({"error": f"Agent {agent_code} not found"}), 404
+        
+        # Generate response using intelligent routing
+        response_content, provider_used = agent.generate_response(prompt)
+        
+        return jsonify({
+            "agent_code": agent_code,
+            "agent_name": agent.role,
+            "prompt": prompt,
+            "response": response_content,
+            "provider_used": provider_used,
+            "intelligent_routing": True,
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in intelligent C-Suite test: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/routing/stats')
+@limiter.limit("20 per minute")
+@csrf.exempt  # API endpoint
+def routing_stats():
+    """Get intelligent routing system statistics"""
+    try:
+        from intelligent_agent_router import intelligent_router
+        
+        stats = intelligent_router.get_routing_stats()
+        provider_status = multi_llm.get_provider_status()
+        
+        return jsonify({
+            "routing_stats": stats,
+            "provider_status": provider_status,
+            "system_status": "operational"
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting routing stats: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
