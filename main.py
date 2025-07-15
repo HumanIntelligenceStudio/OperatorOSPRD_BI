@@ -86,9 +86,7 @@ app.register_blueprint(video_bp)
 
 
 
-# Initialize Real Estate Engine
-from real_estate_engine import RealEstateEngine
-real_estate_engine = RealEstateEngine()
+
 
 # Initialize Enhanced 11-Agent Chain and Business Package Generator
 from enhanced_conversation_chain import Enhanced11AgentChain
@@ -2328,52 +2326,7 @@ def build_project_strategy():
         logging.error(f"Error building project strategy: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
-# Real Estate Engine API Endpoint
-@app.route('/api/real_estate_engine', methods=['POST'])
-@limiter.limit("5 per minute")
-@csrf.exempt
-def api_real_estate_engine():
-    """Process real estate agent prompts through OperatorOS loop"""
-    try:
-        data = request.get_json() if request.is_json else {}
-        
-        if not data or 'prompt' not in data:
-            return jsonify({"error": "prompt is required"}), 400
-        
-        prompt = data['prompt'].strip()
-        
-        # Validate input
-        is_valid, error_msg = InputValidator.validate_conversation_input(prompt)
-        if not is_valid:
-            return jsonify({"error": error_msg}), 400
-        
-        # Sanitize input
-        prompt = InputValidator.sanitize_html(prompt)
-        
-        # Create temporary session for API calls
-        temp_session_id = str(uuid.uuid4())
-        
-        # Process through real estate engine
-        result = real_estate_engine.process_real_estate_prompt(prompt, temp_session_id)
-        
-        if result["success"]:
-            logging.info(f"Real Estate package generated: {result['package_id']}")
-            return jsonify({
-                "success": True,
-                "package_id": result["package_id"],
-                "download_url": result["download_url"],
-                "property_type": result["property_type"],
-                "location": result["location"],
-                "file_count": result["file_count"],
-                "processing_time": result["processing_time"],
-                "files": ["listing.md", "market.md", "actions.md", "pricing.md"]
-            })
-        else:
-            return jsonify({"success": False, "error": result["error"]}), 500
-        
-    except Exception as e:
-        logging.error(f"Error in real estate engine API: {str(e)}")
-        return jsonify({"error": f"Real estate processing failed: {str(e)}"}), 500
+
 
 # Universal Business Intelligence API Endpoints
 @app.route('/api/business_intelligence', methods=['POST'])
