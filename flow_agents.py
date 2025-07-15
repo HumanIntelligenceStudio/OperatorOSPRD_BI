@@ -359,7 +359,7 @@ class FlowAgentManager:
     """Manager for coordinating flow platform agents"""
     
     def __init__(self):
-        # Personal Flow Agents
+        # Initialize Flow Agents
         self.flow_agent = FlowAgent()
         self.energy_agent = EnergyAgent()
         self.loop_agent = LoopAgent()

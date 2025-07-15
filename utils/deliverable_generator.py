@@ -4933,7 +4933,7 @@ Follow the included improvement plan for optimal results.
     
     def _create_improvement_plan(self, client_name: str) -> str:
         """Create personalized improvement plan"""
-        return f"""# Personalized Improvement Plan
+        return f"""ized Improvement Plan
 ## Customized for {client_name}
 
 ### Week 1-2: Foundation Building

@@ -122,16 +122,9 @@ class ProductionConfig(Config):
         "max_overflow": 30
     }
 
-class TestingConfig(Config):
-    """Testing configuration"""
-    TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
-    WTF_CSRF_ENABLED = False
-
 # Configuration selector
 config = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,
-    'testing': TestingConfig,
     'default': DevelopmentConfig
 }
