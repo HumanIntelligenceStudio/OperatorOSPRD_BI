@@ -1,0 +1,298 @@
+{
+  "dataSource": {
+    "type": "Excel",
+    "connectionString": "Provider=Microsoft.ACE.OLEDB.12.0;Data Source={filepath};Extended Properties='Excel 12.0 Xml;HDR=YES';",
+    "authentication": "Anonymous",
+    "privacy": "Organizational"
+  },
+  "dataModel": {
+    "tables": [
+      {
+        "name": "SpecialtyData",
+        "columns": [
+          {
+            "name": "Specialty_Name",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Lead_Person",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Fast_Pass_Status",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Ticket_Scheduling_Amb",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Ticket_Scheduling_FollowUp",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Open_Scheduling",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Direct_Scheduling",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Patient_Self_Service_Score",
+            "dataType": "Int64",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Priority_Level",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Fast_Pass_Notes",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Ticket_Scheduling_Notes", 
+            "dataType": "Text",
+            "formatString": "General"
+          }
+        ],
+        "measures": [
+          {
+            "name": "Total_Specialties",
+            "expression": "COUNTROWS(SpecialtyData)",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Fast_Pass_Live_Count",
+            "expression": "COUNTROWS(FILTER(SpecialtyData, SpecialtyData[Fast_Pass_Status] = \"A\" || SEARCH(\"Live\", SpecialtyData[Fast_Pass_Notes], 1, 0) > 0))",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Ticket_Auto_Count", 
+            "expression": "COUNTROWS(FILTER(SpecialtyData, SpecialtyData[Ticket_Scheduling_Amb] = \"A\"))",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "RAA_Enabled_Count",
+            "expression": "COUNTROWS(FILTER(SpecialtyData, SEARCH(\"RAA\", SpecialtyData[Open_Scheduling], 1, 0) > 0))",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Avg_PSS_Score",
+            "expression": "AVERAGE(SpecialtyData[Patient_Self_Service_Score])",
+            "formatString": "#,##0.0"
+          },
+          {
+            "name": "High_Priority_Count",
+            "expression": "COUNTROWS(FILTER(SpecialtyData, SpecialtyData[Priority_Level] = \"High\"))",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Patient_Self_Service_Readiness",
+            "expression": "DIVIDE([Fast_Pass_Live_Count] + [Ticket_Auto_Count] + [RAA_Enabled_Count], [Total_Specialties] * 3) * 100",
+            "formatString": "#,##0.0"
+          }
+        ]
+      }
+    ]
+  },
+  "dashboards": [
+    {
+      "name": "Executive Overview",
+      "displayName": "Executive Overview - Patient Self Service KPIs",
+      "pages": [
+        {
+          "name": "PSS_Summary", 
+          "displayName": "Patient Self Service Summary",
+          "visuals": [
+            {
+              "type": "card",
+              "name": "Total_Specialties_Card",
+              "title": "Total Specialties",
+              "position": {"x": 0, "y": 0, "width": 280, "height": 120},
+              "dataBindings": {"values": [{"measure": "Total_Specialties"}]}
+            },
+            {
+              "type": "card",
+              "name": "Fast_Pass_Card",
+              "title": "Fast Pass Live",
+              "position": {"x": 300, "y": 0, "width": 280, "height": 120},
+              "dataBindings": {"values": [{"measure": "Fast_Pass_Live_Count"}]}
+            },
+            {
+              "type": "card", 
+              "name": "Ticket_Auto_Card",
+              "title": "Ticket Auto Scheduling",
+              "position": {"x": 600, "y": 0, "width": 280, "height": 120},
+              "dataBindings": {"values": [{"measure": "Ticket_Auto_Count"}]}
+            },
+            {
+              "type": "card",
+              "name": "RAA_Card", 
+              "title": "Request Appointment",
+              "position": {"x": 900, "y": 0, "width": 280, "height": 120},
+              "dataBindings": {"values": [{"measure": "RAA_Enabled_Count"}]}
+            },
+            {
+              "type": "gauge",
+              "name": "PSS_Readiness_Gauge",
+              "title": "Patient Self Service Readiness %",
+              "position": {"x": 0, "y": 140, "width": 600, "height": 400},
+              "dataBindings": {
+                "values": [{"measure": "Patient_Self_Service_Readiness"}],
+                "targets": [{"value": 80}]
+              }
+            },
+            {
+              "type": "pieChart",
+              "name": "Priority_Distribution", 
+              "title": "Priority Distribution",
+              "position": {"x": 620, "y": 140, "width": 560, "height": 400},
+              "dataBindings": {
+                "category": "Priority_Level",
+                "values": [{"measure": "Total_Specialties"}]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Specialty Drill Down",
+      "displayName": "Specialty-by-Specialty Analysis", 
+      "pages": [
+        {
+          "name": "Feature_Implementation",
+          "displayName": "Feature Implementation by Specialty",
+          "visuals": [
+            {
+              "type": "matrix",
+              "name": "Specialty_Feature_Matrix",
+              "title": "Patient Self Service Features by Specialty",
+              "position": {"x": 0, "y": 0, "width": 1200, "height": 600},
+              "dataBindings": {
+                "rows": ["Specialty_Name", "Lead_Person"],
+                "columns": ["Fast_Pass_Status", "Ticket_Scheduling_Amb", "Ticket_Scheduling_FollowUp", "Open_Scheduling"],
+                "values": [{"measure": "Patient_Self_Service_Score"}]
+              }
+            },
+            {
+              "type": "barChart",
+              "name": "PSS_Score_Ranking",
+              "title": "Patient Self Service Score by Specialty",
+              "position": {"x": 0, "y": 620, "width": 1200, "height": 300}, 
+              "dataBindings": {
+                "category": "Specialty_Name",
+                "values": ["Patient_Self_Service_Score"],
+                "legend": "Lead_Person"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Implementation_Details",
+          "displayName": "Implementation Details & Notes",
+          "visuals": [
+            {
+              "type": "table", 
+              "name": "Detailed_Status_Table",
+              "title": "Detailed Implementation Status",
+              "position": {"x": 0, "y": 0, "width": 1200, "height": 920},
+              "dataBindings": {
+                "columns": [
+                  "Specialty_Name",
+                  "Lead_Person", 
+                  "Fast_Pass_Status",
+                  "Fast_Pass_Notes",
+                  "Ticket_Scheduling_Notes",
+                  "Patient_Self_Service_Score",
+                  "Priority_Level"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Lead Analysis",
+      "displayName": "Analysis by Lead Person",
+      "pages": [
+        {
+          "name": "Lead_Performance",
+          "displayName": "Performance by Lead", 
+          "visuals": [
+            {
+              "type": "clusteredBarChart",
+              "name": "Lead_Specialty_Count",
+              "title": "Specialties by Lead Person",
+              "position": {"x": 0, "y": 0, "width": 600, "height": 400},
+              "dataBindings": {
+                "category": "Lead_Person",
+                "values": [{"measure": "Total_Specialties"}]
+              }
+            },
+            {
+              "type": "scatterChart",
+              "name": "Lead_Performance_Scatter", 
+              "title": "Lead Performance: Count vs Avg PSS Score",
+              "position": {"x": 620, "y": 0, "width": 580, "height": 400},
+              "dataBindings": {
+                "x": {"measure": "Total_Specialties"},
+                "y": {"measure": "Avg_PSS_Score"},
+                "details": "Lead_Person"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "theme": {
+    "name": "Healthcare Patient Self Service Theme",
+    "dataColors": [
+      "#28a745",
+      "#ffc107", 
+      "#dc3545",
+      "#17a2b8",
+      "#6f42c1",
+      "#fd7e14",
+      "#20c997",
+      "#6c757d"
+    ],
+    "background": "#FFFFFF",
+    "foreground": "#212529",
+    "tableAccent": "#28a745"
+  },
+  "refreshSettings": {
+    "schedule": "Daily",
+    "time": "06:00", 
+    "timezone": "UTC"
+  },
+  "annotations": {
+    "kpi_definitions": {
+      "Fast_Pass": "Patients can self-schedule appropriate follow-up appointments",
+      "Ticket_Auto": "Automatic release of appointment tickets based on criteria", 
+      "Ticket_Manual": "Manual review and release of appointment tickets",
+      "RAA": "Request an Appointment - patients can request appointments online",
+      "PSS_Score": "Patient Self Service Score - composite measure of self-service capabilities"
+    },
+    "color_coding": {
+      "Green": "Satisfactory and functional",
+      "Light_Green": "On, but additional opportunity",
+      "Yellow": "Opportunity to improve", 
+      "Red": "Concerns / Not On",
+      "Purple": "In Progress"
+    }
+  }
+}
