@@ -95,6 +95,10 @@ from business_package_generator import BusinessPackageGenerator
 # Create business package generator instance
 business_package_generator = BusinessPackageGenerator()
 
+# Initialize Spreadsheet Transformer
+from spreadsheet_transformer import SpreadsheetTransformer
+spreadsheet_transformer = SpreadsheetTransformer()
+
 # Initialize Flow Platform Agents
 from flow_agents import FlowAgentManager
 flow_agent_manager = FlowAgentManager()
@@ -2660,6 +2664,78 @@ def routing_stats():
     except Exception as e:
         logging.error(f"Error getting routing stats: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+# Spreadsheet Transformer Routes
+@app.route('/transform')
+def spreadsheet_transformer_interface():
+    """Spreadsheet to Power BI transformer interface"""
+    return render_template('spreadsheet_transformer.html')
+
+@app.route('/api/transform/spreadsheet', methods=['POST'])
+@limiter.limit("3 per minute")  # Lower limit for file processing
+@csrf.exempt
+def api_transform_spreadsheet():
+    """Transform spreadsheet to clean Excel and Power BI configuration"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        # Validate and save file
+        try:
+            file_path = spreadsheet_transformer.save_uploaded_file(file)
+        except ValueError as e:
+            return jsonify({'error': str(e)}), 400
+        
+        # Transform the file
+        result = spreadsheet_transformer.transform_file(file_path, file.filename)
+        
+        if result['success']:
+            logging.info(f"Spreadsheet transformation successful: {result['transformation_id']}")
+            return jsonify(result)
+        else:
+            return jsonify({'error': result['error']}), 500
+            
+    except Exception as e:
+        logging.error(f"Error in spreadsheet transformation API: {str(e)}")
+        return jsonify({'error': f"Transformation failed: {str(e)}"}), 500
+
+@app.route('/download/excel/<transformation_id>')
+def download_excel(transformation_id):
+    """Download cleaned Excel file"""
+    try:
+        file_path = spreadsheet_transformer.get_file_path(transformation_id, 'excel')
+        if not file_path:
+            return "File not found", 404
+        
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name=f'cleaned_data_{transformation_id}.xlsx'
+        )
+    except Exception as e:
+        logging.error(f"Error downloading Excel file: {str(e)}")
+        return "Download failed", 500
+
+@app.route('/download/config/<transformation_id>')
+def download_config(transformation_id):
+    """Download Power BI configuration JSON"""
+    try:
+        file_path = spreadsheet_transformer.get_file_path(transformation_id, 'config')
+        if not file_path:
+            return "File not found", 404
+        
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name=f'powerbi_config_{transformation_id}.json'
+        )
+    except Exception as e:
+        logging.error(f"Error downloading config file: {str(e)}")
+        return "Download failed", 500
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

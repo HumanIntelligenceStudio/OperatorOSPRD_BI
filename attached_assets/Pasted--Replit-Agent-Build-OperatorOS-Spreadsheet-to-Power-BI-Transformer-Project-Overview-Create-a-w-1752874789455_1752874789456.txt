@@ -1,0 +1,1249 @@
+# Replit Agent: Build OperatorOS Spreadsheet to Power BI Transformer
+
+## Project Overview
+Create a web application that transforms messy spreadsheets into clean Excel files and Power BI dashboard configurations. The app should run entirely in Replit, accept file uploads, process them automatically, and generate downloadable outputs.
+
+## Technology Stack
+- **Backend**: Python with Flask
+- **Frontend**: HTML, Bootstrap 5, Chart.js
+- **Data Processing**: pandas, openpyxl
+- **File Handling**: Excel read/write, JSON generation
+- **Deployment**: Replit hosting
+
+## File Structure
+```
+/operatoros-transformer
+├── app.py                    # Main Flask application
+├── requirements.txt          # Python dependencies
+├── templates/
+│   └── index.html           # Upload interface
+├── static/
+│   ├── css/
+│   │   └── style.css        # Custom styles
+│   └── js/
+│       └── main.js          # Frontend logic
+├── processors/
+│   ├── __init__.py
+│   ├── analyzer.py          # Spreadsheet analysis
+│   ├── cleaner.py           # Data cleaning logic
+│   └── powerbi_generator.py # Dashboard config generation
+├── outputs/                  # Generated files directory
+└── README.md                # Documentation
+```
+
+## Core Implementation
+
+### 1. Create `app.py` - Main Flask Application
+```python
+from flask import Flask, render_template, request, send_file, jsonify
+import os
+import json
+from werkzeug.utils import secure_filename
+from processors.analyzer import SpreadsheetAnalyzer
+from processors.cleaner import DataCleaner
+from processors.powerbi_generator import PowerBIGenerator
+
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['OUTPUT_FOLDER'] = 'outputs'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Ensure directories exist
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        # Process the file
+        try:
+            # Analyze structure
+            analyzer = SpreadsheetAnalyzer()
+            analysis = analyzer.analyze(filepath)
+            
+            # Clean data
+            cleaner = DataCleaner()
+            cleaned_data = cleaner.clean(filepath, analysis)
+            
+            # Generate Power BI config
+            powerbi_gen = PowerBIGenerator()
+            config = powerbi_gen.generate(cleaned_data, analysis)
+            
+            # Save outputs
+            excel_path = os.path.join(app.config['OUTPUT_FOLDER'], 'cleaned_data.xlsx')
+            config_path = os.path.join(app.config['OUTPUT_FOLDER'], 'powerbi_config.json')
+            
+            cleaned_data.to_excel(excel_path, index=False)
+            with open(config_path, 'w') as f:
+                json.dump(config, f, indent=2)
+            
+            return jsonify({
+                'success': True,
+                'message': 'Files processed successfully',
+                'downloads': {
+                    'excel': '/download/excel',
+                    'config': '/download/config'
+                },
+                'preview': {
+                    'rows': len(cleaned_data),
+                    'columns': list(cleaned_data.columns),
+                    'dashboards': config['dashboards']
+                }
+            })
+            
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
+    return jsonify({'error': 'Invalid file type'}), 400
+
+@app.route('/download/excel')
+def download_excel():
+    return send_file(
+        os.path.join(app.config['OUTPUT_FOLDER'], 'cleaned_data.xlsx'),
+        as_attachment=True,
+        download_name='cleaned_data.xlsx'
+    )
+
+@app.route('/download/config')
+def download_config():
+    return send_file(
+        os.path.join(app.config['OUTPUT_FOLDER'], 'powerbi_config.json'),
+        as_attachment=True,
+        download_name='powerbi_config.json'
+    )
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'xlsx', 'xls', 'csv'}
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
+```
+
+### 2. Create `requirements.txt`
+```
+Flask==2.3.2
+pandas==2.0.3
+openpyxl==3.1.2
+numpy==1.24.3
+```
+
+### 3. Create `processors/analyzer.py`
+```python
+import pandas as pd
+import numpy as np
+from typing import Dict, List, Any
+
+class SpreadsheetAnalyzer:
+    def analyze(self, filepath: str) -> Dict[str, Any]:
+        """Analyze spreadsheet structure and identify issues"""
+        
+        # Read file with no headers to analyze structure
+        df_raw = pd.read_excel(filepath, header=None)
+        
+        analysis = {
+            'total_rows': len(df_raw),
+            'total_columns': len(df_raw.columns),
+            'issues': [],
+            'patterns': {},
+            'recommendations': []
+        }
+        
+        # Detect header row
+        header_row = self._detect_header_row(df_raw)
+        analysis['header_row'] = header_row
+        
+        # Detect merged cells
+        merged_cells = self._detect_merged_cells(df_raw)
+        if merged_cells:
+            analysis['issues'].append({
+                'type': 'merged_cells',
+                'locations': merged_cells
+            })
+        
+        # Detect color patterns (this would need cell styling info)
+        analysis['patterns']['data_types'] = self._analyze_data_types(df_raw)
+        
+        # Detect Epic build patterns
+        epic_patterns = self._detect_epic_patterns(df_raw)
+        if epic_patterns:
+            analysis['patterns']['epic_build'] = epic_patterns
+            analysis['recommendations'].append('Epic Build Dashboard')
+        
+        # Detect workflow patterns
+        if self._has_workflow_columns(df_raw):
+            analysis['patterns']['workflow'] = True
+            analysis['recommendations'].append('Workflow Tracking Dashboard')
+        
+        # Detect department patterns
+        if self._has_department_columns(df_raw):
+            analysis['patterns']['departments'] = True
+            analysis['recommendations'].append('Department Readiness Dashboard')
+        
+        return analysis
+    
+    def _detect_header_row(self, df: pd.DataFrame) -> int:
+        """Detect which row contains headers"""
+        for idx, row in df.iterrows():
+            non_null_count = row.notna().sum()
+            if non_null_count > len(df.columns) * 0.7:  # 70% non-null threshold
+                # Check if next row has different pattern
+                if idx < len(df) - 1:
+                    next_row = df.iloc[idx + 1]
+                    if self._is_data_row(next_row):
+                        return idx
+        return 0
+    
+    def _detect_merged_cells(self, df: pd.DataFrame) -> List[Dict]:
+        """Detect potential merged cells based on patterns"""
+        merged = []
+        
+        # Look for rows with single value followed by empty cells
+        for idx, row in df.iterrows():
+            values = row.dropna()
+            if len(values) == 1 and row.notna().sum() < len(row) / 2:
+                merged.append({
+                    'row': idx,
+                    'type': 'horizontal_merge',
+                    'value': values.iloc[0]
+                })
+        
+        return merged
+    
+    def _analyze_data_types(self, df: pd.DataFrame) -> Dict[int, str]:
+        """Analyze data types in each column"""
+        types = {}
+        for col in df.columns:
+            col_data = df[col].dropna()
+            if len(col_data) == 0:
+                types[col] = 'empty'
+            elif col_data.apply(lambda x: isinstance(x, (int, float))).all():
+                types[col] = 'numeric'
+            elif pd.to_datetime(col_data, errors='coerce').notna().all():
+                types[col] = 'date'
+            else:
+                types[col] = 'text'
+        return types
+    
+    def _detect_epic_patterns(self, df: pd.DataFrame) -> bool:
+        """Detect if this is Epic build related data"""
+        epic_keywords = ['module', 'workflow', 'build', 'epic', 'deployment']
+        
+        # Check all cells for Epic-related keywords
+        all_text = df.astype(str).values.flatten()
+        text_lower = ' '.join(all_text).lower()
+        
+        return any(keyword in text_lower for keyword in epic_keywords)
+    
+    def _has_workflow_columns(self, df: pd.DataFrame) -> bool:
+        """Check for workflow-related columns"""
+        workflow_keywords = ['status', 'approval', 'approved', 'pending', 'stage']
+        all_text = df.astype(str).values.flatten()
+        text_lower = ' '.join(all_text).lower()
+        return any(keyword in text_lower for keyword in workflow_keywords)
+    
+    def _has_department_columns(self, df: pd.DataFrame) -> bool:
+        """Check for department-related columns"""
+        dept_keywords = ['department', 'team', 'owner', 'division', 'unit']
+        all_text = df.astype(str).values.flatten()
+        text_lower = ' '.join(all_text).lower()
+        return any(keyword in text_lower for keyword in dept_keywords)
+    
+    def _is_data_row(self, row: pd.Series) -> bool:
+        """Check if row contains actual data vs headers"""
+        non_null = row.notna().sum()
+        return non_null > 0 and non_null < len(row) * 0.9
+```
+
+### 4. Create `processors/cleaner.py`
+```python
+import pandas as pd
+import numpy as np
+import re
+from typing import Dict, Any
+
+class DataCleaner:
+    def clean(self, filepath: str, analysis: Dict[str, Any]) -> pd.DataFrame:
+        """Clean and restructure the spreadsheet data"""
+        
+        # Read with detected header row
+        df = pd.read_excel(filepath, header=analysis['header_row'])
+        
+        # Clean column names
+        df.columns = [self._clean_column_name(col) for col in df.columns]
+        
+        # Remove empty rows and columns
+        df = df.dropna(how='all').dropna(axis=1, how='all')
+        
+        # Handle merged cells from analysis
+        if 'merged_cells' in analysis['issues'][0] if analysis['issues'] else {}:
+            df = self._handle_merged_cells(df, analysis['issues'][0]['locations'])
+        
+        # Add metadata columns based on patterns
+        if analysis['patterns'].get('epic_build'):
+            df = self._add_epic_metadata(df)
+        
+        if analysis['patterns'].get('workflow'):
+            df = self._add_workflow_metadata(df)
+        
+        # Standardize data types
+        df = self._standardize_types(df)
+        
+        # Add calculated columns
+        df = self._add_calculated_columns(df, analysis)
+        
+        return df
+    
+    def _clean_column_name(self, name: str) -> str:
+        """Clean column names for consistency"""
+        if pd.isna(name):
+            return 'Unnamed'
+        
+        # Convert to string and clean
+        name = str(name)
+        name = re.sub(r'[^\w\s]', '', name)  # Remove special chars
+        name = name.strip().replace(' ', '_')
+        name = re.sub(r'_+', '_', name)  # Remove multiple underscores
+        
+        return name or 'Column'
+    
+    def _handle_merged_cells(self, df: pd.DataFrame, merged_locations: List[Dict]) -> pd.DataFrame:
+        """Handle merged cells by creating group columns"""
+        
+        if not merged_locations:
+            return df
+        
+        # Add group column for merged cells
+        df['Group'] = ''
+        current_group = None
+        
+        for idx, row in df.iterrows():
+            # Check if this row is a merged cell indicator
+            for merged in merged_locations:
+                if merged['row'] == idx:
+                    current_group = merged['value']
+                    break
+            
+            if current_group and pd.notna(row).sum() > 1:  # Data row
+                df.at[idx, 'Group'] = current_group
+        
+        # Remove rows that were just merged cell headers
+        df = df[df['Group'] != '']
+        
+        return df
+    
+    def _add_epic_metadata(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add Epic-specific metadata columns"""
+        
+        # Add status interpretation
+        if 'Status' in df.columns:
+            df['Status_Category'] = df['Status'].apply(self._categorize_status)
+        
+        # Add completion percentage if not present
+        if 'Completion' not in df.columns and 'Status' in df.columns:
+            df['Completion_Percentage'] = df['Status'].apply(self._estimate_completion)
+        
+        # Add priority scoring
+        df['Priority_Score'] = self._calculate_priority(df)
+        
+        return df
+    
+    def _add_workflow_metadata(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add workflow-specific metadata"""
+        
+        # Add days in current status
+        if 'Status_Date' in df.columns:
+            df['Status_Date'] = pd.to_datetime(df['Status_Date'])
+            df['Days_In_Status'] = (pd.Timestamp.now() - df['Status_Date']).dt.days
+        
+        # Add workflow stage
+        if 'Status' in df.columns:
+            df['Workflow_Stage'] = df['Status'].apply(self._determine_workflow_stage)
+        
+        return df
+    
+    def _standardize_types(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Standardize data types across columns"""
+        
+        for col in df.columns:
+            # Try to convert to numeric
+            if df[col].dtype == 'object':
+                try:
+                    df[col] = pd.to_numeric(df[col], errors='ignore')
+                except:
+                    pass
+            
+            # Try to convert to datetime
+            if col.lower() in ['date', 'created', 'updated', 'modified']:
+                try:
+                    df[col] = pd.to_datetime(df[col], errors='coerce')
+                except:
+                    pass
+        
+        return df
+    
+    def _add_calculated_columns(self, df: pd.DataFrame, analysis: Dict) -> pd.DataFrame:
+        """Add calculated columns based on data patterns"""
+        
+        # Add unique ID if not present
+        if 'ID' not in df.columns and 'Id' not in df.columns:
+            df['Record_ID'] = range(1, len(df) + 1)
+        
+        # Add date-based calculations
+        date_cols = [col for col in df.columns if df[col].dtype == 'datetime64[ns]']
+        if len(date_cols) >= 2:
+            df['Duration_Days'] = (df[date_cols[-1]] - df[date_cols[0]]).dt.days
+        
+        return df
+    
+    def _categorize_status(self, status: str) -> str:
+        """Categorize status values"""
+        if pd.isna(status):
+            return 'Unknown'
+        
+        status_lower = str(status).lower()
+        
+        if any(word in status_lower for word in ['complete', 'done', 'finished']):
+            return 'Complete'
+        elif any(word in status_lower for word in ['progress', 'working', 'active']):
+            return 'In Progress'
+        elif any(word in status_lower for word in ['blocked', 'issue', 'problem']):
+            return 'Blocked'
+        elif any(word in status_lower for word in ['pending', 'waiting', 'review']):
+            return 'Pending'
+        else:
+            return 'Not Started'
+    
+    def _estimate_completion(self, status: str) -> int:
+        """Estimate completion percentage from status"""
+        category = self._categorize_status(status)
+        
+        completion_map = {
+            'Complete': 100,
+            'In Progress': 50,
+            'Blocked': 25,
+            'Pending': 75,
+            'Not Started': 0,
+            'Unknown': 0
+        }
+        
+        return completion_map.get(category, 0)
+    
+    def _calculate_priority(self, df: pd.DataFrame) -> pd.Series:
+        """Calculate priority score based on available data"""
+        priority = pd.Series(50, index=df.index)  # Default priority
+        
+        # Increase priority for blocked items
+        if 'Status' in df.columns:
+            blocked_mask = df['Status'].str.contains('block', case=False, na=False)
+            priority[blocked_mask] = 90
+        
+        # Adjust based on dates if available
+        if 'Due_Date' in df.columns:
+            try:
+                days_until_due = (pd.to_datetime(df['Due_Date']) - pd.Timestamp.now()).dt.days
+                priority[days_until_due < 7] = 85
+                priority[days_until_due < 0] = 95
+            except:
+                pass
+        
+        return priority
+    
+    def _determine_workflow_stage(self, status: str) -> str:
+        """Determine workflow stage from status"""
+        if pd.isna(status):
+            return 'Unknown'
+        
+        status_lower = str(status).lower()
+        
+        if 'initial' in status_lower or 'start' in status_lower:
+            return 'Initiation'
+        elif 'plan' in status_lower or 'design' in status_lower:
+            return 'Planning'
+        elif 'develop' in status_lower or 'build' in status_lower:
+            return 'Execution'
+        elif 'test' in status_lower or 'review' in status_lower:
+            return 'Review'
+        elif 'approve' in status_lower or 'sign' in status_lower:
+            return 'Approval'
+        elif 'complete' in status_lower or 'done' in status_lower:
+            return 'Closure'
+        else:
+            return 'In Process'
+```
+
+### 5. Create `processors/powerbi_generator.py`
+```python
+import pandas as pd
+import json
+from typing import Dict, List, Any
+
+class PowerBIGenerator:
+    def generate(self, df: pd.DataFrame, analysis: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate Power BI configuration based on cleaned data"""
+        
+        config = {
+            "dataSource": self._generate_datasource_config(),
+            "dataModel": self._generate_datamodel(df),
+            "dashboards": self._generate_dashboards(df, analysis),
+            "theme": self._generate_theme(),
+            "refreshSettings": {
+                "schedule": "Daily",
+                "time": "06:00",
+                "timezone": "UTC"
+            }
+        }
+        
+        return config
+    
+    def _generate_datasource_config(self) -> Dict[str, Any]:
+        """Generate data source configuration"""
+        return {
+            "type": "Excel",
+            "connectionString": "Provider=Microsoft.ACE.OLEDB.12.0;Data Source={filepath};Extended Properties='Excel 12.0 Xml;HDR=YES';",
+            "authentication": "Anonymous",
+            "privacy": "Organizational"
+        }
+    
+    def _generate_datamodel(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Generate data model configuration"""
+        
+        # Identify columns and types
+        columns = []
+        for col in df.columns:
+            col_type = str(df[col].dtype)
+            
+            if 'int' in col_type:
+                powerbi_type = "Int64"
+            elif 'float' in col_type:
+                powerbi_type = "Double"
+            elif 'datetime' in col_type:
+                powerbi_type = "DateTime"
+            elif 'bool' in col_type:
+                powerbi_type = "Boolean"
+            else:
+                powerbi_type = "Text"
+            
+            columns.append({
+                "name": col,
+                "dataType": powerbi_type,
+                "formatString": self._get_format_string(col, powerbi_type)
+            })
+        
+        # Generate measures
+        measures = self._generate_measures(df)
+        
+        return {
+            "tables": [{
+                "name": "MainData",
+                "columns": columns,
+                "measures": measures
+            }],
+            "relationships": [],  # Would be populated if multiple tables
+            "roles": []
+        }
+    
+    def _generate_dashboards(self, df: pd.DataFrame, analysis: Dict[str, Any]) -> List[Dict]:
+        """Generate dashboard configurations based on data patterns"""
+        
+        dashboards = []
+        
+        # Always create overview dashboard
+        dashboards.append(self._create_overview_dashboard(df))
+        
+        # Create specific dashboards based on patterns
+        if analysis['patterns'].get('epic_build'):
+            dashboards.append(self._create_epic_dashboard(df))
+        
+        if analysis['patterns'].get('workflow'):
+            dashboards.append(self._create_workflow_dashboard(df))
+        
+        if analysis['patterns'].get('departments'):
+            dashboards.append(self._create_department_dashboard(df))
+        
+        return dashboards
+    
+    def _create_overview_dashboard(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Create overview dashboard configuration"""
+        
+        visuals = []
+        x_pos = 0
+        y_pos = 0
+        
+        # KPI Cards
+        kpi_metrics = ['Total_Records', 'Completion_Rate', 'Active_Items', 'Blocked_Items']
+        for i, metric in enumerate(kpi_metrics):
+            if self._can_calculate_metric(df, metric):
+                visuals.append({
+                    "type": "card",
+                    "name": f"{metric}_Card",
+                    "title": metric.replace('_', ' '),
+                    "position": {
+                        "x": i * 300,
+                        "y": 0,
+                        "width": 280,
+                        "height": 100
+                    },
+                    "dataBindings": {
+                        "values": [{
+                            "measure": metric
+                        }]
+                    }
+                })
+        
+        # Status distribution pie chart
+        if 'Status' in df.columns or 'Status_Category' in df.columns:
+            visuals.append({
+                "type": "pieChart",
+                "name": "Status_Distribution",
+                "title": "Status Distribution",
+                "position": {
+                    "x": 0,
+                    "y": 120,
+                    "width": 600,
+                    "height": 400
+                },
+                "dataBindings": {
+                    "category": "Status_Category",
+                    "values": [{
+                        "measure": "Count_of_Records"
+                    }]
+                }
+            })
+        
+        # Trend line if date columns exist
+        date_cols = [col for col in df.columns if df[col].dtype == 'datetime64[ns]']
+        if date_cols:
+            visuals.append({
+                "type": "lineChart",
+                "name": "Completion_Trend",
+                "title": "Completion Trend",
+                "position": {
+                    "x": 620,
+                    "y": 120,
+                    "width": 600,
+                    "height": 400
+                },
+                "dataBindings": {
+                    "axis": date_cols[0],
+                    "values": [{
+                        "measure": "Cumulative_Completion"
+                    }],
+                    "legend": "Status_Category"
+                }
+            })
+        
+        return {
+            "name": "Executive Overview",
+            "displayName": "Executive Overview",
+            "pages": [{
+                "name": "Summary",
+                "displayName": "Summary",
+                "visuals": visuals
+            }]
+        }
+    
+    def _create_epic_dashboard(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Create Epic-specific dashboard"""
+        
+        visuals = []
+        
+        # Module status matrix
+        if 'Module' in df.columns:
+            visuals.append({
+                "type": "matrix",
+                "name": "Module_Status_Matrix",
+                "title": "Module Status Overview",
+                "position": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 800,
+                    "height": 500
+                },
+                "dataBindings": {
+                    "rows": ["Module"],
+                    "columns": ["Status_Category"],
+                    "values": [{
+                        "measure": "Count_of_Records"
+                    }]
+                }
+            })
+        
+        # Timeline visual
+        visuals.append({
+            "type": "ganttChart",
+            "name": "Build_Timeline",
+            "title": "Build Timeline",
+            "position": {
+                "x": 0,
+                "y": 520,
+                "width": 1200,
+                "height": 400
+            },
+            "dataBindings": {
+                "task": "Module",
+                "start": "Start_Date",
+                "end": "End_Date",
+                "progress": "Completion_Percentage"
+            }
+        })
+        
+        return {
+            "name": "Epic Build Tracker",
+            "displayName": "Epic Build Tracker",
+            "pages": [{
+                "name": "Build_Status",
+                "displayName": "Build Status",
+                "visuals": visuals
+            }]
+        }
+    
+    def _create_workflow_dashboard(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Create workflow tracking dashboard"""
+        
+        visuals = []
+        
+        # Workflow funnel
+        visuals.append({
+            "type": "funnelChart",
+            "name": "Workflow_Funnel",
+            "title": "Workflow Stages",
+            "position": {
+                "x": 0,
+                "y": 0,
+                "width": 600,
+                "height": 500
+            },
+            "dataBindings": {
+                "category": "Workflow_Stage",
+                "values": [{
+                    "measure": "Count_of_Records"
+                }]
+            }
+        })
+        
+        # Time in status
+        if 'Days_In_Status' in df.columns:
+            visuals.append({
+                "type": "columnChart",
+                "name": "Time_In_Status",
+                "title": "Average Days in Status",
+                "position": {
+                    "x": 620,
+                    "y": 0,
+                    "width": 600,
+                    "height": 500
+                },
+                "dataBindings": {
+                    "axis": "Status_Category",
+                    "values": [{
+                        "measure": "Average_Days_In_Status"
+                    }]
+                }
+            })
+        
+        return {
+            "name": "Workflow Analytics",
+            "displayName": "Workflow Analytics",
+            "pages": [{
+                "name": "Workflow_Overview",
+                "displayName": "Workflow Overview",
+                "visuals": visuals
+            }]
+        }
+    
+    def _create_department_dashboard(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Create department readiness dashboard"""
+        
+        visuals = []
+        
+        # Department heatmap
+        if 'Department' in df.columns:
+            visuals.append({
+                "type": "heatmap",
+                "name": "Department_Readiness",
+                "title": "Department Readiness Heatmap",
+                "position": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 800,
+                    "height": 600
+                },
+                "dataBindings": {
+                    "rows": ["Department"],
+                    "columns": ["Module"],
+                    "values": [{
+                        "measure": "Readiness_Score"
+                    }],
+                    "colorScale": {
+                        "min": 0,
+                        "mid": 50,
+                        "max": 100,
+                        "minColor": "#FF0000",
+                        "midColor": "#FFFF00",
+                        "maxColor": "#00FF00"
+                    }
+                }
+            })
+        
+        return {
+            "name": "Department Readiness",
+            "displayName": "Department Readiness",
+            "pages": [{
+                "name": "Readiness_Overview",
+                "displayName": "Readiness Overview",
+                "visuals": visuals
+            }]
+        }
+    
+    def _generate_measures(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
+        """Generate DAX measures based on available columns"""
+        
+        measures = []
+        
+        # Basic count measure
+        measures.append({
+            "name": "Count_of_Records",
+            "expression": "COUNTROWS(MainData)",
+            "formatString": "#,##0"
+        })
+        
+        # Total records
+        measures.append({
+            "name": "Total_Records",
+            "expression": "COUNTROWS(MainData)",
+            "formatString": "#,##0"
+        })
+        
+        # Status-based measures
+        if 'Status_Category' in df.columns:
+            measures.append({
+                "name": "Completion_Rate",
+                "expression": "DIVIDE(CALCULATE(COUNTROWS(MainData), MainData[Status_Category] = \"Complete\"), COUNTROWS(MainData))",
+                "formatString": "0.0%"
+            })
+            
+            measures.append({
+                "name": "Active_Items",
+                "expression": "CALCULATE(COUNTROWS(MainData), MainData[Status_Category] = \"In Progress\")",
+                "formatString": "#,##0"
+            })
+            
+            measures.append({
+                "name": "Blocked_Items",
+                "expression": "CALCULATE(COUNTROWS(MainData), MainData[Status_Category] = \"Blocked\")",
+                "formatString": "#,##0"
+            })
+        
+        # Date-based measures
+        if 'Days_In_Status' in df.columns:
+            measures.append({
+                "name": "Average_Days_In_Status",
+                "expression": "AVERAGE(MainData[Days_In_Status])",
+                "formatString": "#,##0.0"
+            })
+        
+        # Completion percentage
+        if 'Completion_Percentage' in df.columns:
+            measures.append({
+                "name": "Average_Completion",
+                "expression": "AVERAGE(MainData[Completion_Percentage])",
+                "formatString": "0.0%"
+            })
+        
+        # Priority score
+        if 'Priority_Score' in df.columns:
+            measures.append({
+                "name": "Average_Priority",
+                "expression": "AVERAGE(MainData[Priority_Score])",
+                "formatString": "#,##0.0"
+            })
+        
+        return measures
+    
+    def _generate_theme(self) -> Dict[str, Any]:
+        """Generate Power BI theme configuration"""
+        return {
+            "name": "OperatorOS Theme",
+            "dataColors": [
+                "#28a745",  # Success green
+                "#dc3545",  # Danger red
+                "#ffc107",  # Warning yellow
+                "#17a2b8",  # Info blue
+                "#6c757d",  # Secondary gray
+                "#343a40",  # Dark
+                "#f8f9fa",  # Light
+                "#007bff"   # Primary blue
+            ],
+            "background": "#FFFFFF",
+            "foreground": "#252423",
+            "tableAccent": "#28a745"
+        }
+    
+    def _get_format_string(self, column: str, data_type: str) -> str:
+        """Get appropriate format string for column"""
+        
+        column_lower = column.lower()
+        
+        # Currency formatting
+        if any(word in column_lower for word in ['amount', 'price', 'cost', 'revenue']):
+            return "$#,##0.00"
+        
+        # Percentage formatting
+        if any(word in column_lower for word in ['percentage', 'percent', 'rate']):
+            return "0.0%"
+        
+        # Date formatting
+        if data_type == "DateTime":
+            return "yyyy-MM-dd"
+        
+        # Number formatting
+        if data_type in ["Int64", "Double"]:
+            return "#,##0"
+        
+        return "General"
+    
+    def _can_calculate_metric(self, df: pd.DataFrame, metric: str) -> bool:
+        """Check if a metric can be calculated from available columns"""
+        
+        if metric == "Total_Records":
+            return True
+        
+        if metric == "Completion_Rate":
+            return 'Status_Category' in df.columns
+        
+        if metric == "Active_Items":
+            return 'Status_Category' in df.columns
+        
+        if metric == "Blocked_Items":
+            return 'Status_Category' in df.columns
+        
+        return False
+```
+
+### 6. Create `templates/index.html`
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OperatorOS - Spreadsheet to Power BI Transformer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-chart-line me-2"></i>OperatorOS Transformer
+            </span>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h2 class="card-title text-center mb-4">
+                            Transform Spreadsheets to Power BI
+                        </h2>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Upload your messy spreadsheet and get:
+                            <ul class="mb-0 mt-2">
+                                <li>Clean, structured Excel file</li>
+                                <li>Power BI dashboard configuration</li>
+                                <li>Automated data transformation</li>
+                            </ul>
+                        </div>
+
+                        <!-- Upload Form -->
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="file" class="form-label">Select Spreadsheet</label>
+                                <input type="file" class="form-control" id="file" name="file" 
+                                       accept=".xlsx,.xls,.csv" required>
+                                <div class="form-text">
+                                    Supported formats: Excel (.xlsx, .xls) and CSV files
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary w-100" id="uploadBtn">
+                                <i class="fas fa-upload me-2"></i>Transform Spreadsheet
+                            </button>
+                        </form>
+
+                        <!-- Progress -->
+                        <div id="progressSection" class="mt-4" style="display: none;">
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <p class="text-center mt-2" id="progressText">Processing...</p>
+                        </div>
+
+                        <!-- Results -->
+                        <div id="resultsSection" class="mt-4" style="display: none;">
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Transformation complete!
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
+                                            <h5>Clean Excel Data</h5>
+                                            <p id="excelInfo" class="text-muted"></p>
+                                            <a href="#" id="downloadExcel" class="btn btn-success">
+                                                <i class="fas fa-download me-2"></i>Download Excel
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-chart-pie fa-3x text-primary mb-3"></i>
+                                            <h5>Power BI Config</h5>
+                                            <p id="configInfo" class="text-muted"></p>
+                                            <a href="#" id="downloadConfig" class="btn btn-primary">
+                                                <i class="fas fa-download me-2"></i>Download Config
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <h5>Recommended Dashboards:</h5>
+                                <ul id="dashboardList"></ul>
+                            </div>
+                            
+                            <button class="btn btn-secondary w-100 mt-3" onclick="resetForm()">
+                                <i class="fas fa-redo me-2"></i>Transform Another File
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
+```
+
+### 7. Create `static/css/style.css`
+```css
+body {
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.btn {
+    border-radius: 5px;
+    font-weight: 500;
+}
+
+.progress {
+    height: 25px;
+    border-radius: 5px;
+}
+
+.progress-bar {
+    font-size: 14px;
+    line-height: 25px;
+}
+
+#resultsSection .card {
+    transition: transform 0.2s;
+}
+
+#resultsSection .card:hover {
+    transform: translateY(-5px);
+}
+
+.alert {
+    border-radius: 5px;
+}
+```
+
+### 8. Create `static/js/main.js`
+```javascript
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const fileInput = document.getElementById('file');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select a file');
+        return;
+    }
+    
+    // Show progress
+    document.getElementById('progressSection').style.display = 'block';
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('uploadBtn').disabled = true;
+    
+    // Update progress
+    updateProgress(20, 'Uploading file...');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        updateProgress(50, 'Analyzing structure...');
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            updateProgress(80, 'Generating configurations...');
+            
+            setTimeout(() => {
+                updateProgress(100, 'Complete!');
+                showResults(result);
+            }, 1000);
+        } else {
+            throw new Error(result.error || 'Processing failed');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+        resetForm();
+    }
+});
+
+function updateProgress(percent, text) {
+    const progressBar = document.querySelector('.progress-bar');
+    progressBar.style.width = percent + '%';
+    progressBar.textContent = percent + '%';
+    document.getElementById('progressText').textContent = text;
+}
+
+function showResults(result) {
+    // Hide progress
+    document.getElementById('progressSection').style.display = 'none';
+    
+    // Show results
+    document.getElementById('resultsSection').style.display = 'block';
+    
+    // Update info
+    document.getElementById('excelInfo').textContent = 
+        `${result.preview.rows} rows, ${result.preview.columns.length} columns`;
+    
+    document.getElementById('configInfo').textContent = 
+        `${result.preview.dashboards.length} dashboards configured`;
+    
+    // Update download links
+    document.getElementById('downloadExcel').href = result.downloads.excel;
+    document.getElementById('downloadConfig').href = result.downloads.config;
+    
+    // Show dashboard list
+    const dashboardList = document.getElementById('dashboardList');
+    dashboardList.innerHTML = '';
+    result.preview.dashboards.forEach(dashboard => {
+        const li = document.createElement('li');
+        li.textContent = dashboard.name;
+        dashboardList.appendChild(li);
+    });
+}
+
+function resetForm() {
+    document.getElementById('uploadForm').reset();
+    document.getElementById('progressSection').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('uploadBtn').disabled = false;
+    updateProgress(0, 'Processing...');
+}
+```
+
+### 9. Create `README.md`
+```markdown
+# OperatorOS Spreadsheet to Power BI Transformer
+
+Transform messy spreadsheets into clean Excel files and Power BI dashboard configurations automatically.
+
+## Features
+
+- **Automatic Structure Detection**: Identifies headers, merged cells, and data patterns
+- **Smart Data Cleaning**: Handles inconsistent formats and creates structured data
+- **Power BI Configuration**: Generates complete dashboard configurations
+- **Pattern Recognition**: Detects Epic builds, workflows, and department data
+- **Multiple Dashboard Types**: Creates appropriate visualizations based on data
+
+## Quick Start
+
+1. Upload your spreadsheet (Excel or CSV)
+2. Wait for automatic processing
+3. Download cleaned Excel file
+4. Download Power BI configuration
+5. Import into Power BI
+
+## Supported Patterns
+
+- Epic Build Tracking
+- Workflow Management
+- Department Readiness
+- Project Timelines
+- Status Tracking
+
+## Output Files
+
+### cleaned_data.xlsx
+- Main data sheet with flat structure
+- Metadata documentation
+- Data model diagram
+
+### powerbi_config.json
+- Complete dashboard configurations
+- Visual layouts and positions
+- DAX measures
+- Data model relationships
+```
+
+## Deployment Instructions
+
+1. Create a new Repl with Python template
+2. Copy all files to appropriate directories
+3. Install dependencies: `pip install -r requirements.txt`
+4. Run the application: `python app.py`
+5. Access at your Replit URL
+
+The application will automatically process uploaded spreadsheets and generate the required output files for Power BI integration.
