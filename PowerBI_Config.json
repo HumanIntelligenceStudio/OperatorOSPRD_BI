@@ -1,0 +1,214 @@
+{
+  "dataSource": {
+    "type": "Excel",
+    "connectionString": "Provider=Microsoft.ACE.OLEDB.12.0;Data Source={filepath};Extended Properties='Excel 12.0 Xml;HDR=YES';",
+    "authentication": "Anonymous",
+    "privacy": "Organizational"
+  },
+  "dataModel": {
+    "tables": [
+      {
+        "name": "MainData",
+        "columns": [
+          {
+            "name": "Unnamed_0",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "WAVE_1",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "CHPCC_Boris",
+            "dataType": "Double",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Urology_Dan",
+            "dataType": "Double",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Nutrition_Boris",
+            "dataType": "Double",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "WAVE_2",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "ORL_Dan",
+            "dataType": "Double",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Audiology_Dan",
+            "dataType": "Double",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Speech_Boris",
+            "dataType": "Double",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "EndocrinologyGeMsOWL_Shannon",
+            "dataType": "Double",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Gynecology_Shannon",
+            "dataType": "Double",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Behavioral_HealthPsychiatry_Travis",
+            "dataType": "Double",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Plastic_Surgery_Dan",
+            "dataType": "Double",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Sleep_Center_Shannon",
+            "dataType": "Double",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Vaccine_ClinicTravel_Clinic_Travis",
+            "dataType": "Double",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Group",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Priority_Score",
+            "dataType": "Int64",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Record_ID",
+            "dataType": "Int64",
+            "formatString": "#,##0"
+          }
+        ],
+        "measures": [
+          {
+            "name": "Count_of_Records",
+            "expression": "COUNTROWS(MainData)",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Total_Records",
+            "expression": "COUNTROWS(MainData)",
+            "formatString": "#,##0"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "roles": []
+  },
+  "dashboards": [
+    {
+      "name": "Executive Overview",
+      "displayName": "Executive Overview",
+      "pages": [
+        {
+          "name": "Summary",
+          "displayName": "Summary",
+          "visuals": [
+            {
+              "type": "card",
+              "name": "Total_Records_Card",
+              "title": "Total Records",
+              "position": {
+                "x": 0,
+                "y": 0,
+                "width": 280,
+                "height": 100
+              },
+              "dataBindings": {
+                "values": [
+                  {
+                    "measure": "Total_Records"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Epic Build Tracker",
+      "displayName": "Epic Build Tracker",
+      "pages": [
+        {
+          "name": "Build_Status",
+          "displayName": "Build Status",
+          "visuals": [
+            {
+              "type": "ganttChart",
+              "name": "Build_Timeline",
+              "title": "Build Timeline",
+              "position": {
+                "x": 0,
+                "y": 520,
+                "width": 1200,
+                "height": 400
+              },
+              "dataBindings": {
+                "task": "Module",
+                "start": "Start_Date",
+                "end": "End_Date",
+                "progress": "Completion_Percentage"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Department Readiness",
+      "displayName": "Department Readiness",
+      "pages": [
+        {
+          "name": "Readiness_Overview",
+          "displayName": "Readiness Overview",
+          "visuals": []
+        }
+      ]
+    }
+  ],
+  "theme": {
+    "name": "OperatorOS Theme",
+    "dataColors": [
+      "#28a745",
+      "#dc3545",
+      "#ffc107",
+      "#17a2b8",
+      "#6c757d",
+      "#343a40",
+      "#f8f9fa",
+      "#007bff"
+    ],
+    "background": "#FFFFFF",
+    "foreground": "#252423",
+    "tableAccent": "#28a745"
+  },
+  "refreshSettings": {
+    "schedule": "Daily",
+    "time": "06:00",
+    "timezone": "UTC"
+  }
+}
