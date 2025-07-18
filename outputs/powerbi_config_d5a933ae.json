@@ -1,0 +1,295 @@
+{
+  "dataSource": {
+    "type": "Excel",
+    "connectionString": "Provider=Microsoft.ACE.OLEDB.12.0;Data Source={filepath};Extended Properties='Excel 12.0 Xml;HDR=YES';",
+    "authentication": "Anonymous",
+    "privacy": "Organizational"
+  },
+  "dataModel": {
+    "tables": [
+      {
+        "name": "MainData",
+        "columns": [
+          {
+            "name": "Unnamed_0",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_1",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_2",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Template_\nScheduling_Optimization",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_4",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_5",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_6",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Self_Service_Options\nthrough_the_Portal",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_8",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_9",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_10",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Other_Projects",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_12",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_13",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_14",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_15",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_16",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_17",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_18",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_19",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_20",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_21",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_22",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Unnamed_23",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Merged_Cell_Info",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Section_Header",
+            "dataType": "Text",
+            "formatString": "General"
+          },
+          {
+            "name": "Priority_Score",
+            "dataType": "Int64",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Record_ID",
+            "dataType": "Int64",
+            "formatString": "#,##0"
+          }
+        ],
+        "measures": [
+          {
+            "name": "Count_of_Records",
+            "expression": "COUNTROWS(MainData)",
+            "formatString": "#,##0"
+          },
+          {
+            "name": "Total_Records",
+            "expression": "COUNTROWS(MainData)",
+            "formatString": "#,##0"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "roles": []
+  },
+  "dashboards": [
+    {
+      "name": "Executive Overview",
+      "displayName": "Executive Overview",
+      "pages": [
+        {
+          "name": "Summary",
+          "displayName": "Summary",
+          "visuals": [
+            {
+              "type": "card",
+              "name": "Total_Records_Card",
+              "title": "Total Records",
+              "position": {
+                "x": 0,
+                "y": 0,
+                "width": 280,
+                "height": 100
+              },
+              "dataBindings": {
+                "values": [
+                  {
+                    "measure": "Total_Records"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Epic Build Tracker",
+      "displayName": "Epic Build Tracker",
+      "pages": [
+        {
+          "name": "Build_Status",
+          "displayName": "Build Status",
+          "visuals": [
+            {
+              "type": "ganttChart",
+              "name": "Build_Timeline",
+              "title": "Build Timeline",
+              "position": {
+                "x": 0,
+                "y": 520,
+                "width": 1200,
+                "height": 400
+              },
+              "dataBindings": {
+                "task": "Module",
+                "start": "Start_Date",
+                "end": "End_Date",
+                "progress": "Completion_Percentage"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Workflow Analytics",
+      "displayName": "Workflow Analytics",
+      "pages": [
+        {
+          "name": "Workflow_Overview",
+          "displayName": "Workflow Overview",
+          "visuals": [
+            {
+              "type": "funnelChart",
+              "name": "Workflow_Funnel",
+              "title": "Workflow Stages",
+              "position": {
+                "x": 0,
+                "y": 0,
+                "width": 600,
+                "height": 500
+              },
+              "dataBindings": {
+                "category": "Workflow_Stage",
+                "values": [
+                  {
+                    "measure": "Count_of_Records"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Department Readiness",
+      "displayName": "Department Readiness",
+      "pages": [
+        {
+          "name": "Readiness_Overview",
+          "displayName": "Readiness Overview",
+          "visuals": []
+        }
+      ]
+    }
+  ],
+  "theme": {
+    "name": "OperatorOS Theme",
+    "dataColors": [
+      "#28a745",
+      "#dc3545",
+      "#ffc107",
+      "#17a2b8",
+      "#6c757d",
+      "#343a40",
+      "#f8f9fa",
+      "#007bff"
+    ],
+    "background": "#FFFFFF",
+    "foreground": "#252423",
+    "tableAccent": "#28a745"
+  },
+  "refreshSettings": {
+    "schedule": "Daily",
+    "time": "06:00",
+    "timezone": "UTC"
+  }
+}

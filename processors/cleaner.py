@@ -9,21 +9,24 @@ from typing import Dict, Any, List
 
 class DataCleaner:
     def clean(self, filepath: str, analysis: Dict[str, Any]) -> pd.DataFrame:
-        """Clean and restructure the spreadsheet data"""
+        """Clean and restructure the spreadsheet data while preserving maximum information"""
         
         # Read with detected header row
         df = pd.read_excel(filepath, header=analysis['header_row'])
         
-        # Clean column names
+        # Clean column names but preserve structure
         df.columns = [self._clean_column_name(col) for col in df.columns]
         
-        # Remove empty rows and columns
-        df = df.dropna(how='all').dropna(axis=1, how='all')
+        # Only remove completely empty columns, preserve rows with partial data
+        df = df.dropna(axis=1, how='all')
         
-        # Handle merged cells from analysis
+        # More conservative row filtering - only remove rows that are completely empty
+        df = df.dropna(how='all')
+        
+        # Handle merged cells from analysis but preserve the content
         if analysis['issues'] and any(issue['type'] == 'merged_cells' for issue in analysis['issues']):
             merged_locations = next(issue['locations'] for issue in analysis['issues'] if issue['type'] == 'merged_cells')
-            df = self._handle_merged_cells(df, merged_locations)
+            df = self._handle_merged_cells_preservative(df, merged_locations)
         
         # Add metadata columns based on patterns
         if analysis['patterns'].get('epic_build'):
@@ -32,11 +35,32 @@ class DataCleaner:
         if analysis['patterns'].get('workflow'):
             df = self._add_workflow_metadata(df)
         
-        # Standardize data types
-        df = self._standardize_types(df)
+        # More gentle data type standardization
+        df = self._standardize_types_preservative(df)
         
         # Add calculated columns
         df = self._add_calculated_columns(df, analysis)
+        
+        return df
+    
+    def _handle_merged_cells_preservative(self, df: pd.DataFrame, merged_locations: List[Dict]) -> pd.DataFrame:
+        """Handle merged cells while preserving all information"""
+        
+        if not merged_locations:
+            return df
+        
+        # Add columns for merged cell information without removing data
+        df['Merged_Cell_Info'] = ''
+        df['Section_Header'] = ''
+        
+        # Process merged cells more carefully
+        for merged in merged_locations:
+            if merged['row'] < len(df):
+                df.at[merged['row'], 'Merged_Cell_Info'] = merged['value']
+                df.at[merged['row'], 'Section_Header'] = merged['value']
+        
+        # Forward-fill section headers to subsequent rows
+        df['Section_Header'] = df['Section_Header'].replace('', None).fillna(method='ffill')
         
         return df
     
@@ -125,6 +149,26 @@ class DataCleaner:
                     df[col] = pd.to_datetime(df[col], errors='coerce')
                 except:
                     pass
+        
+        return df
+    
+    def _standardize_types_preservative(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Standardize data types while preserving all data"""
+        
+        for col in df.columns:
+            # Only convert obviously numeric columns, preserve text data
+            if df[col].dtype == 'object':
+                # Check if column looks numeric but preserve text
+                numeric_test = pd.to_numeric(df[col], errors='coerce')
+                if numeric_test.notna().sum() > len(df) * 0.8:  # 80% numeric
+                    df[col] = pd.to_numeric(df[col], errors='ignore')
+            
+            # Only convert clear date columns
+            if any(date_word in col.lower() for date_word in ['date', 'time', 'created', 'updated']):
+                try:
+                    df[col] = pd.to_datetime(df[col], errors='coerce')
+                except:
+                    pass  # Keep as is if conversion fails
         
         return df
     
