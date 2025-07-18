@@ -1,0 +1,1265 @@
+[
+  {
+    "specialty": "ORL",
+    "lead": "LK",
+    "pss_score": 68,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "M",
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": "RAA",
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for consults and follow ups. Next: Refine the  logic - if any future audiology exclude from Fast Pass offers, also future Speech/Feeding, or MBS. Exclude - Vestibular Balance Lab, Consult vestibular.",
+      "ticket_notes": "Live for Referral - Manual Release and Follow Up - Automatic Release",
+      "build_notes": "Allow consults + follow ups, MUST TEST, Kate meet with Jenna to verify test results",
+      "build_status": "removed specialty exclusion - ONLY FOR 539, AND 753",
+      "prd_specialty": "Pediatric Oto"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "TicketManual-Live",
+      "FollowUpAuto-Live",
+      "RAA-Enabled"
+    ],
+    "row_index": 6
+  },
+  {
+    "specialty": "Audiology",
+    "lead": "LK",
+    "pss_score": 68,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "M",
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": "RAA",
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for consults and follow ups. Next: Refine the  logic - if any future audiology exclude from Fast Pass offers, also future Speech/Feeding, or MBS. Exclude - Vestibular Balance Lab, Consult vestibular.",
+      "ticket_notes": "Live for Referral - Manual Release and Follow Up - Automatic Release",
+      "build_notes": "Allow consults + follow ups, MUST TEST, Kate meet with Jenna to verify test results. Enable for these PRCs only:\nABR\nAPD\nASSISTED\nAUDIO\nBAHS-ASSISTED\nBAHS-AUDIO\nBAHS-CONSULT\nCI-ASSISTED\nCI-AUDIO\nCI-CONSULT\nDSTI\nHA-ASSISTED\nHA-AUDIO\nHA-CONSUL",
+      "build_status": "removed specialty exclusion",
+      "prd_specialty": "Pediatric Audiology"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "TicketManual-Live",
+      "FollowUpAuto-Live",
+      "RAA-Enabled"
+    ],
+    "row_index": 7
+  },
+  {
+    "specialty": "Nutrition",
+    "lead": "MM",
+    "pss_score": 65,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "A",
+      "ticket_followup": "A",
+      "open_direct": NaN,
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for consults and follow ups. Next: Ready to start automatic ticket scheduling. Very cooperative and looking forward to adopting more functionality. (Willing to pilot)",
+      "ticket_notes": "Automatic release for both Consults and Follow Ups",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": "Nutrition"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "TicketAuto-Live",
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 3
+  },
+  {
+    "specialty": "Allergy & Immunology",
+    "lead": "MM",
+    "pss_score": 65,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "A",
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Going live with Consults and Follow Ups for Allergy and Immunology. Want to go live with Food Challenge, IT needs to do some additional testing to meet this request. ",
+      "ticket_notes": "Live for Automatic Release for both. Also automatic release for Food Challenge orders.",
+      "build_notes": "Allow consults (524/532) and follow ups (651/1242) for allergy and immunology. Do not include food challenge. ",
+      "build_status": "removed specialty exclusion, added prc/specialty exclusion",
+      "prd_specialty": "Pediatric Allergy"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "TicketAuto-Live",
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 22
+  },
+  {
+    "specialty": "General Surgery",
+    "lead": "LK",
+    "pss_score": 65,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "A",
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: live for consults and follow ups. ",
+      "ticket_notes": "Live for automatic release of Follow Ups.",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "TicketAuto-Live",
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 44
+  },
+  {
+    "specialty": "Pulmonary",
+    "lead": "MM",
+    "pss_score": 65,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "A",
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Previously marked as live, but not currently. Follow up conversation needed.",
+      "ticket_notes": "Live for Automatic Release for Follow Ups and Consults",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "TicketAuto-Live",
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 52
+  },
+  {
+    "specialty": "Urology",
+    "lead": "LK",
+    "pss_score": 56,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "M",
+      "ticket_followup": "M",
+      "open_direct": NaN,
+      "open_sched": "RAA",
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: live for consults and follow ups. Next: Look at opportunities for automatic ticket scheduling. Live for manual release. ",
+      "ticket_notes": "Live for Manual Release for Consults and Follow Ups.   ",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": "Pediatric Urology"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "TicketManual-Live",
+      "FollowUpManual-Live",
+      "RAA-Enabled"
+    ],
+    "row_index": 4
+  },
+  {
+    "specialty": "Plastic Surgery",
+    "lead": "LK",
+    "pss_score": 56,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "M",
+      "ticket_followup": "M",
+      "open_direct": "\u00a0",
+      "open_sched": "RAA",
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for New Plagio consults. No real need with the other RFVs because patients want a specific time. Not managing a large waitlist. Next: Explore ticket scheduling for new Plagio patients",
+      "ticket_notes": "Live for Manual Release for Consults and Follow Ups. Opportunity to automate Follow Ups pending Plastics getting comfortable with how follow up scheduling is working",
+      "build_notes": "https://jiraprod.tch.harvard.edu/browse/ITHD-230744",
+      "build_status": "PRC 1408 ONLY: removed specialty exclusion, added prc/specialty exclusion",
+      "prd_specialty": "Pediatric Plastic "
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "TicketManual-Live",
+      "FollowUpManual-Live",
+      "RAA-Enabled"
+    ],
+    "row_index": 12
+  },
+  {
+    "specialty": "Nephrology",
+    "lead": "MM",
+    "pss_score": 53,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "M",
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "Fast pass - Follow ups live, exclude kidney txp and dialysis. Arifa send list of RFV to IT to filter which visits should get offers. (Consults and follow ups) ",
+      "ticket_notes": "Live for Manual Release for Referrals. Live for Automatic for Follow Ups.  ",
+      "build_notes": "Allow for follow ups and consults filtered by RFV. Waiting on list from Arifa.",
+      "build_status": NaN,
+      "prd_specialty": "Pediatric Nephrology"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "TicketManual-Live",
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 25
+  },
+  {
+    "specialty": "Gastroenterology",
+    "lead": "MM",
+    "pss_score": 53,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "M",
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for consults and follow ups. Future potential with adding on same day/next day consults etc. Heavy cancel rate on Mondays. ",
+      "ticket_notes": "Live for Manual Release for Referrals. Live for Automatic for Follow Ups.  ",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": "Pediatric Gastro"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "TicketManual-Live",
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 26
+  },
+  {
+    "specialty": "Dermatology",
+    "lead": "MM",
+    "pss_score": 53,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "M",
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Follow ups live",
+      "ticket_notes": "Live for Manual Release for new patients. Automatic release for follow ups.",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "TicketManual-Live",
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 53
+  },
+  {
+    "specialty": "Speech",
+    "lead": "LK",
+    "pss_score": 48,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "M",
+      "ticket_followup": "M/A",
+      "open_direct": "\u00a0",
+      "open_sched": "RAA",
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for consults and follow ups. Next: Refine the  logic - if any future audiology exclude from Fast Pass offers, also future Speech/Feeding, or MBS. Exclude - Vestibular Balance Lab, Consult vestibular. ",
+      "ticket_notes": "Live for Referral - Manual Release - Pending Ambulatory to complete build for different specialty orders for follow up automation.",
+      "build_notes": "Allow consults + follow ups, MUST TEST, Kate meet with Jenna to verify test results",
+      "build_status": "removed specialty exclusion, added 562/773/856/855 to opt in",
+      "prd_specialty": "Speech"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "TicketManual-Live",
+      "RAA-Enabled"
+    ],
+    "row_index": 8
+  },
+  {
+    "specialty": "Orthopaedics",
+    "lead": "LK",
+    "pss_score": 48,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "M",
+      "open_direct": NaN,
+      "open_sched": "RAA",
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live with Consults starting next week. Difficulties to offer follow ups dues to coordinated scheduling with systems external to Epic. ",
+      "ticket_notes": "Live for Manual Release for Follow Ups. Challenges operationally against automatic release. ",
+      "build_notes": "Allow for consults. Must test and send list to verify potential offers before go-live with Julie, Wes, and Adrienne (PRCS: 732/1618/1620/1609/1621)",
+      "build_status": "removed specialty exclusion, added prc/specialty exclusion",
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpManual-Live",
+      "RAA-Enabled"
+    ],
+    "row_index": 31
+  },
+  {
+    "specialty": "Endocrinology/GeMs/OWL",
+    "lead": "MM",
+    "pss_score": 45,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for most consults and follow ups - some exceptions including GeMs for consults and some coordinated Diabetes visits. ",
+      "ticket_notes": "Live with Manual release for follow ups. Met with them 5/7/25 - Pending Department to indicate when they want to go live with automation/if there's any additional questions (working w/Kimchi)",
+      "build_notes": "https://jiraprod.tch.harvard.edu/browse/ITHD-233150",
+      "build_status": "PRC 528/1368/1389/1388/606/1369/1435/299/1380/747/305/306 removed specialty exclusion, added prc/specialty exclusion",
+      "prd_specialty": "Pediatric Endo"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 9
+  },
+  {
+    "specialty": "Developmental Medicine",
+    "lead": "MM",
+    "pss_score": 45,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for follow ups. Next: Explore adding consults to Fast Pass ",
+      "ticket_notes": "Live for Automatic Release for Follow Ups. ",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": "Pediatric Develop"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 15
+  },
+  {
+    "specialty": "Hematology",
+    "lead": "MM",
+    "pss_score": 45,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": NaN,
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Unable to adopt Fast Pass due to coordinated consults and follow ups within the treatment plans at this time. Interested in revisiting when this becomes possible.  ",
+      "ticket_notes": "Automatic Release for Follow Ups. ",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": "Pediatric Hematology"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 19
+  },
+  {
+    "specialty": "Ophthalmology/ Orthoptics",
+    "lead": "RH",
+    "pss_score": 45,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": NaN,
+      "ticket_amb": NaN,
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: On, with additional logic for preventing appts at certain times",
+      "ticket_notes": "Went live with automated for 1-year follow-ups and manual release. ",
+      "build_notes": "Meeting scheduled Tuesday",
+      "build_status": NaN,
+      "prd_specialty": "Pediatric Ophtha"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 20
+  },
+  {
+    "specialty": "Adolescent",
+    "lead": "MM",
+    "pss_score": 45,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live with consults and follow ups. Explore ticket scheduling. ",
+      "ticket_notes": "Working on request to automate sending follow up tickets, pending Physician approval/review",
+      "build_notes": "Allow for visit types 671, 702, 1072, and 670. ",
+      "build_status": "removed specialty exclusion, added prc/specialty exclusion",
+      "prd_specialty": "Adolescent Medicine"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 28
+  },
+  {
+    "specialty": "Rheumatology",
+    "lead": "MM",
+    "pss_score": 45,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "X",
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for consults and follow ups. Ticket scheduling live for follow ups. Review ambulatory referral order to find barrier to self scheduling. ",
+      "ticket_notes": "Live for automatic release of Follow Ups.",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 35
+  },
+  {
+    "specialty": "Neurology/Neurophysiology",
+    "lead": "RH",
+    "pss_score": 45,
+    "category": "IMPLEMENTATION_IN_PROGRESS",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": NaN,
+      "ticket_followup": "A",
+      "open_direct": NaN,
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: live for consults and follow ups. ",
+      "ticket_notes": "Live for Manual Release for Follow Ups and Consults. Automatic releasing for EEGs\n\n5/5 - Epilepsy went live with automation of follow ups, pending remainder of specialty to give feedback",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 48
+  },
+  {
+    "specialty": "CHPCC",
+    "lead": "MM",
+    "pss_score": 33,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "M",
+      "open_direct": NaN,
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for well child follow ups right now. New patient intake is controlled and scheduled manually for newborns and other. ",
+      "ticket_notes": "Approved to go live with manual release in CHPCC, WEY, and MEHC primary cares)",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": "Primary Care"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpManual-Live"
+    ],
+    "row_index": 5
+  },
+  {
+    "specialty": "Gynecology",
+    "lead": "LK",
+    "pss_score": 33,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "M",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for follow ups, opportunity for consults in the future. ",
+      "ticket_notes": "Live with Manual release for follow ups. Unable to automate until there is more conversation to update their follow up order. (Ambulatory owned)",
+      "build_notes": "Allow for birth control refills",
+      "build_status": "removed specialty exclusion, added 622 to fp opt in",
+      "prd_specialty": "Gynecology"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpManual-Live"
+    ],
+    "row_index": 10
+  },
+  {
+    "specialty": "Behavioral Health/Psychiatry",
+    "lead": "RH",
+    "pss_score": 33,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "M",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Not live for consults due to strict intake process and sequencing. Potential for follow ups but not useful at the moment. ",
+      "ticket_notes": "Unable to enable manual until update to follow up order (Ambulatory owned)",
+      "build_notes": "Allow for follow ups only. ",
+      "build_status": "removed specialty exclusion, added 762 to fp opt in",
+      "prd_specialty": "Pediatric Psych"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpManual-Live"
+    ],
+    "row_index": 11
+  },
+  {
+    "specialty": "Sleep Center",
+    "lead": "RH",
+    "pss_score": 33,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": NaN,
+      "ticket_amb": NaN,
+      "ticket_followup": "M",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Open to consults.  Next: Testing and providing results to department",
+      "ticket_notes": "Manual release for follow ups, potential for automation pending department comfort.",
+      "build_notes": "Meeting scheduled Wednesday",
+      "build_status": NaN,
+      "prd_specialty": "Sleep Medicine"
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpManual-Live"
+    ],
+    "row_index": 13
+  },
+  {
+    "specialty": "Sports Medicine ",
+    "lead": "LK",
+    "pss_score": 33,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": NaN,
+      "ticket_followup": "M",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live with Consults starting next week. Difficulties to offer follow ups dues to coordinated scheduling with systems external to Epic. ",
+      "ticket_notes": "Live for Manual Release for Follow Ups. Challenges operationally against automatic release. ",
+      "build_notes": "Allow new patient consults (PRCS: 574/289/1554/1577/1562/1584/1581/1561)",
+      "build_status": "removed specialty exclusion, added prc/specialty exclusion",
+      "prd_specialty": "Pediatric Sports "
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpManual-Live"
+    ],
+    "row_index": 24
+  },
+  {
+    "specialty": "Lead (Pediatric Environmental Health) ",
+    "lead": "MM",
+    "pss_score": 33,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "M",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Not live at this time due to prerequisite clinical information required for visits to be successful. Next: Review ticket scheduling opportunities",
+      "ticket_notes": "Open to implementing, need to sort out some complexity in order to explore automatic release. Live for Manual release for follow ups. ",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpManual-Live"
+    ],
+    "row_index": 29
+  },
+  {
+    "specialty": "MEHC",
+    "lead": "MM",
+    "pss_score": 33,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "M",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Not live in BH (Provider request), live for new and follow ups. Next: Review how MEHC can align with their BCH counterparts. (BH)",
+      "ticket_notes": "Approved to go live with manual release in CHPCC, WEY, and MEHC primary cares)",
+      "build_notes": "Meeting scheduled on Thursday",
+      "build_status": "Exclude MEHC Behavioral Health DEP (psych turning on)",
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpManual-Live"
+    ],
+    "row_index": 33
+  },
+  {
+    "specialty": "Pain Clinic/Interventional",
+    "lead": "RH",
+    "pss_score": 33,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "M",
+      "open_direct": NaN,
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Previously marked as live, but not currently. Follow up conversation needed.",
+      "ticket_notes": "Live for Manual Release for Follow Ups. ",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live",
+      "FollowUpManual-Live"
+    ],
+    "row_index": 51
+  },
+  {
+    "specialty": "Infectious Disease",
+    "lead": "MM",
+    "pss_score": 25,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for General ID patients, not PDC or ICH. ",
+      "ticket_notes": "N/A for ticket scheduling due to current operations and physician pairing in the practice. ",
+      "build_notes": "Allow for new patients labeled at General Infectious Disease, not PDC and ICH. (PRC 533 Consults w/ general ID tag)",
+      "build_status": "added prc/specialty/tag exclusion",
+      "prd_specialty": "Pediatric Infect"
+    },
+    "implementation_status": [
+      "FastPass-Live"
+    ],
+    "row_index": 17
+  },
+  {
+    "specialty": "Dentistry/Orthodontics",
+    "lead": "LK",
+    "pss_score": 25,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "M/A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live and happy with it. Next step: Interested in exploring ticket scheduling opportunities.",
+      "ticket_notes": "Live for Manual release of Treatment Plan visits. Live for Automatic Ortho Follow Ups. Continuing to discuss automatic release. ",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live"
+    ],
+    "row_index": 34
+  },
+  {
+    "specialty": "Neuropsychology (psych)",
+    "lead": "RH",
+    "pss_score": 25,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for consults.",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live"
+    ],
+    "row_index": 38
+  },
+  {
+    "specialty": "Genetics",
+    "lead": "MM",
+    "pss_score": 25,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for consults and follow ups. ",
+      "ticket_notes": "Live for automatic release of Follow Ups.",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live"
+    ],
+    "row_index": 45
+  },
+  {
+    "specialty": "Lab",
+    "lead": "RH",
+    "pss_score": 25,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Right now scheduling same day and next day, wouldn't hit criteria. Want to move to walk-ins only if possible, but some labs are medication timed. Live in direct scheduling. Ticket scheduling ruled out based on criteria but replicated in a way through the direct scheduling workflow. Patients are only allowed to direct schedule if they have a lab order in a specific grouper of tests. Otherwise patient must call to schedule. ",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live"
+    ],
+    "row_index": 46
+  },
+  {
+    "specialty": "Autism Spectrum Center",
+    "lead": "RH",
+    "pss_score": 25,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for consults. Follow ups are in Neurology bucket. ",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live"
+    ],
+    "row_index": 49
+  },
+  {
+    "specialty": "Neuropsychology (Neuro)",
+    "lead": "RH",
+    "pss_score": 25,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Live for consults. ",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FastPass-Live"
+    ],
+    "row_index": 50
+  },
+  {
+    "specialty": "Heart Center (all areas)",
+    "lead": "PH",
+    "pss_score": 20,
+    "category": "FOUNDATION_ESTABLISHED",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "A",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "Follow up visits in Fast pass (not consults) (approved by KP/SA)",
+      "ticket_notes": "Live for manual release of Follow Ups. Pushing to explore automatic ticket bundling. Excited to lead the organization as an example of what is possible. Ongoing feedback from Nolan to bring additional procedures up on ticket scheduling. Includes ticket bundling - but need coordination with Cupid (for procedure tickets)",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [
+      "FollowUpAuto-Live"
+    ],
+    "row_index": 42
+  },
+  {
+    "specialty": "ASAP ",
+    "lead": "MM",
+    "pss_score": 8,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "M",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "Approved for follow ups in Fast Pass except Social Work visits. Some operational clean up but want to expand. ",
+      "ticket_notes": "Live for Manual Release for Follow Ups (did not want to automate due to clinic wf).",
+      "build_notes": "Allow for follow ups except Social Work follow ups based on the provider type",
+      "build_status": "removed specialty excusion, added 666 to fp opt in, added exclusion to prevent SW f/ups",
+      "prd_specialty": "Addiction Medicine"
+    },
+    "implementation_status": [
+      "FollowUpManual-Live"
+    ],
+    "row_index": 16
+  },
+  {
+    "specialty": "Vaccine Clinic/Travel Clinic",
+    "lead": "MM",
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Still opportunity for simple visits, not a good use in Travel Clinic. ",
+      "ticket_notes": "Workflow favors direct/open scheduling rather than tickets.",
+      "build_notes": "Messaged Erica for feedback",
+      "build_status": NaN,
+      "prd_specialty": "Family Medicine"
+    },
+    "implementation_status": [],
+    "row_index": 14
+  },
+  {
+    "specialty": "GPU",
+    "lead": "MM",
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: N/A due to procedural visit exclusion. ",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [],
+    "row_index": 18
+  },
+  {
+    "specialty": "Dialysis",
+    "lead": "MM",
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Unable to adopt Fast Pass due to coordinated consults and follow ups within the treatment plans at this time. ",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": "Dialysis"
+    },
+    "implementation_status": [],
+    "row_index": 21
+  },
+  {
+    "specialty": "Apheresis",
+    "lead": NaN,
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Unable to adopt Fast Pass due to coordinated consults and follow ups within the treatment plans at this time. ",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": "Transfusion "
+    },
+    "implementation_status": [],
+    "row_index": 23
+  },
+  {
+    "specialty": "Infusion",
+    "lead": "KR",
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": "\u00a0",
+      "direct_sched": "\u00a0",
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Unable to adopt Fast Pass due to coordinated consults and follow ups within the treatment plans at this time. ",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": "Infusion Therapy"
+    },
+    "implementation_status": [],
+    "row_index": 27
+  },
+  {
+    "specialty": "NICU Grads",
+    "lead": "MM",
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "X",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Do not feel this is necessary in NICU grads due to patient population, low volume. Some MD follow ups that would prehaps fit into a phase 2 effort with some additional logic. ",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": "Neonatology"
+    },
+    "implementation_status": [],
+    "row_index": 30
+  },
+  {
+    "specialty": "CCS",
+    "lead": "MM",
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: No opportunity today. Taking patients same day. Potentially in the future as clinic becomes busier. ",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [],
+    "row_index": 32
+  },
+  {
+    "specialty": "ETU",
+    "lead": "KR",
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Unable to adopt Fast Pass due to coordinated consults and follow ups within the treatment plans at this time. ",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [],
+    "row_index": 36
+  },
+  {
+    "specialty": "DEXA/Bone Density",
+    "lead": "MM",
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: N/A due to procedural visit exclusion. ",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [],
+    "row_index": 37
+  },
+  {
+    "specialty": "CAPE (Vent HH)",
+    "lead": "RH",
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Patient population not appropriate for Fast Pass or ticket scheduling.",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [],
+    "row_index": 39
+  },
+  {
+    "specialty": "CR (Crisis Response) ",
+    "lead": "MM",
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Coordinating space with CHPCC and small managed group of patients. Not appropriate at this time. ",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [],
+    "row_index": 40
+  },
+  {
+    "specialty": "Transplant",
+    "lead": "LK",
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Not appropriate based on Transplant episode coordination. Continue to monitor self service opportunities as features change. ",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": "left Tx exclusion, removed [1666] Heart TX PRC from eligible follow ups for fast pass",
+      "prd_specialty": NaN
+    },
+    "implementation_status": [],
+    "row_index": 41
+  },
+  {
+    "specialty": "PT/OT",
+    "lead": "JG",
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Interested in seeing functionality for Initial Evals (follow ups won't work for fast pass and won't work for ticket scheduling unless parameters are available for correct gaps between appts based on order)",
+      "ticket_notes": "Interested in consult, but requires updates to decision trees to make patient facing and have not pursued. ",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [],
+    "row_index": 43
+  },
+  {
+    "specialty": "Palliative Care (PACT)",
+    "lead": "MM",
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "\u00a0",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": "\u00a0",
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: Patient population not appropriate for Fast Pass or ticket scheduling.",
+      "ticket_notes": "N/A for ticket scheduling",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [],
+    "row_index": 47
+  },
+  {
+    "specialty": "CV Surgery",
+    "lead": "PH",
+    "pss_score": 0,
+    "category": "REQUIRES_IMMEDIATE_ATTENTION",
+    "features": {
+      "fast_pass_status": "x",
+      "ticket_amb": "\u00a0",
+      "ticket_followup": NaN,
+      "open_direct": "\u00a0",
+      "open_sched": NaN,
+      "direct_sched": NaN,
+      "outlook": NaN,
+      "fast_pass_notes": "FP: External second opinion process is new to Epic. Want to build trust in the workflow before explore self-service.",
+      "ticket_notes": "Follow up conversation needed. ",
+      "build_notes": "No build change",
+      "build_status": NaN,
+      "prd_specialty": NaN
+    },
+    "implementation_status": [],
+    "row_index": 54
+  }
+]
